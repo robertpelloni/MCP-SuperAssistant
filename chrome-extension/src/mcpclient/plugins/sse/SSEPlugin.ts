@@ -1,4 +1,4 @@
-import { Client } from '@modelcontextprotocol/sdk/client/index.js';
+import type { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { SSEClientTransport } from '@modelcontextprotocol/sdk/client/sse.js';
 import type { Transport } from '@modelcontextprotocol/sdk/shared/transport.js';
 import { LoggingMessageNotificationSchema } from '@modelcontextprotocol/sdk/types.js';
@@ -6,7 +6,6 @@ import { LoggingMessageNotificationSchema } from '@modelcontextprotocol/sdk/type
 import type { ITransportPlugin, PluginMetadata, PluginConfig } from '../../types/plugin.js';
 import type { SSEPluginConfig } from '../../types/config.js';
 import { createLogger } from '@extension/shared/lib/logger';
-
 
 const logger = createLogger('SSEPlugin');
 

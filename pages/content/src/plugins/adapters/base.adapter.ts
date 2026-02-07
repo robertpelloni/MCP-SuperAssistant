@@ -1,9 +1,4 @@
-import type { 
-  AdapterPlugin, 
-  PluginContext, 
-  AdapterCapability, 
-  DetectedTool 
-} from '../plugin-types';
+import type { AdapterPlugin, PluginContext, AdapterCapability, DetectedTool } from '../plugin-types';
 
 /**
  * BaseAdapterPlugin provides a foundational class for all adapter plugins.
@@ -84,7 +79,7 @@ export abstract class BaseAdapterPlugin implements AdapterPlugin {
     this.context.logger.warn('navigateToUrl not implemented by this adapter.');
     return false;
   }
-  
+
   async executeScript<T>(script: string | (() => T)): Promise<T | null> {
     this.context.logger.warn('executeScript not implemented by this adapter.');
     return null;
@@ -101,11 +96,14 @@ export abstract class BaseAdapterPlugin implements AdapterPlugin {
     return this.currentStatus;
   }
 
-  protected setStatus(status: 'active' | 'inactive' | 'error' | 'initializing' | 'disabled' | 'pending', error?: string | Error): void {
+  protected setStatus(
+    status: 'active' | 'inactive' | 'error' | 'initializing' | 'disabled' | 'pending',
+    error?: string | Error,
+  ): void {
     this.currentStatus = status;
     if (status === 'error' && error) {
-        this.context.logger.error('Status set to error:', error);
-        // Optionally emit an event or update store directly if context allows
+      this.context.logger.error('Status set to error:', error);
+      // Optionally emit an event or update store directly if context allows
     }
   }
 
@@ -117,7 +115,7 @@ export abstract class BaseAdapterPlugin implements AdapterPlugin {
   onPageChanged?(url: string, oldUrl?: string): void {
     this.context.logger.debug(`onPageChanged (Base): from ${oldUrl || 'N/A'} to ${url}`);
   }
-  
+
   onHostChanged?(newHost: string, oldHost?: string): void {
     this.context.logger.debug(`onHostChanged (Base): from ${oldHost || 'N/A'} to ${newHost}`);
     // Base implementation could re-check isSupported or trigger adapter re-evaluation

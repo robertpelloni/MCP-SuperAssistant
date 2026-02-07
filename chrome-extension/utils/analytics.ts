@@ -102,7 +102,7 @@ async function getOrCreateSessionId(): Promise<string> {
 export async function sendAnalyticsEvent(
   name: string,
   params: { [key: string]: any },
-  userProperties?: { [key: string]: { value: any } }
+  userProperties?: { [key: string]: { value: any } },
 ): Promise<void> {
   // Basic check for essential credentials
   if (

@@ -25,7 +25,10 @@ interface IconProps {
     | 'tool'
     | 'box'
     | 'file-text'
-    | 'arrow-up-right';
+    | 'arrow-up-right'
+    | 'book'
+    | 'help-circle'
+    | 'life-buoy';
   size?: 'sm' | 'md' | 'lg' | 'xs';
   className?: string;
 }
@@ -286,6 +289,54 @@ const Icon: React.FC<IconProps> = ({ name, size = 'md', className }) => {
             strokeLinejoin="round">
             <line x1="7" y1="17" x2="17" y2="7"></line>
             <polyline points="7 7 17 7 17 17"></polyline>
+          </svg>
+        );
+      case 'book':
+        return (
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round">
+            <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+            <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
+          </svg>
+        );
+      case 'help-circle':
+        return (
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round">
+            <circle cx="12" cy="12" r="10" />
+            <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
+            <path d="M12 17h.01" />
+          </svg>
+        );
+      case 'life-buoy':
+        return (
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round">
+            <circle cx="12" cy="12" r="10" />
+            <circle cx="12" cy="12" r="4" />
+            <path d="m4.93 4.93 4.24 4.24" />
+            <path d="m14.83 14.83 4.24 4.24" />
+            <path d="m14.83 9.17 4.24-4.24" />
+            <path d="m14.83 9.17 4.24-4.24" />
+            <path d="m4.93 19.07 4.24-4.24" />
           </svg>
         );
       default:
