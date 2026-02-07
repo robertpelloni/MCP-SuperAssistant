@@ -180,6 +180,9 @@ To connect the Chrome extension to a local server for proxying connections:
 6. The status indicator should change to "Connected" if successful
 
 ## Usage
+
+For a comprehensive guide on all features and configuration options, please refer to the [User Manual](docs/MANUAL.md).
+
 Example Workflow:
 1. Navigate to a supported AI platform example chatgpt.
 2. The MCP SuperAssistant sidebar will appear on the right side of the page

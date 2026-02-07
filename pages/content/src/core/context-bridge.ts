@@ -1,23 +1,18 @@
 /**
  * Context Bridge for Chrome Extension Communication
- * 
+ *
  * Handles communication between different contexts in the Chrome extension:
  * - Content script ↔ Background script
  * - Content script ↔ Popup
  * - Content script ↔ Options page
- * 
+ *
  * Provides type-safe message passing with retry logic, error handling,
  * and automatic message validation.
  */
 
 import { eventBus } from '../events/event-bus';
 import type { EventMap } from '../events/event-types';
-import type { 
-  BaseMessage, 
-  RequestMessage, 
-  ResponseMessage,
-  McpMessageType
-} from '../types/messages';
+import type { BaseMessage, RequestMessage, ResponseMessage, McpMessageType } from '../types/messages';
 import { createLogger } from '@extension/shared/lib/logger';
 
 // Legacy compatibility interface
@@ -136,7 +131,7 @@ class ContextBridge {
       // Emit event to notify other components
       eventBus.emit('context:bridge-invalidated', {
         timestamp: Date.now(),
-        error: error instanceof Error ? error.message : String(error)
+        error: error instanceof Error ? error.message : String(error),
       });
 
       return false;
@@ -175,7 +170,7 @@ class ContextBridge {
           logger.error('[ContextBridge] Extension context invalidated:', error);
           eventBus.emit('context:bridge-invalidated', {
             timestamp: now,
-            error: error instanceof Error ? error.message : String(error)
+            error: error instanceof Error ? error.message : String(error),
           });
         }
       }
@@ -194,7 +189,7 @@ class ContextBridge {
   private handleChromeMessage(
     message: any,
     sender: chrome.runtime.MessageSender,
-    sendResponse: (response?: any) => void
+    sendResponse: (response?: any) => void,
   ): boolean {
     try {
       if (this.config.enableLogging) {
@@ -305,15 +300,15 @@ class ContextBridge {
       this.broadcast(event, data, excludeOrigin as ContextMessage['origin']);
     });
 
-    eventBus.on('connection:status-changed', (data) => {
+    eventBus.on('connection:status-changed', data => {
       this.broadcast('connection:status-changed', data);
     });
 
-    eventBus.on('adapter:activated', (data) => {
+    eventBus.on('adapter:activated', data => {
       this.broadcast('adapter:activated', data);
     });
 
-    eventBus.on('tool:execution-completed', (data) => {
+    eventBus.on('tool:execution-completed', data => {
       this.broadcast('tool:execution-completed', data);
     });
   }
@@ -325,7 +320,7 @@ class ContextBridge {
     target: 'background' | 'popup' | 'options' | 'content',
     type: string,
     payload?: any,
-    options: { timeout?: number; retries?: number } = {}
+    options: { timeout?: number; retries?: number } = {},
   ): Promise<any> {
     // Check if extension context is valid
     if (!this.isExtensionContextValid) {
@@ -375,7 +370,7 @@ class ContextBridge {
     target: 'background' | 'popup' | 'options' | 'content',
     type: string,
     payload?: any,
-    timeout: number = 5000
+    timeout: number = 5000,
   ): Promise<any> {
     const messageId = this.generateMessageId();
     const message: ContextMessage = {
@@ -406,7 +401,7 @@ class ContextBridge {
 
         // For background messages, send directly
         if (target === 'background') {
-          chrome.runtime.sendMessage({ ...message, expectResponse: true }, (response) => {
+          chrome.runtime.sendMessage({ ...message, expectResponse: true }, response => {
             // Clear timeout since we got a response (even if it's an error)
             clearTimeout(timeoutHandle);
             this.pendingRequests.delete(messageId);
@@ -436,7 +431,7 @@ class ContextBridge {
         } else {
           // For other contexts, we might need tab-specific messaging
           // This is a simplified approach - in practice you might need more sophisticated routing
-          chrome.runtime.sendMessage({ ...message, target, expectResponse: true }, (response) => {
+          chrome.runtime.sendMessage({ ...message, target, expectResponse: true }, response => {
             clearTimeout(timeoutHandle);
             this.pendingRequests.delete(messageId);
 
@@ -469,7 +464,7 @@ class ContextBridge {
           this.isExtensionContextValid = false;
           eventBus.emit('context:bridge-invalidated', {
             timestamp: Date.now(),
-            error: error.message
+            error: error.message,
           });
         }
 
@@ -533,13 +528,15 @@ class ContextBridge {
       logger.error('[ContextBridge] Error broadcasting message:', error);
 
       // Check if this is an extension context invalidation
-      if (error instanceof Error &&
-          (error.message.includes('Extension context invalidated') ||
-           error.message.includes('Chrome runtime not available'))) {
+      if (
+        error instanceof Error &&
+        (error.message.includes('Extension context invalidated') ||
+          error.message.includes('Chrome runtime not available'))
+      ) {
         this.isExtensionContextValid = false;
         eventBus.emit('context:bridge-invalidated', {
           timestamp: Date.now(),
-          error: error.message
+          error: error.message,
         });
       }
     }
@@ -595,7 +592,7 @@ class ContextBridge {
    */
   async getConnectionStatus(): Promise<{ [key: string]: boolean }> {
     const statuses: { [key: string]: boolean } = {};
-    
+
     try {
       const backgrounds = await this.sendMessage('background', 'ping', {}, { timeout: 2000 });
       statuses.background = !!backgrounds;
