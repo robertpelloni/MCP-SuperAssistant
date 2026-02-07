@@ -1,7 +1,6 @@
 import type { Transport } from '@modelcontextprotocol/sdk/shared/transport.js';
 import { createLogger } from '@extension/shared/lib/logger';
 
-
 const logger = createLogger('WebSocketTransport');
 
 export interface WebSocketTransportOptions {

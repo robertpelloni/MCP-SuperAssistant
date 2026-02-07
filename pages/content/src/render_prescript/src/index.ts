@@ -47,20 +47,22 @@ const injectCodeMirrorAccessor = () => {
   // Prevent multiple injection attempts
   if (codeMirrorScriptInjected || injectionAttempted) return;
   if (typeof document === 'undefined') return; // Guard against non-browser env
-  
+
   injectionAttempted = true;
-  
+
   // Check if script is already present in DOM
-  if (document.getElementById('codemirror-accessor-script') || 
-      document.getElementById('codemirror-accessor-script-direct') ||
-      document.getElementById('codemirror-accessor-page-context')) {
+  if (
+    document.getElementById('codemirror-accessor-script') ||
+    document.getElementById('codemirror-accessor-script-direct') ||
+    document.getElementById('codemirror-accessor-page-context')
+  ) {
     if (CONFIG.debug) {
       logger.debug('CodeMirror accessor script already present in DOM, skipping injection');
     }
     codeMirrorScriptInjected = true;
     return;
   }
-  
+
   // Check if window.CodeMirrorAccessor already exists
   if (typeof (window as any).CodeMirrorAccessor !== 'undefined') {
     if (CONFIG.debug) {
@@ -69,38 +71,40 @@ const injectCodeMirrorAccessor = () => {
     codeMirrorScriptInjected = true;
     return;
   }
-  
+
   try {
     // Get the script content from the chrome extension
     const scriptUrl = chrome.runtime.getURL('codemirror-accessor.js');
-    
+
     // Load and inject the script with immediate execution
     fetch(scriptUrl)
       .then(response => response.text())
       .then(scriptContent => {
         // Double-check before injecting
-        if (document.getElementById('codemirror-accessor-script') || 
-            typeof (window as any).CodeMirrorAccessor !== 'undefined') {
+        if (
+          document.getElementById('codemirror-accessor-script') ||
+          typeof (window as any).CodeMirrorAccessor !== 'undefined'
+        ) {
           if (CONFIG.debug) {
             logger.debug('CodeMirror accessor already present, aborting injection');
           }
           codeMirrorScriptInjected = true;
           return;
         }
-        
+
         const scriptElement = document.createElement('script');
         scriptElement.type = 'text/javascript';
         scriptElement.id = 'codemirror-accessor-script';
         scriptElement.textContent = scriptContent;
-        
+
         // Inject into page context, not content script context
         (document.head || document.documentElement).appendChild(scriptElement);
         codeMirrorScriptInjected = true;
-        
+
         if (CONFIG.debug) {
           logger.debug('CodeMirror accessor script injected successfully');
         }
-        
+
         // Verify script is active after a short delay
         setTimeout(() => {
           if (typeof (window as any).CodeMirrorAccessor !== 'undefined') {
@@ -135,17 +139,19 @@ const injectCodeMirrorAccessor = () => {
 // Alternative injection method for when content script context isolation prevents access
 const injectCodeMirrorAccessorAlternative = () => {
   // Prevent multiple alternative injections
-  if (document.getElementById('codemirror-accessor-script-direct') ||
-      typeof (window as any).CodeMirrorAccessor !== 'undefined') {
+  if (
+    document.getElementById('codemirror-accessor-script-direct') ||
+    typeof (window as any).CodeMirrorAccessor !== 'undefined'
+  ) {
     if (CONFIG.debug) {
       logger.debug('CodeMirror accessor already present, skipping alternative injection');
     }
     return;
   }
-  
+
   try {
     const scriptUrl = chrome.runtime.getURL('codemirror-accessor.js');
-    
+
     // Method 1: Direct script tag injection
     const scriptElement = document.createElement('script');
     scriptElement.src = scriptUrl;
@@ -154,7 +160,7 @@ const injectCodeMirrorAccessorAlternative = () => {
       if (CONFIG.debug) {
         logger.debug('CodeMirror accessor script loaded via direct method');
       }
-      
+
       // Verify accessibility
       setTimeout(() => {
         if (typeof (window as any).CodeMirrorAccessor !== 'undefined') {
@@ -178,7 +184,7 @@ const injectCodeMirrorAccessorAlternative = () => {
         injectCodeMirrorAccessorPageContext();
       }
     };
-    
+
     (document.head || document.documentElement).appendChild(scriptElement);
   } catch (error) {
     logger.debug('Alternative injection method failed:', error);
@@ -192,18 +198,20 @@ const injectCodeMirrorAccessorAlternative = () => {
 // Page context injection method
 const injectCodeMirrorAccessorPageContext = () => {
   // Prevent multiple page context injections
-  if (document.getElementById('codemirror-accessor-page-context') ||
-      document.querySelector('script[data-cm-accessor-injector]') ||
-      typeof (window as any).CodeMirrorAccessor !== 'undefined') {
+  if (
+    document.getElementById('codemirror-accessor-page-context') ||
+    document.querySelector('script[data-cm-accessor-injector]') ||
+    typeof (window as any).CodeMirrorAccessor !== 'undefined'
+  ) {
     if (CONFIG.debug) {
       logger.debug('CodeMirror accessor already present, skipping page context injection');
     }
     return;
   }
-  
+
   try {
     const scriptUrl = chrome.runtime.getURL('codemirror-accessor.js');
-    
+
     // Inject script that loads our accessor into page context
     const injectorScript = document.createElement('script');
     injectorScript.setAttribute('data-cm-accessor-injector', 'true');
@@ -230,16 +238,16 @@ const injectCodeMirrorAccessorPageContext = () => {
           });
       })();
     `;
-    
+
     (document.head || document.documentElement).appendChild(injectorScript);
-    
+
     // Mark as successful to prevent further attempts
     setTimeout(() => {
       if (typeof (window as any).CodeMirrorAccessor !== 'undefined') {
         codeMirrorScriptInjected = true;
       }
     }, 200);
-    
+
     if (CONFIG.debug) {
       logger.debug('Attempted page context injection of CodeMirror accessor');
     }
@@ -260,12 +268,12 @@ const initializeRenderer = () => {
   }
 
   injectStyles();
-  
+
   // Inject CodeMirror accessor script only if the website uses CodeMirror
   if (CONFIG.useCodeMirrorExtraction) {
     injectCodeMirrorAccessor();
   }
-  
+
   processFunctionCalls(); // Initial processing of existing blocks
 
   // Process function results if selectors are configured

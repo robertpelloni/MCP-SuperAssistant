@@ -69,12 +69,18 @@ export const stripLanguageTags = (line: string): string => {
   const trimmed = line.trim();
 
   // First, strip markdown code fence markers (```)
-  let cleaned = trimmed.replace(/^```\s*(javascript|typescript|markdown|csharp|kotlin|python|jsonl|bash|rust|java|scala|swift|shell|json|text|perl|yaml|toml|html|ruby|cpp|php|lua|css|sql|yml|ini|xml|ts|js|py|sh|md|cs|go|rb|c|r)?\s*/i, '');
+  let cleaned = trimmed.replace(
+    /^```\s*(javascript|typescript|markdown|csharp|kotlin|python|jsonl|bash|rust|java|scala|swift|shell|json|text|perl|yaml|toml|html|ruby|cpp|php|lua|css|sql|yml|ini|xml|ts|js|py|sh|md|cs|go|rb|c|r)?\s*/i,
+    '',
+  );
 
   // Then strip language tags with optional "copy" or "copy code" suffix
   // Supports: json, jsonCopy, json Copy, json copy code, jsonCopycode, jsonlCopy code, etc.
   // IMPORTANT: Order matters! Longer language names must come first (e.g., jsonl before json)
-  cleaned = cleaned.replace(/^(javascript|typescript|markdown|csharp|kotlin|python|jsonl|bash|rust|java|scala|swift|shell|json|text|perl|yaml|toml|html|ruby|cpp|php|lua|css|sql|yml|ini|xml|ts|js|py|sh|md|cs|go|rb|c|r)(\s*copy(\s*code)?)?\s*/i, '');
+  cleaned = cleaned.replace(
+    /^(javascript|typescript|markdown|csharp|kotlin|python|jsonl|bash|rust|java|scala|swift|shell|json|text|perl|yaml|toml|html|ruby|cpp|php|lua|css|sql|yml|ini|xml|ts|js|py|sh|md|cs|go|rb|c|r)(\s*copy(\s*code)?)?\s*/i,
+    '',
+  );
 
   // Strip standalone "copy" or "copy code" buttons that might remain
   cleaned = cleaned.replace(/^[cC]opy(\s+code)?\s*/i, '');
@@ -169,11 +175,13 @@ export const containsJSONFunctionCalls = (block: HTMLElement): FunctionInfo => {
   const hasTypeField = content.includes('"type"') || content.includes("'type'") || content.includes('type:');
 
   // Accept partial matches during streaming (e.g., "function_ca" while typing "function_call")
-  const hasFunctionCall = content.includes('function_call') ||
-                         (content.includes('"type"') && /function_call_\w*/.test(content)) ||
-                         (content.includes('"type"') && content.includes('function_ca')); // Partial match
+  const hasFunctionCall =
+    content.includes('function_call') ||
+    (content.includes('"type"') && /function_call_\w*/.test(content)) ||
+    (content.includes('"type"') && content.includes('function_ca')); // Partial match
 
-  const hasParameter = content.includes('"parameter"') || content.includes("'parameter'") || content.includes('parameter');
+  const hasParameter =
+    content.includes('"parameter"') || content.includes("'parameter'") || content.includes('parameter');
 
   // Also check if it looks like start of JSON object with type field
   const looksLikeJSONStart = content.includes('{"type"') || content.includes('{ "type"');
@@ -184,7 +192,7 @@ export const containsJSONFunctionCalls = (block: HTMLElement): FunctionInfo => {
       hasFunctionCall,
       hasParameter,
       looksLikeJSONStart,
-      willProceed: hasTypeField && (hasFunctionCall || hasParameter || looksLikeJSONStart)
+      willProceed: hasTypeField && (hasFunctionCall || hasParameter || looksLikeJSONStart),
     });
   }
 
@@ -224,9 +232,9 @@ export const containsJSONFunctionCalls = (block: HTMLElement): FunctionInfo => {
   //   "type": "function_call_start",
   //   "name": "foo"
   // }
-  const isPrettyPrinted = lines.length > 1 &&
-                         (content.includes('{\n') || content.includes('{ \n') ||
-                          lines.some(line => line.trim() === '{'));
+  const isPrettyPrinted =
+    lines.length > 1 &&
+    (content.includes('{\n') || content.includes('{ \n') || lines.some(line => line.trim() === '{'));
 
   if (isSingleLineFormat) {
     if (CONFIG.debug) {
@@ -323,7 +331,7 @@ export const containsJSONFunctionCalls = (block: HTMLElement): FunctionInfo => {
       isComplete: result.isComplete,
       functionName: state.functionName,
       paramCount: state.parameterCount,
-      hasEnd: state.hasFunctionEnd
+      hasEnd: state.hasFunctionEnd,
     });
   }
 
@@ -333,7 +341,9 @@ export const containsJSONFunctionCalls = (block: HTMLElement): FunctionInfo => {
 /**
  * Extract function name and call_id from JSON function calls (handles partial/streaming content)
  */
-export const extractJSONFunctionInfo = (content: string): {
+export const extractJSONFunctionInfo = (
+  content: string,
+): {
   functionName: string | null;
   callId: string | null;
   description: string | null;
@@ -350,7 +360,10 @@ export const extractJSONFunctionInfo = (content: string): {
       let trimmed = line.trim();
       // Strip language tags and copy-code prefixes before checking
       // IMPORTANT: Order matters! Longer language names must come first (e.g., jsonl before json)
-      trimmed = trimmed.replace(/^(javascript|typescript|markdown|csharp|kotlin|python|jsonl|bash|rust|java|scala|swift|shell|json|text|perl|yaml|toml|html|ruby|cpp|php|lua|css|sql|yml|ini|xml|ts|js|py|sh|md|cs|go|rb|c|r)(\s*copy(\s*code)?)?\s*/i, '');
+      trimmed = trimmed.replace(
+        /^(javascript|typescript|markdown|csharp|kotlin|python|jsonl|bash|rust|java|scala|swift|shell|json|text|perl|yaml|toml|html|ruby|cpp|php|lua|css|sql|yml|ini|xml|ts|js|py|sh|md|cs|go|rb|c|r)(\s*copy(\s*code)?)?\s*/i,
+        '',
+      );
 
       if (trimmed.startsWith('{') && trimmed.includes('"type"') && trimmed.includes('function_call_start')) {
         // Try to extract name from partial JSON
@@ -403,7 +416,7 @@ export const extractJSONParameters = (content: string): Record<string, any> => {
     if (!parsed) continue;
 
     if (parsed.type === 'parameter' && parsed.key) {
-      parameters[parsed.key] = parsed.value ?? '';  // Ensure value is never undefined
+      parameters[parsed.key] = parsed.value ?? ''; // Ensure value is never undefined
     }
   }
 

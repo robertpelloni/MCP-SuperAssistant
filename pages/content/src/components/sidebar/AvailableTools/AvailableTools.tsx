@@ -8,14 +8,13 @@ import { cn } from '@src/lib/utils';
 import { Card, CardHeader, CardContent } from '@src/components/ui/card';
 import { createLogger } from '@extension/shared/lib/logger';
 
-
 const logger = createLogger('AvailableTools');
 
 interface ExtendedTool extends Tool {
   displayName?: string;
   originalName?: string;
+  isFavorite?: boolean;
 }
-
 
 interface AvailableToolsProps {
   tools: Tool[];
@@ -28,7 +27,16 @@ const AvailableTools: React.FC<AvailableToolsProps> = ({ tools, onExecute, onRef
   // Use Zustand hooks for tool management
   const { tools: storeTools } = useAvailableTools();
   const { executions, isExecuting } = useToolExecution();
-  const { enabledTools, enableTool, disableTool, enableAllTools, disableAllTools, isToolEnabled, loadToolEnablementState, isLoadingEnablement } = useToolEnablement();
+  const {
+    enabledTools,
+    enableTool,
+    disableTool,
+    enableAllTools,
+    disableAllTools,
+    isToolEnabled,
+    loadToolEnablementState,
+    isLoadingEnablement,
+  } = useToolEnablement();
 
   const [searchTerm, setSearchTerm] = useState('');
   const [expandedTools, setExpandedTools] = useState<Set<string>>(new Set());
@@ -36,6 +44,30 @@ const AvailableTools: React.FC<AvailableToolsProps> = ({ tools, onExecute, onRef
   const [isLoaded, setIsLoaded] = useState(false);
   const [pendingChanges, setPendingChanges] = useState<Set<string>>(new Set());
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [favorites, setFavorites] = useState<Set<string>>(new Set());
+  const [sortBy, setSortBy] = useState<'name' | 'favorite'>('name');
+
+  // Load favorites from local storage
+  useEffect(() => {
+    try {
+      const storedFavorites = JSON.parse(localStorage.getItem('mcpFavorites') || '[]');
+      setFavorites(new Set(storedFavorites));
+    } catch (e) {
+      logger.error('Failed to load favorites', e);
+    }
+  }, []);
+
+  // Save favorites to local storage
+  const toggleFavorite = (toolName: string) => {
+    const newFavorites = new Set(favorites);
+    if (newFavorites.has(toolName)) {
+      newFavorites.delete(toolName);
+    } else {
+      newFavorites.add(toolName);
+    }
+    setFavorites(newFavorites);
+    localStorage.setItem('mcpFavorites', JSON.stringify(Array.from(newFavorites)));
+  };
 
   // Use tools from store if available, fallback to props
   const effectiveTools = storeTools.length > 0 ? storeTools : tools;
@@ -97,35 +129,46 @@ const AvailableTools: React.FC<AvailableToolsProps> = ({ tools, onExecute, onRef
     const ungrouped: ExtendedTool[] = [];
 
     filtered.forEach(tool => {
+      const toolNameFull = tool.name;
+      const isFav = favorites.has(toolNameFull);
+      const toolObj: ExtendedTool = { ...tool, isFavorite: isFav };
+
       const dotIndex = tool.name.indexOf('.');
       if (dotIndex > 0) {
         const serverName = tool.name.substring(0, dotIndex);
         const toolName = tool.name.substring(dotIndex + 1);
-        
+
         if (!grouped[serverName]) {
           grouped[serverName] = [];
         }
-        grouped[serverName].push({
-          ...tool,
-          displayName: toolName, // Store the short name for display
-          originalName: tool.name // Keep original for functionality
-        } as ExtendedTool);
+
+        toolObj.displayName = toolName;
+        toolObj.originalName = tool.name;
+
+        grouped[serverName].push(toolObj);
       } else {
-        ungrouped.push(tool as ExtendedTool);
+        ungrouped.push(toolObj);
       }
     });
 
     // Sort tools within each group
     Object.keys(grouped).forEach(serverName => {
       grouped[serverName].sort((a, b) => {
-        if (!hasUnsavedChanges) {
+        // Sort by favorite first if selected
+        if (sortBy === 'favorite') {
+          if (a.isFavorite && !b.isFavorite) return -1;
+          if (!a.isFavorite && b.isFavorite) return 1;
+        }
+
+        // Then by enablement (optional, can be confusing if mixed with favorites)
+        if (!hasUnsavedChanges && sortBy !== 'favorite') {
           const aEnabled = isToolEnabled(a.originalName || a.name);
           const bEnabled = isToolEnabled(b.originalName || b.name);
-          
+
           if (aEnabled && !bEnabled) return -1;
           if (!aEnabled && bEnabled) return 1;
         }
-        
+
         const aName = a.displayName || a.name;
         const bName = b.displayName || b.name;
         return aName.localeCompare(bName);
@@ -134,19 +177,24 @@ const AvailableTools: React.FC<AvailableToolsProps> = ({ tools, onExecute, onRef
 
     // Sort ungrouped tools
     ungrouped.sort((a, b) => {
-      if (!hasUnsavedChanges) {
+      if (sortBy === 'favorite') {
+        if (a.isFavorite && !b.isFavorite) return -1;
+        if (!a.isFavorite && b.isFavorite) return 1;
+      }
+
+      if (!hasUnsavedChanges && sortBy !== 'favorite') {
         const aEnabled = isToolEnabled(a.name);
         const bEnabled = isToolEnabled(b.name);
-        
+
         if (aEnabled && !bEnabled) return -1;
         if (!aEnabled && bEnabled) return 1;
       }
-      
+
       return a.name.localeCompare(b.name);
     });
 
     return { groupedTools: grouped, ungroupedTools: ungrouped };
-  }, [effectiveTools, searchTerm, enabledTools, hasUnsavedChanges]);
+  }, [effectiveTools, searchTerm, enabledTools, hasUnsavedChanges, favorites, sortBy]);
 
   const handleExecute = (tool: Tool) => {
     logMessage(`[AvailableTools] Executing tool: ${tool.name}`);
@@ -169,7 +217,7 @@ const AvailableTools: React.FC<AvailableToolsProps> = ({ tools, onExecute, onRef
       }
       return newPending;
     });
-    
+
     if (isToolEnabled(toolName)) {
       disableTool(toolName);
       logMessage(`[AvailableTools] Tool disabled: ${toolName}`);
@@ -194,7 +242,7 @@ const AvailableTools: React.FC<AvailableToolsProps> = ({ tools, onExecute, onRef
         enableTool(toolName);
       }
     });
-    
+
     setHasUnsavedChanges(false);
     setPendingChanges(new Set());
     logMessage('[AvailableTools] Tool changes discarded');
@@ -216,7 +264,7 @@ const AvailableTools: React.FC<AvailableToolsProps> = ({ tools, onExecute, onRef
   const handleToggleGroup = (serverName: string, tools: ExtendedTool[]) => {
     setHasUnsavedChanges(true);
     const allEnabled = tools.every(tool => isToolEnabled(tool.originalName || tool.name));
-    
+
     tools.forEach(tool => {
       const toolName = tool.originalName || tool.name;
       if (allEnabled) {
@@ -225,7 +273,7 @@ const AvailableTools: React.FC<AvailableToolsProps> = ({ tools, onExecute, onRef
         enableTool(toolName);
       }
     });
-    
+
     logMessage(`[AvailableTools] Group ${serverName} ${allEnabled ? 'disabled' : 'enabled'}`);
   };
 
@@ -261,24 +309,43 @@ const AvailableTools: React.FC<AvailableToolsProps> = ({ tools, onExecute, onRef
             </button>
             <Typography variant="h3">Available Tools</Typography>
           </div>
-          <Button
-            onClick={handleRefresh}
-            disabled={isRefreshing}
-            size="sm"
-            variant="outline"
-            className={cn(
-              'h-9 w-9 p-0',
-              isRefreshing ? 'opacity-50' : 'bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600',
+          <div className="flex items-center gap-2">
+            {/* Sort Toggle */}
+            {isExpanded && (
+              <button
+                onClick={() => setSortBy(sortBy === 'name' ? 'favorite' : 'name')}
+                className={cn(
+                  'p-1.5 rounded transition-colors',
+                  sortBy === 'favorite'
+                    ? 'bg-yellow-100 text-yellow-600 dark:bg-yellow-900/30 dark:text-yellow-400'
+                    : 'bg-slate-100 text-slate-500 hover:bg-slate-200 dark:bg-slate-700 dark:text-slate-400 dark:hover:bg-slate-600',
+                )}
+                title={sortBy === 'name' ? 'Sort by Favorites' : 'Sort by Name'}>
+                <Icon name="sun" size="sm" className={sortBy === 'favorite' ? 'fill-current' : ''} />
+                {/* Using sun as star placeholder if star not available, or modify Icon component */}
+              </button>
             )}
-            aria-label="Refresh tools">
-            <Icon
-              name="refresh"
+            <Button
+              onClick={handleRefresh}
+              disabled={isRefreshing}
               size="sm"
-              className={cn('text-slate-700 dark:text-slate-300', isRefreshing ? 'animate-spin' : '')}
-            />
-          </Button>
+              variant="outline"
+              className={cn(
+                'h-9 w-9 p-0',
+                isRefreshing
+                  ? 'opacity-50'
+                  : 'bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600',
+              )}
+              aria-label="Refresh tools">
+              <Icon
+                name="refresh"
+                size="sm"
+                className={cn('text-slate-700 dark:text-slate-300', isRefreshing ? 'animate-spin' : '')}
+              />
+            </Button>
+          </div>
         </div>
-        
+
         {isExpanded && (
           <div className="flex items-center justify-between mt-3 pt-3 border-t border-slate-200 dark:border-slate-700">
             <div className="flex items-center gap-2">
@@ -408,9 +475,11 @@ const AvailableTools: React.FC<AvailableToolsProps> = ({ tools, onExecute, onRef
                 const groupEnabled = isGroupEnabled(tools);
                 const groupPartiallyEnabled = isGroupPartiallyEnabled(tools);
                 const groupExpanded = expandedTools.has(serverName);
-                
+
                 return (
-                  <div key={serverName} className="border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden">
+                  <div
+                    key={serverName}
+                    className="border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden">
                     {/* Group Header */}
                     <div className="bg-slate-100 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 p-3">
                       <div className="flex items-center justify-between">
@@ -424,14 +493,14 @@ const AvailableTools: React.FC<AvailableToolsProps> = ({ tools, onExecute, onRef
                               size="sm"
                               className={cn(
                                 'text-slate-600 dark:text-slate-400 transition-transform',
-                                groupExpanded ? 'rotate-90' : ''
+                                groupExpanded ? 'rotate-90' : '',
                               )}
                             />
                           </button>
                           <input
                             type="checkbox"
                             checked={groupEnabled}
-                            ref={(el) => {
+                            ref={el => {
                               if (el) el.indeterminate = groupPartiallyEnabled;
                             }}
                             onChange={() => handleToggleGroup(serverName, tools)}
@@ -467,15 +536,18 @@ const AvailableTools: React.FC<AvailableToolsProps> = ({ tools, onExecute, onRef
                           const displayName = tool.displayName || tool.name;
                           const isEnabled = isToolEnabled(toolName);
                           const toolExpanded = expandedTools.has(toolName);
-                          
+                          const isFav = tool.isFavorite;
+
                           return (
-                            <div key={toolName} className="border-b border-slate-100 dark:border-slate-800 last:border-b-0">
+                            <div
+                              key={toolName}
+                              className="border-b border-slate-100 dark:border-slate-800 last:border-b-0">
                               <div
                                 className={cn(
-                                  "flex items-center justify-between p-3 cursor-pointer transition-colors",
-                                  isEnabled 
-                                    ? "hover:bg-slate-50 dark:hover:bg-slate-800/50"
-                                    : "hover:bg-slate-50 dark:hover:bg-slate-800/30 opacity-60"
+                                  'flex items-center justify-between p-3 cursor-pointer transition-colors',
+                                  isEnabled
+                                    ? 'hover:bg-slate-50 dark:hover:bg-slate-800/50'
+                                    : 'hover:bg-slate-50 dark:hover:bg-slate-800/30 opacity-60',
                                 )}
                                 onClick={() => toggleToolExpansion(toolName)}>
                                 <div className="flex items-center">
@@ -490,27 +562,49 @@ const AvailableTools: React.FC<AvailableToolsProps> = ({ tools, onExecute, onRef
                                   <input
                                     type="checkbox"
                                     checked={isEnabled}
-                                    onChange={(e) => {
+                                    onChange={e => {
                                       e.stopPropagation();
                                       handleToggleTool(toolName);
                                     }}
-                                    onClick={(e) => {
+                                    onClick={e => {
                                       e.stopPropagation();
                                     }}
                                     className="w-4 h-4 mr-3 text-blue-600 bg-white border-slate-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-slate-800 focus:ring-2 dark:bg-slate-700 dark:border-slate-600"
                                   />
-                                  <Typography 
-                                    variant="body" 
+                                  <div className="flex flex-col">
+                                    <Typography
+                                      variant="body"
+                                      className={cn(
+                                        'font-medium transition-colors flex items-center gap-1',
+                                        isEnabled
+                                          ? 'text-slate-800 dark:text-slate-200'
+                                          : 'text-slate-500 dark:text-slate-400',
+                                      )}>
+                                      {displayName}
+                                      {isFav && (
+                                        <Icon name="sun" size="xs" className="text-yellow-500 fill-current w-3 h-3" />
+                                      )}
+                                    </Typography>
+                                  </div>
+                                </div>
+
+                                <div className="flex items-center gap-2">
+                                  <button
+                                    onClick={e => {
+                                      e.stopPropagation();
+                                      toggleFavorite(toolName);
+                                    }}
                                     className={cn(
-                                      "font-medium transition-colors",
-                                      isEnabled 
-                                        ? "text-slate-800 dark:text-slate-200"
-                                        : "text-slate-500 dark:text-slate-400"
-                                    )}>
-                                    {displayName}
-                                  </Typography>
+                                      'p-1 rounded hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors',
+                                      isFav
+                                        ? 'text-yellow-500'
+                                        : 'text-slate-300 dark:text-slate-600 hover:text-slate-500 dark:hover:text-slate-400',
+                                    )}
+                                    title={isFav ? 'Remove from favorites' : 'Add to favorites'}>
+                                    <Icon name="sun" size="xs" className={cn(isFav ? 'fill-current' : '')} />
+                                  </button>
                                   {!isEnabled && (
-                                    <span className="ml-2 px-2 py-0.5 text-xs bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-400 rounded">
+                                    <span className="px-2 py-0.5 text-xs bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-400 rounded">
                                       Disabled
                                     </span>
                                   )}
@@ -518,39 +612,37 @@ const AvailableTools: React.FC<AvailableToolsProps> = ({ tools, onExecute, onRef
                               </div>
 
                               {toolExpanded && (
-                                <div className={cn(
-                                  "p-3 bg-slate-50 dark:bg-slate-800/50",
-                                  !isEnabled && "opacity-60"
-                                )}>
+                                <div className={cn('p-3 bg-slate-50 dark:bg-slate-800/50', !isEnabled && 'opacity-60')}>
                                   {tool.description && (
-                                    <Typography 
-                                      variant="body" 
+                                    <Typography
+                                      variant="body"
                                       className={cn(
-                                        "mb-2",
-                                        isEnabled 
-                                          ? "text-slate-600 dark:text-slate-300"
-                                          : "text-slate-500 dark:text-slate-400"
+                                        'mb-2',
+                                        isEnabled
+                                          ? 'text-slate-600 dark:text-slate-300'
+                                          : 'text-slate-500 dark:text-slate-400',
                                       )}>
                                       {tool.description}
                                     </Typography>
                                   )}
                                   <div className="mt-2">
-                                    <Typography 
-                                      variant="caption" 
+                                    <Typography
+                                      variant="caption"
                                       className={cn(
-                                        "mb-1",
-                                        isEnabled 
-                                          ? "text-slate-500 dark:text-slate-400"
-                                          : "text-slate-400 dark:text-slate-500"
+                                        'mb-1',
+                                        isEnabled
+                                          ? 'text-slate-500 dark:text-slate-400'
+                                          : 'text-slate-400 dark:text-slate-500',
                                       )}>
                                       Schema
                                     </Typography>
-                                    <pre className={cn(
-                                      "text-xs p-2 whitespace-pre-wrap max-h-60 overflow-y-auto rounded border",
-                                      isEnabled 
-                                        ? "bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700"
-                                        : "bg-slate-100 dark:bg-slate-800/50 text-slate-500 dark:text-slate-400 border-slate-300 dark:border-slate-600"
-                                    )}>
+                                    <pre
+                                      className={cn(
+                                        'text-xs p-2 whitespace-pre-wrap max-h-60 overflow-y-auto rounded border font-mono',
+                                        isEnabled
+                                          ? 'bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700'
+                                          : 'bg-slate-100 dark:bg-slate-800/50 text-slate-500 dark:text-slate-400 border-slate-300 dark:border-slate-600',
+                                      )}>
                                       {(() => {
                                         try {
                                           const schema = (tool as any).schema || (tool as any).input_schema;
@@ -592,15 +684,18 @@ const AvailableTools: React.FC<AvailableToolsProps> = ({ tools, onExecute, onRef
                     {ungroupedTools.map(tool => {
                       const isEnabled = isToolEnabled(tool.name);
                       const toolExpanded = expandedTools.has(tool.name);
-                      
+                      const isFav = tool.isFavorite;
+
                       return (
-                        <div key={tool.name} className="border-b border-slate-100 dark:border-slate-800 last:border-b-0">
+                        <div
+                          key={tool.name}
+                          className="border-b border-slate-100 dark:border-slate-800 last:border-b-0">
                           <div
                             className={cn(
-                              "flex items-center justify-between p-3 cursor-pointer transition-colors",
-                              isEnabled 
-                                ? "hover:bg-slate-50 dark:hover:bg-slate-800/50"
-                                : "hover:bg-slate-50 dark:hover:bg-slate-800/30 opacity-60"
+                              'flex items-center justify-between p-3 cursor-pointer transition-colors',
+                              isEnabled
+                                ? 'hover:bg-slate-50 dark:hover:bg-slate-800/50'
+                                : 'hover:bg-slate-50 dark:hover:bg-slate-800/30 opacity-60',
                             )}
                             onClick={() => toggleToolExpansion(tool.name)}>
                             <div className="flex items-center">
@@ -615,25 +710,47 @@ const AvailableTools: React.FC<AvailableToolsProps> = ({ tools, onExecute, onRef
                               <input
                                 type="checkbox"
                                 checked={isEnabled}
-                                onChange={(e) => {
+                                onChange={e => {
                                   e.stopPropagation();
                                   handleToggleTool(tool.name);
                                 }}
-                                onClick={(e) => {
+                                onClick={e => {
                                   e.stopPropagation();
                                 }}
                                 className="w-4 h-4 mr-3 text-blue-600 bg-white border-slate-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-slate-800 focus:ring-2 dark:bg-slate-700 dark:border-slate-600"
                               />
-                              <Typography 
-                                variant="body" 
+                              <div className="flex flex-col">
+                                <Typography
+                                  variant="body"
+                                  className={cn(
+                                    'font-medium transition-colors flex items-center gap-1',
+                                    isEnabled
+                                      ? 'text-slate-800 dark:text-slate-200'
+                                      : 'text-slate-500 dark:text-slate-400',
+                                  )}>
+                                  {tool.name}
+                                  {isFav && (
+                                    <Icon name="sun" size="xs" className="text-yellow-500 fill-current w-3 h-3" />
+                                  )}
+                                </Typography>
+                              </div>
+                            </div>
+
+                            <div className="flex items-center gap-2">
+                              <button
+                                onClick={e => {
+                                  e.stopPropagation();
+                                  toggleFavorite(tool.name);
+                                }}
                                 className={cn(
-                                  "font-medium transition-colors",
-                                  isEnabled 
-                                    ? "text-slate-800 dark:text-slate-200"
-                                    : "text-slate-500 dark:text-slate-400"
-                                )}>
-                                {tool.name}
-                              </Typography>
+                                  'p-1 rounded hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors',
+                                  isFav
+                                    ? 'text-yellow-500'
+                                    : 'text-slate-300 dark:text-slate-600 hover:text-slate-500 dark:hover:text-slate-400',
+                                )}
+                                title={isFav ? 'Remove from favorites' : 'Add to favorites'}>
+                                <Icon name="sun" size="xs" className={cn(isFav ? 'fill-current' : '')} />
+                              </button>
                               {!isEnabled && (
                                 <span className="ml-2 px-2 py-0.5 text-xs bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-400 rounded">
                                   Disabled
@@ -643,39 +760,37 @@ const AvailableTools: React.FC<AvailableToolsProps> = ({ tools, onExecute, onRef
                           </div>
 
                           {toolExpanded && (
-                            <div className={cn(
-                              "p-3 bg-slate-50 dark:bg-slate-800/50",
-                              !isEnabled && "opacity-60"
-                            )}>
+                            <div className={cn('p-3 bg-slate-50 dark:bg-slate-800/50', !isEnabled && 'opacity-60')}>
                               {tool.description && (
-                                <Typography 
-                                  variant="body" 
+                                <Typography
+                                  variant="body"
                                   className={cn(
-                                    "mb-2",
-                                    isEnabled 
-                                      ? "text-slate-600 dark:text-slate-300"
-                                      : "text-slate-500 dark:text-slate-400"
+                                    'mb-2',
+                                    isEnabled
+                                      ? 'text-slate-600 dark:text-slate-300'
+                                      : 'text-slate-500 dark:text-slate-400',
                                   )}>
                                   {tool.description}
                                 </Typography>
                               )}
                               <div className="mt-2">
-                                <Typography 
-                                  variant="caption" 
+                                <Typography
+                                  variant="caption"
                                   className={cn(
-                                    "mb-1",
-                                    isEnabled 
-                                      ? "text-slate-500 dark:text-slate-400"
-                                      : "text-slate-400 dark:text-slate-500"
+                                    'mb-1',
+                                    isEnabled
+                                      ? 'text-slate-500 dark:text-slate-400'
+                                      : 'text-slate-400 dark:text-slate-500',
                                   )}>
                                   Schema
                                 </Typography>
-                                <pre className={cn(
-                                  "text-xs p-2 whitespace-pre-wrap max-h-60 overflow-y-auto rounded border",
-                                  isEnabled 
-                                    ? "bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700"
-                                    : "bg-slate-100 dark:bg-slate-800/50 text-slate-500 dark:text-slate-400 border-slate-300 dark:border-slate-600"
-                                )}>
+                                <pre
+                                  className={cn(
+                                    'text-xs p-2 whitespace-pre-wrap max-h-60 overflow-y-auto rounded border font-mono',
+                                    isEnabled
+                                      ? 'bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700'
+                                      : 'bg-slate-100 dark:bg-slate-800/50 text-slate-500 dark:text-slate-400 border-slate-300 dark:border-slate-600',
+                                  )}>
                                   {(() => {
                                     try {
                                       const schema = (tool as any).schema || (tool as any).input_schema;
