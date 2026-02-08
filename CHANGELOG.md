@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.6.0] - 2024-05-22
+
+### Added
+- **Analytics Dashboard**: New sidebar tab showing high-level usage stats (Total Runs, Success Rate, Most Used Tool).
+- **Rich Renderer**: Visualizes tool outputs in Activity Logs (JSON tree, Markdown, Images).
+- **Keyboard Shortcuts**: Global shortcuts for power users (`Alt+Shift+S` toggle sidebar, `/` search, etc.).
+- **Auto-Execute Whitelist**: Safe mode for automation, allowing only trusted tools to run automatically.
+
 ## [0.5.9] - 2024-05-22
 
 ### Added

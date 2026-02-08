@@ -223,7 +223,7 @@ const Settings: React.FC = () => {
           </CardContent>
         </Card>
 
-        {/* Safety Settings (Trusted Tools Placeholder) */}
+        {/* Safety Settings (Trusted Tools) */}
         <Card className="border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm overflow-hidden">
           <CardHeader className="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-800 p-4">
             <div className="flex items-center gap-2">
@@ -235,12 +235,49 @@ const Settings: React.FC = () => {
           </CardHeader>
           <CardContent className="p-5">
             <div className="text-sm text-slate-600 dark:text-slate-400 mb-3">
-              Configure which tools are allowed to auto-execute.
+              Tools listed here will auto-execute without confirmation (if enabled above).
             </div>
-            <div className="p-4 bg-slate-50 dark:bg-slate-800 rounded border border-slate-100 dark:border-slate-700 text-center">
-              <Typography variant="body" className="text-slate-500 dark:text-slate-400 text-sm">
-                Trusted Tools management coming soon in 0.6.0
-              </Typography>
+            <div className="flex gap-2 mb-3">
+              <input
+                type="text"
+                placeholder="Enter tool name (e.g., filesystem.read_file)"
+                className="flex-1 px-3 py-2 text-sm border rounded-md bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-600 text-slate-900 dark:text-slate-100"
+                onKeyDown={e => {
+                  if (e.key === 'Enter') {
+                    const val = e.currentTarget.value.trim();
+                    if (val && !trustedTools.includes(val)) {
+                      const newTools = [...trustedTools, val];
+                      setTrustedTools(newTools);
+                      updatePreferences({ trustedTools: newTools });
+                      e.currentTarget.value = '';
+                    }
+                  }
+                }}
+              />
+              <Button size="sm" variant="outline" className="border-slate-300 dark:border-slate-600">
+                Add
+              </Button>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {(preferences.trustedTools || []).map(tool => (
+                <div
+                  key={tool}
+                  className="flex items-center gap-1 px-2 py-1 bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300 text-xs rounded border border-green-100 dark:border-green-800">
+                  <span>{tool}</span>
+                  <button
+                    onClick={() => {
+                      const newTools = (preferences.trustedTools || []).filter(t => t !== tool);
+                      setTrustedTools(newTools);
+                      updatePreferences({ trustedTools: newTools });
+                    }}
+                    className="hover:text-green-900 dark:hover:text-green-100">
+                    <Icon name="x" size="xs" />
+                  </button>
+                </div>
+              ))}
+              {(!preferences.trustedTools || preferences.trustedTools.length === 0) && (
+                <span className="text-xs text-slate-400 italic">No trusted tools configured.</span>
+              )}
             </div>
           </CardContent>
         </Card>

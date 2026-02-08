@@ -3,6 +3,7 @@ import { useState, useMemo } from 'react';
 import { useActivityStore, type LogType, type LogStatus } from '@src/stores/activity.store';
 import { Card, CardContent, CardHeader } from '@src/components/ui/card';
 import { Typography, Icon, Button } from '../ui';
+import { RichRenderer } from '../ui/RichRenderer';
 import { cn } from '@src/lib/utils';
 
 const ActivityLog: React.FC = () => {
@@ -137,11 +138,11 @@ const ActivityLog: React.FC = () => {
                   {log.metadata && (
                     <div className="mb-2">
                       <Typography variant="caption" className="text-slate-500 dark:text-slate-400 block mb-1">
-                        Metadata
+                        Result / Metadata
                       </Typography>
-                      <pre className="text-[10px] font-mono bg-white dark:bg-slate-900 p-2 rounded border border-slate-200 dark:border-slate-700 overflow-x-auto text-slate-700 dark:text-slate-300">
-                        {JSON.stringify(log.metadata, null, 2)}
-                      </pre>
+                      <div className="bg-white dark:bg-slate-900 p-2 rounded border border-slate-200 dark:border-slate-700 overflow-hidden">
+                        <RichRenderer data={log.metadata} />
+                      </div>
                     </div>
                   )}
                   <div className="flex justify-end pt-1">
