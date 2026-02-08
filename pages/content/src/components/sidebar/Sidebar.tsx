@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useCurrentAdapter } from '@src/hooks/useAdapter';
 import { useTheme, useSidebarState, useUserPreferences, useConnectionStatus } from '@src/hooks';
+import { useKeyboardShortcuts } from '@src/hooks/useKeyboardShortcuts';
 import { useUIStore } from '@src/stores/ui.store';
 import ServerStatus from './ServerStatus/ServerStatus';
 import AvailableTools from './AvailableTools/AvailableTools';
@@ -9,6 +10,7 @@ import InputArea from './InputArea/InputArea';
 import Settings from './Settings/Settings';
 import Help from './Help/Help';
 import ActivityLog from './Activity/ActivityLog';
+import Dashboard from './Dashboard/Dashboard';
 import { useMcpCommunication } from '@src/hooks/useMcpCommunication';
 import { logMessage } from '@src/utils/helpers';
 import { eventBus } from '@src/events/event-bus';
@@ -327,18 +329,51 @@ const Sidebar: React.FC<SidebarProps> = ({ initialPreferences }) => {
   }, [sidebarVisible, isMinimized, isPushMode, sidebarWidth]);
 
   // Local UI state that doesn't need to be in the store
-  const [activeTab, setActiveTab] = useState<'availableTools' | 'instructions' | 'activity' | 'settings' | 'help'>(
-    'availableTools',
-  );
+  const [activeTab, setActiveTab] = useState<
+    'availableTools' | 'instructions' | 'activity' | 'dashboard' | 'settings' | 'help'
+  >('availableTools');
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [isInputMinimized, setIsInputMinimized] = useState(false);
 
   const sidebarRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
+  const searchInputRef = useRef<HTMLInputElement>(null); // Ref for available tools search input
   const isResizingRef = useRef(false);
   const previousWidthRef = useRef(SIDEBAR_DEFAULT_WIDTH);
   const transitionTimerRef = useRef<number | null>(null);
+
+  // Keyboard Shortcuts Integration
+  useKeyboardShortcuts({
+    toggleSidebar: () => {
+      toggleSidebar();
+      logMessage('[Sidebar] Toggled via shortcut');
+    },
+    closeSidebar: () => {
+      if (!isMinimized) toggleMinimize('shortcut');
+    },
+    focusSearch: () => {
+      // This requires passing a ref down to AvailableTools or managing focus globally
+      // For now, let's just switch to the tab
+      setActiveTab('availableTools');
+      // Ideally we would focus the input inside AvailableTools
+    },
+    switchTab: direction => {
+      const tabs: ('availableTools' | 'instructions' | 'activity' | 'dashboard' | 'settings' | 'help')[] = [
+        'availableTools',
+        'instructions',
+        'activity',
+        'dashboard',
+        'settings',
+        'help',
+      ];
+      const currentIndex = tabs.indexOf(activeTab);
+      let nextIndex = direction === 'next' ? currentIndex + 1 : currentIndex - 1;
+      if (nextIndex >= tabs.length) nextIndex = 0;
+      if (nextIndex < 0) nextIndex = tabs.length - 1;
+      setActiveTab(tabs[nextIndex]);
+    },
+  });
 
   // Helper function to wait for SidebarManager to become available with retry mechanism
   const waitForSidebarManager = useCallback(async (maxRetries = 10, baseDelay = 50): Promise<any> => {
@@ -945,6 +980,16 @@ const Sidebar: React.FC<SidebarProps> = ({ initialPreferences }) => {
                   <button
                     className={cn(
                       'py-2 px-4 font-medium text-sm transition-all duration-200',
+                      activeTab === 'dashboard'
+                        ? 'border-b-2 border-indigo-600 text-indigo-600 dark:border-indigo-400 dark:text-indigo-400'
+                        : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-t-lg',
+                    )}
+                    onClick={() => setActiveTab('dashboard')}>
+                    Dashboard
+                  </button>
+                  <button
+                    className={cn(
+                      'py-2 px-4 font-medium text-sm transition-all duration-200',
                       activeTab === 'settings'
                         ? 'border-b-2 border-indigo-600 text-indigo-600 dark:border-indigo-400 dark:text-indigo-400'
                         : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-t-lg',
@@ -1006,6 +1051,15 @@ const Sidebar: React.FC<SidebarProps> = ({ initialPreferences }) => {
                   { hidden: activeTab !== 'activity' },
                 )}>
                 <ActivityLog />
+              </div>
+
+              {/* Dashboard */}
+              <div
+                className={cn(
+                  'h-full overflow-y-auto scrollbar-thin scrollbar-thumb-slate-300 dark:scrollbar-thumb-slate-600 scrollbar-track-transparent',
+                  { hidden: activeTab !== 'dashboard' },
+                )}>
+                <Dashboard />
               </div>
 
               {/* Settings */}
