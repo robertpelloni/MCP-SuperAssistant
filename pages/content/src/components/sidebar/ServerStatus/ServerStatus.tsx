@@ -40,6 +40,8 @@ const ServerStatus: React.FC<ServerStatusProps> = ({ status: initialStatus }) =>
   const [isEditingConnectionType, setIsEditingConnectionType] = useState<boolean>(false);
   const [lastErrorMessage, setLastErrorMessage] = useState<string>('');
   const [configFetched, setConfigFetched] = useState<boolean>(false);
+  const [pingLatency, setPingLatency] = useState<number | null>(null);
+  const [isPinging, setIsPinging] = useState(false);
 
   // Animation states
   const [showSuccessAnimation, setShowSuccessAnimation] = useState(false);
@@ -335,6 +337,28 @@ const ServerStatus: React.FC<ServerStatusProps> = ({ status: initialStatus }) =>
       }
     }
   }, [status, hasBackgroundError, isReconnecting]);
+
+  const handleTestConnection = async () => {
+    if (isPinging) return;
+    setIsPinging(true);
+    setPingLatency(null);
+
+    const startTime = Date.now();
+    try {
+      logMessage('[ServerStatus] Testing connection latency...');
+      // Use refresh tools as a ping mechanism
+      await refreshTools(true);
+      const endTime = Date.now();
+      const latency = endTime - startTime;
+      setPingLatency(latency);
+      logMessage(`[ServerStatus] Ping latency: ${latency}ms`);
+    } catch (error) {
+      logMessage(`[ServerStatus] Ping failed: ${error}`);
+      setPingLatency(-1); // Indicator for error
+    } finally {
+      setIsPinging(false);
+    }
+  };
 
   const handleReconnect = async () => {
     const startTime = Date.now();
@@ -835,7 +859,7 @@ const ServerStatus: React.FC<ServerStatusProps> = ({ status: initialStatus }) =>
                   <div className="mb-2">
                     <strong>To start MCP SuperAssistant Proxy:</strong>
                   </div>
-                  <div className="bg-slate-100 dark:bg-slate-800 p-2 rounded font-mono text-xs border">
+                  <div className="bg-slate-100 dark:bg-slate-800 p-2 rounded font-mono text-xs border border-slate-200 dark:border-slate-700">
                     npx @srbhptl39/mcp-superassistant-proxy@latest --config ./config.json --outputTransport{' '}
                     {connectionType === 'sse' ? 'sse' : connectionType === 'websocket' ? 'ws' : 'streamableHttp'}
                   </div>
@@ -863,18 +887,6 @@ const ServerStatus: React.FC<ServerStatusProps> = ({ status: initialStatus }) =>
                         security restrictions.
                       </div>
                     </div>
-                    {/* <div className="mt-3 p-2 bg-green-50 dark:bg-green-900/20 rounded border border-green-200 dark:border-green-800">
-                      <div className="font-medium text-green-800 dark:text-green-200 mb-2">🌍 Example Public Endpoints:</div>
-                      <div className="text-green-700 dark:text-green-300 space-y-1 text-xs">
-                        <div><strong>SSE:</strong></div>
-                        <div className="ml-2">• <code>https://api.zapier.com/v1/mcp/sse</code></div>
-                        <div className="ml-2">• <code>https://composio.dev/api/mcp/sse</code></div>
-                        <div className="mt-2"><strong>Streamable HTTP:</strong></div>
-                        <div className="ml-2">• <code>https://api.zapier.com/v1/mcp</code></div>
-                        <div className="ml-2">• <code>https://composio.dev/api/mcp</code></div>
-                        <div className="ml-2">• <code>https://your-server.com/mcp</code></div>
-                      </div>
-                    </div> */}
                   </div>
                 </div>
               </div>
@@ -989,6 +1001,38 @@ const ServerStatus: React.FC<ServerStatusProps> = ({ status: initialStatus }) =>
                     <span className="text-slate-600 dark:text-slate-300">{lastReconnectTime}</span>
                   </div>
                 )}
+
+                {/* Ping Test Section */}
+                <div className="pt-2 border-t border-slate-100 dark:border-slate-800">
+                  <div className="flex justify-between items-center py-1">
+                    <span className="font-medium text-slate-700 dark:text-slate-200">Network Latency:</span>
+                    <div className="flex items-center gap-2">
+                      {pingLatency !== null && (
+                        <span
+                          className={cn(
+                            'text-xs font-mono px-1.5 py-0.5 rounded',
+                            pingLatency === -1
+                              ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
+                              : pingLatency < 50
+                                ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+                                : pingLatency < 200
+                                  ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400'
+                                  : 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400',
+                          )}>
+                          {pingLatency === -1 ? 'Failed' : `${pingLatency}ms`}
+                        </span>
+                      )}
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-6 px-2 text-[10px]"
+                        onClick={handleTestConnection}
+                        disabled={isPinging}>
+                        {isPinging ? <Icon name="refresh" size="xs" className="animate-spin" /> : 'Test'}
+                      </Button>
+                    </div>
+                  </div>
+                </div>
               </div>
 
               {status === 'disconnected' && (

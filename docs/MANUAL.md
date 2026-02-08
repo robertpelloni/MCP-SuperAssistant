@@ -22,7 +22,10 @@ The proxy bridges the browser (extension) to your local MCP servers.
       "mcpServers": {
         "filesystem": {
           "command": "npx",
-          "args": ["-y", "@modelcontextprotocol/server-filesystem", "/path/to/allowed/folder"]
+          "args": ["-y", "@modelcontextprotocol/server-filesystem", "/path/to/allowed/folder"],
+          "env": {
+            "DEBUG": "true"
+          }
         }
       }
     }
@@ -34,7 +37,7 @@ The proxy bridges the browser (extension) to your local MCP servers.
     npx -y @srbhptl39/mcp-superassistant-proxy@latest --config ./config.json
     ```
 
-    By default, this starts an SSE server on port 3006.
+    By default, this starts an SSE server on port 3006. You can change the port using environment variables: `PORT=3007 npx ...`
 
 ## Connection Configuration
 
@@ -43,14 +46,19 @@ Open the extension sidebar and go to the **Settings** tab or click the **Setting
 ### Connection Types
 
 *   **SSE (Server-Sent Events)**: The default connection type. Standard HTTP streaming.
+    *   URI: `http://localhost:3006/sse`
 *   **WebSocket**: Faster, full-duplex communication. Requires running the proxy with WebSocket support or using a WebSocket-enabled MCP server.
+    *   URI: `ws://localhost:3006/message`
 *   **Streamable HTTP**: Standard MCP transport over HTTP.
+    *   URI: `http://localhost:3006/mcp`
 
 ### Server URI
 
 Enter the URL where your local proxy or remote MCP server is running.
-*   Default SSE: `http://localhost:3006/sse`
-*   Default WebSocket: `ws://localhost:3006/message`
+
+### Testing Connection
+
+You can test the latency of your connection by clicking the **Test** button in the Connection Details panel (click the info icon next to the settings gear). This will measure the round-trip time to your MCP server.
 
 ## Features
 
@@ -74,9 +82,37 @@ Toggle this in the Sidebar settings. It adjusts the page layout so the sidebar p
 
 ### Tool Management
 In the **Available Tools** tab, you can:
-*   View all connected tools.
-*   Enable or disable specific tools or groups of tools.
-*   View tool descriptions and schemas (click on a tool to expand).
+*   **Search**: Filter tools by name or description.
+*   **Favorites**: Click the sun icon next to a tool to mark it as a favorite. Toggle sort order to prioritize favorites.
+*   **Enable/Disable**: Toggle individual tools or entire server groups.
+*   **View Details**: Click on a tool to expand its description and view the JSON schema.
+
+### Activity Monitoring & Logs
+The new **Activity** tab provides a real-time timeline of extension actions:
+*   **Log Entries**: Tracks every tool execution, connection event, and error.
+*   **Filtering**: Filter logs by type (Tools, Connection, Errors).
+*   **Details**: Click on any log entry to view full details, including execution metadata and raw JSON results.
+*   **Persistence**: Logs are saved locally (up to 50 entries) so you can review recent history even after reloading the page.
+
+### Notifications (Toasts)
+The extension now provides non-intrusive toast notifications for:
+*   Successful connections.
+*   Tool execution results (success/failure).
+*   Settings updates.
+
+## Advanced Usage
+
+### Developing Custom Tools
+
+You can create your own MCP server to expose custom tools (e.g., internal API access, database queries). Refer to the [Official MCP Documentation](https://modelcontextprotocol.io/docs/server) to learn how to build an MCP server in Python or TypeScript.
+
+Once built, simply add it to your `config.json` and restart the proxy.
+
+### Security Best Practices
+
+*   **Local Execution**: Tools run on your local machine. Be careful with tools that modify files or execute system commands. Always review the tool call before clicking "Run" unless you trust the source completely.
+*   **Data Privacy**: Your data (files, database content) remains local. It is only sent to the AI provider (OpenAI, Anthropic, etc.) when a tool result is explicitly inserted into the chat.
+*   **API Keys**: Never hardcode API keys in your `config.json` if you plan to share it. Use environment variables instead.
 
 ## Troubleshooting
 
@@ -91,6 +127,12 @@ In the **Available Tools** tab, you can:
 
 ### Extension Context Invalidated
 This happens if the extension is updated or reloaded while the page is open. Simply refresh the web page to reconnect.
+
+### Latency Issues
+If the "Test Connection" shows high latency (>200ms) for a local server:
+*   Check your CPU usage.
+*   Ensure no other process is blocking the port.
+*   Try switching to WebSocket if supported.
 
 ## FAQ
 
