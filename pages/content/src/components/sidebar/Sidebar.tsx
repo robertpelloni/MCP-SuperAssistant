@@ -8,10 +8,14 @@ import InstructionManager from './Instructions/InstructionManager';
 import InputArea from './InputArea/InputArea';
 import Settings from './Settings/Settings';
 import Help from './Help/Help';
+import ActivityLog from './Activity/ActivityLog';
 import { useMcpCommunication } from '@src/hooks/useMcpCommunication';
 import { logMessage } from '@src/utils/helpers';
 import { eventBus } from '@src/events/event-bus';
 import { Typography, Toggle, ToggleWithoutLabel, ResizeHandle, Icon, Button } from './ui';
+import { ToastContainer } from './ui/Toast';
+import { useToastStore } from '@src/stores/toast.store';
+import { useActivityStore } from '@src/stores/activity.store';
 import { cn } from '@src/lib/utils';
 import { Card, CardContent } from '@src/components/ui/card';
 import type { UserPreferences } from '@src/types/stores';
@@ -182,14 +186,26 @@ const Sidebar: React.FC<SidebarProps> = ({ initialPreferences }) => {
   // Enhanced event bus integration for real-time updates
   useEffect(() => {
     const unsubscribeCallbacks: (() => void)[] = [];
+    const { addToast } = useToastStore.getState();
+    const { addLog } = useActivityStore.getState();
 
     // Listen for connection status changes
     const unsubscribeConnection = eventBus.on('connection:status-changed', data => {
       logMessage(`[Sidebar] Connection status event received: ${data.status}${data.error ? ` (${data.error})` : ''}`);
 
-      // The connection store will be updated by the MCP client,
-      // but we can add additional UI feedback here if needed
       if (data.status === 'connected') {
+        addToast({
+          title: 'Connected',
+          message: 'Successfully connected to MCP server',
+          type: 'success',
+          duration: 3000,
+        });
+        addLog({
+          type: 'connection',
+          title: 'Connected',
+          detail: 'Successfully connected to MCP server',
+          status: 'success',
+        });
         // Automatically refresh tools when connection is established
         logMessage('[Sidebar] Connection established, refreshing tools...');
         refreshTools(true).catch(error => {
@@ -202,21 +218,53 @@ const Sidebar: React.FC<SidebarProps> = ({ initialPreferences }) => {
     // Listen for tool updates
     const unsubscribeTools = eventBus.on('tool:list-updated', data => {
       logMessage(`[Sidebar] Tool list updated event received: ${data.tools.length} tools`);
-      // Tools are already updated in the store by the MCP client
-      // We can add UI feedback here if needed
+      if (data.tools.length > 0) {
+        addToast({
+          title: 'Tools Updated',
+          message: `Loaded ${data.tools.length} available tools`,
+          type: 'info',
+          duration: 2000,
+        });
+      }
     });
     unsubscribeCallbacks.push(unsubscribeTools);
 
     // Listen for tool execution events for better user feedback
     const unsubscribeToolExecution = eventBus.on('tool:execution-completed', data => {
       logMessage(`[Sidebar] Tool execution completed: ${data.execution.toolName} (ID: ${data.execution.id})`);
-      // Could show success notifications or update UI state
+      addToast({
+        title: 'Tool Executed',
+        message: `Successfully ran ${data.execution.toolName}`,
+        type: 'success',
+        duration: 3000,
+      });
+      addLog({
+        type: 'tool_execution',
+        title: `Executed: ${data.execution.toolName}`,
+        detail: 'Tool execution completed successfully',
+        status: 'success',
+        metadata: {
+          executionId: data.execution.id,
+          result: data.execution.result,
+        },
+      });
     });
     unsubscribeCallbacks.push(unsubscribeToolExecution);
 
     const unsubscribeToolError = eventBus.on('tool:execution-failed', data => {
       logMessage(`[Sidebar] Tool execution failed: ${data.toolName} - ${data.error}`);
-      // Could show error notifications
+      addToast({
+        title: 'Execution Failed',
+        message: `${data.toolName}: ${data.error}`,
+        type: 'error',
+        duration: 5000,
+      });
+      addLog({
+        type: 'error',
+        title: `Failed: ${data.toolName}`,
+        detail: data.error,
+        status: 'error',
+      });
     });
     unsubscribeCallbacks.push(unsubscribeToolError);
 
@@ -279,7 +327,9 @@ const Sidebar: React.FC<SidebarProps> = ({ initialPreferences }) => {
   }, [sidebarVisible, isMinimized, isPushMode, sidebarWidth]);
 
   // Local UI state that doesn't need to be in the store
-  const [activeTab, setActiveTab] = useState<'availableTools' | 'instructions' | 'settings' | 'help'>('availableTools');
+  const [activeTab, setActiveTab] = useState<'availableTools' | 'instructions' | 'activity' | 'settings' | 'help'>(
+    'availableTools',
+  );
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [isInputMinimized, setIsInputMinimized] = useState(false);
@@ -758,6 +808,7 @@ const Sidebar: React.FC<SidebarProps> = ({ initialPreferences }) => {
 
       {/* Main Content Area - Using sliding panel approach */}
       <div className="sidebar-inner-content flex-1 relative overflow-hidden bg-white dark:bg-slate-900">
+        <ToastContainer />
         {/* Virtual slide - content always at full width */}
         <div
           ref={contentRef}
@@ -884,6 +935,16 @@ const Sidebar: React.FC<SidebarProps> = ({ initialPreferences }) => {
                   <button
                     className={cn(
                       'py-2 px-4 font-medium text-sm transition-all duration-200',
+                      activeTab === 'activity'
+                        ? 'border-b-2 border-indigo-600 text-indigo-600 dark:border-indigo-400 dark:text-indigo-400'
+                        : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-t-lg',
+                    )}
+                    onClick={() => setActiveTab('activity')}>
+                    Activity
+                  </button>
+                  <button
+                    className={cn(
+                      'py-2 px-4 font-medium text-sm transition-all duration-200',
                       activeTab === 'settings'
                         ? 'border-b-2 border-indigo-600 text-indigo-600 dark:border-indigo-400 dark:text-indigo-400'
                         : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-t-lg',
@@ -936,6 +997,15 @@ const Sidebar: React.FC<SidebarProps> = ({ initialPreferences }) => {
                     <InstructionManager adapter={adapter} tools={formattedTools} />
                   </CardContent>
                 </Card>
+              </div>
+
+              {/* Activity Log */}
+              <div
+                className={cn(
+                  'h-full overflow-y-auto scrollbar-thin scrollbar-thumb-slate-300 dark:scrollbar-thumb-slate-600 scrollbar-track-transparent',
+                  { hidden: activeTab !== 'activity' },
+                )}>
+                <ActivityLog />
               </div>
 
               {/* Settings */}

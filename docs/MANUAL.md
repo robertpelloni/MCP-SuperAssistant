@@ -87,6 +87,19 @@ In the **Available Tools** tab, you can:
 *   **Enable/Disable**: Toggle individual tools or entire server groups.
 *   **View Details**: Click on a tool to expand its description and view the JSON schema.
 
+### Activity Monitoring & Logs
+The new **Activity** tab provides a real-time timeline of extension actions:
+*   **Log Entries**: Tracks every tool execution, connection event, and error.
+*   **Filtering**: Filter logs by type (Tools, Connection, Errors).
+*   **Details**: Click on any log entry to view full details, including execution metadata and raw JSON results.
+*   **Persistence**: Logs are saved locally (up to 50 entries) so you can review recent history even after reloading the page.
+
+### Notifications (Toasts)
+The extension now provides non-intrusive toast notifications for:
+*   Successful connections.
+*   Tool execution results (success/failure).
+*   Settings updates.
+
 ## Advanced Usage
 
 ### Developing Custom Tools
