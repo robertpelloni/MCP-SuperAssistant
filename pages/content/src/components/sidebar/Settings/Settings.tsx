@@ -1,5 +1,8 @@
 import React, { useState } from 'react';
 import { useUserPreferences } from '@src/hooks';
+import { useProfileStore } from '@src/stores/profile.store';
+import { useActivityStore } from '@src/stores/activity.store';
+import { useToastStore } from '@src/stores/toast.store';
 import { Card, CardContent, CardHeader, CardTitle } from '@src/components/ui/card';
 import { Typography, Icon, Button, ToggleWithoutLabel } from '../ui';
 import { AutomationService } from '@src/services/automation.service';
@@ -69,6 +72,70 @@ const Settings: React.FC = () => {
     updatePreferences(DEFAULT_DELAYS);
     localStorage.setItem('mcpDelaySettings', JSON.stringify(DEFAULT_DELAYS));
     logger.debug('[Settings] Reset to defaults');
+  };
+
+  const handleExportData = () => {
+    const data = {
+      preferences: preferences,
+      profiles: useProfileStore.getState().profiles,
+      activeProfileId: useProfileStore.getState().activeProfileId,
+      logs: useActivityStore.getState().logs,
+      favorites: JSON.parse(localStorage.getItem('mcpFavorites') || '[]'),
+      version: '0.6.1',
+      timestamp: new Date().toISOString(),
+    };
+
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `mcp-superassistant-backup-${new Date().toISOString().slice(0, 10)}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+
+    useToastStore.getState().addToast({
+      title: 'Export Successful',
+      message: 'Data exported to JSON file',
+      type: 'success',
+    });
+  };
+
+  const handleImportData = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = e => {
+      try {
+        const data = JSON.parse(e.target?.result as string);
+
+        if (data.preferences) updatePreferences(data.preferences);
+        if (data.profiles) useProfileStore.setState({ profiles: data.profiles, activeProfileId: data.activeProfileId });
+        if (data.logs) useActivityStore.setState({ logs: data.logs });
+        if (data.favorites) localStorage.setItem('mcpFavorites', JSON.stringify(data.favorites));
+
+        useToastStore.getState().addToast({
+          title: 'Import Successful',
+          message: 'Settings and data restored',
+          type: 'success',
+        });
+
+        // Refresh page to ensure all stores rehydrate correctly if needed
+        setTimeout(() => window.location.reload(), 1500);
+      } catch (error) {
+        logger.error('Import failed', error);
+        useToastStore.getState().addToast({
+          title: 'Import Failed',
+          message: 'Invalid backup file',
+          type: 'error',
+        });
+      }
+    };
+    reader.readAsText(file);
+    // Reset input
+    event.target.value = '';
   };
 
   return (
@@ -279,6 +346,44 @@ const Settings: React.FC = () => {
                 <span className="text-xs text-slate-400 italic">No trusted tools configured.</span>
               )}
             </div>
+          </CardContent>
+        </Card>
+
+        {/* Data Management */}
+        <Card className="border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm overflow-hidden">
+          <CardHeader className="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-800 p-4">
+            <div className="flex items-center gap-2">
+              <div className="p-1.5 bg-purple-100 dark:bg-purple-900/30 rounded text-purple-600 dark:text-purple-400">
+                <Icon name="box" size="sm" />
+              </div>
+              <CardTitle className="text-base font-medium">Data Management</CardTitle>
+            </div>
+          </CardHeader>
+          <CardContent className="p-5">
+            <div className="flex gap-3">
+              <Button
+                variant="outline"
+                className="flex-1 border-slate-300 dark:border-slate-600"
+                onClick={handleExportData}>
+                <Icon name="arrow-up-right" size="sm" className="mr-2 rotate-45" />
+                Export Data
+              </Button>
+              <div className="relative flex-1">
+                <input
+                  type="file"
+                  accept=".json"
+                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                  onChange={handleImportData}
+                />
+                <Button variant="outline" className="w-full border-slate-300 dark:border-slate-600">
+                  <Icon name="arrow-up-right" size="sm" className="mr-2 rotate-[-135deg]" />
+                  Import Data
+                </Button>
+              </div>
+            </div>
+            <Typography variant="caption" className="text-slate-500 dark:text-slate-400 mt-2 block text-center">
+              Backup your settings, profiles, logs, and favorites.
+            </Typography>
           </CardContent>
         </Card>
 

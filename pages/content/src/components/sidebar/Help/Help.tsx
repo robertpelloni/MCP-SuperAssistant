@@ -2,6 +2,9 @@ import React, { useState, useMemo } from 'react';
 import { Typography, Icon, Button } from '../ui';
 import { Card, CardContent, CardHeader, CardTitle } from '@src/components/ui/card';
 import { cn } from '@src/lib/utils';
+import { useProfileStore } from '@src/stores/profile.store';
+import { useActivityStore } from '@src/stores/activity.store';
+import { useToastStore } from '@src/stores/toast.store';
 
 type Section =
   | 'overview'
@@ -10,6 +13,7 @@ type Section =
   | 'advanced'
   | 'development'
   | 'security'
+  | 'diagnostics'
   | 'troubleshooting'
   | 'faq'
   | 'support';
@@ -337,6 +341,77 @@ const Help: React.FC = () => {
                   variables instead.
                 </Typography>
               </div>
+            </CardContent>
+          </Card>
+        </div>
+      ),
+    },
+    {
+      id: 'diagnostics',
+      title: 'Diagnostics',
+      icon: 'activity',
+      content: (
+        <div className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>System Diagnostics</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <Typography variant="body" className="text-sm">
+                Use this information when reporting issues or debugging problems.
+              </Typography>
+
+              <div className="space-y-2">
+                <div className="flex justify-between items-center p-2 bg-slate-50 dark:bg-slate-800 rounded border border-slate-100 dark:border-slate-700">
+                  <span className="text-xs font-semibold text-slate-600 dark:text-slate-400">Extension Version</span>
+                  <span className="text-xs font-mono text-slate-800 dark:text-slate-200">0.6.1</span>
+                </div>
+                <div className="flex justify-between items-center p-2 bg-slate-50 dark:bg-slate-800 rounded border border-slate-100 dark:border-slate-700">
+                  <span className="text-xs font-semibold text-slate-600 dark:text-slate-400">User Agent</span>
+                  <span
+                    className="text-xs font-mono text-slate-800 dark:text-slate-200 truncate max-w-[200px]"
+                    title={navigator.userAgent}>
+                    {navigator.userAgent}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center p-2 bg-slate-50 dark:bg-slate-800 rounded border border-slate-100 dark:border-slate-700">
+                  <span className="text-xs font-semibold text-slate-600 dark:text-slate-400">Activity Logs</span>
+                  <span className="text-xs font-mono text-slate-800 dark:text-slate-200">
+                    {useActivityStore.getState().logs.length} entries
+                  </span>
+                </div>
+                <div className="flex justify-between items-center p-2 bg-slate-50 dark:bg-slate-800 rounded border border-slate-100 dark:border-slate-700">
+                  <span className="text-xs font-semibold text-slate-600 dark:text-slate-400">Profiles</span>
+                  <span className="text-xs font-mono text-slate-800 dark:text-slate-200">
+                    {useProfileStore.getState().profiles.length} configured
+                  </span>
+                </div>
+              </div>
+
+              <Button
+                variant="outline"
+                className="w-full mt-2"
+                onClick={() => {
+                  const info = {
+                    version: '0.6.1',
+                    userAgent: navigator.userAgent,
+                    timestamp: new Date().toISOString(),
+                    profiles: useProfileStore.getState().profiles.map(p => ({ name: p.name, type: p.connectionType })),
+                    logsSummary: {
+                      total: useActivityStore.getState().logs.length,
+                      errors: useActivityStore.getState().logs.filter(l => l.status === 'error').length,
+                    },
+                  };
+                  navigator.clipboard.writeText(JSON.stringify(info, null, 2));
+                  useToastStore.getState().addToast({
+                    title: 'Copied',
+                    message: 'Diagnostic info copied to clipboard',
+                    type: 'success',
+                  });
+                }}>
+                <Icon name="copy" size="sm" className="mr-2" />
+                Copy Diagnostic Info
+              </Button>
             </CardContent>
           </Card>
         </div>

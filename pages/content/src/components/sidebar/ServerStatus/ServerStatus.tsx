@@ -3,6 +3,7 @@ import type React from 'react';
 import { useState, useEffect, useCallback } from 'react';
 import { useMcpCommunication } from '@src/hooks/useMcpCommunication';
 import { useConnectionStatus, useServerConfig } from '../../../hooks';
+import { useProfileStore } from '@src/stores/profile.store';
 import { logMessage } from '@src/utils/helpers';
 import { eventBus } from '@src/events/event-bus';
 import { Typography, Icon, Button } from '../ui';
@@ -26,11 +27,14 @@ const ServerStatus: React.FC<ServerStatusProps> = ({ status: initialStatus }) =>
   } = useConnectionStatus();
 
   const { config: serverConfig, setConfig: setServerConfig } = useServerConfig();
+  const { profiles, activeProfileId, addProfile, removeProfile, setActiveProfile } = useProfileStore();
 
   // Local UI state
   const [showDetails, setShowDetails] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [isReconnecting, setIsReconnecting] = useState(false);
+  const [newProfileName, setNewProfileName] = useState('');
+  const [isManagingProfiles, setIsManagingProfiles] = useState(false);
   const [lastReconnectTime, setLastReconnectTime] = useState<string>('');
   const [serverUri, setServerUri] = useState<string>(serverConfig.uri || '');
   const [connectionType, setConnectionType] = useState<ConnectionType>(serverConfig.connectionType || 'sse');
@@ -794,6 +798,91 @@ const ServerStatus: React.FC<ServerStatusProps> = ({ status: initialStatus }) =>
               <Typography variant="h4" className="mb-3 text-slate-800 dark:text-slate-100 font-semibold">
                 Server Configuration
               </Typography>
+
+              {/* Profile Selection */}
+              <div className="mb-4 bg-slate-50 dark:bg-slate-800/50 p-3 rounded-lg border border-slate-100 dark:border-slate-800">
+                <div className="flex items-center justify-between mb-2">
+                  <label className="text-xs font-medium text-slate-600 dark:text-slate-400">Connection Profile</label>
+                  <button
+                    onClick={() => setIsManagingProfiles(!isManagingProfiles)}
+                    className="text-xs text-blue-600 dark:text-blue-400 hover:underline">
+                    {isManagingProfiles ? 'Done' : 'Manage'}
+                  </button>
+                </div>
+
+                {!isManagingProfiles ? (
+                  <div className="flex gap-2">
+                    <select
+                      value={activeProfileId || ''}
+                      onChange={e => {
+                        const id = e.target.value;
+                        setActiveProfile(id);
+                        const profile = profiles.find(p => p.id === id);
+                        if (profile) {
+                          setServerUri(profile.uri);
+                          setConnectionType(profile.connectionType);
+                        } else {
+                          // Custom/Unsaved
+                          setActiveProfile(null);
+                        }
+                      }}
+                      className="flex-1 px-2 py-1.5 text-sm border border-slate-300 rounded bg-white dark:bg-slate-800 dark:border-slate-600 dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-blue-500">
+                      <option value="">-- Custom --</option>
+                      {profiles.map(p => (
+                        <option key={p.id} value={p.id}>
+                          {p.name}
+                        </option>
+                      ))}
+                    </select>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setIsManagingProfiles(true)}
+                      className="h-8 px-2"
+                      title="Save as new profile">
+                      <Icon name="box" size="xs" />
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        placeholder="Profile Name"
+                        value={newProfileName}
+                        onChange={e => setNewProfileName(e.target.value)}
+                        className="flex-1 px-2 py-1.5 text-xs border rounded bg-white dark:bg-slate-800 dark:border-slate-600 dark:text-slate-200"
+                      />
+                      <Button
+                        size="sm"
+                        disabled={!newProfileName}
+                        onClick={() => {
+                          addProfile({
+                            name: newProfileName,
+                            uri: serverUri,
+                            connectionType,
+                          });
+                          setNewProfileName('');
+                        }}
+                        className="h-7 px-2 text-xs">
+                        Save
+                      </Button>
+                    </div>
+                    <div className="max-h-24 overflow-y-auto space-y-1">
+                      {profiles.map(p => (
+                        <div
+                          key={p.id}
+                          className="flex justify-between items-center text-xs p-1 hover:bg-slate-100 dark:hover:bg-slate-700 rounded">
+                          <span className="truncate dark:text-slate-300">{p.name}</span>
+                          <button onClick={() => removeProfile(p.id)} className="text-red-500 hover:text-red-700 ml-2">
+                            <Icon name="x" size="xs" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
 
               <div className="mb-4">
                 <div className="flex items-center gap-2 mb-2">

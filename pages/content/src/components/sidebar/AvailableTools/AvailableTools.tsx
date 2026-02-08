@@ -4,6 +4,7 @@ import type { Tool } from '@src/types/mcp';
 import { useAvailableTools, useToolExecution, useToolEnablement } from '../../../hooks';
 import { logMessage } from '@src/utils/helpers';
 import { Typography, Icon, Button } from '../ui';
+import SchemaRenderer from '../ui/SchemaRenderer';
 import { cn } from '@src/lib/utils';
 import { Card, CardHeader, CardContent } from '@src/components/ui/card';
 import { createLogger } from '@extension/shared/lib/logger';
@@ -625,38 +626,35 @@ const AvailableTools: React.FC<AvailableToolsProps> = ({ tools, onExecute, onRef
                                       {tool.description}
                                     </Typography>
                                   )}
-                                  <div className="mt-2">
+                                  <div className="mt-3">
                                     <Typography
                                       variant="caption"
                                       className={cn(
-                                        'mb-1',
+                                        'mb-1 font-semibold',
                                         isEnabled
-                                          ? 'text-slate-500 dark:text-slate-400'
-                                          : 'text-slate-400 dark:text-slate-500',
+                                          ? 'text-slate-700 dark:text-slate-300'
+                                          : 'text-slate-500 dark:text-slate-500',
                                       )}>
-                                      Schema
+                                      Arguments
                                     </Typography>
-                                    <pre
+                                    <div
                                       className={cn(
-                                        'text-xs p-2 whitespace-pre-wrap max-h-60 overflow-y-auto rounded border font-mono',
+                                        'bg-white dark:bg-slate-900 rounded border p-2',
                                         isEnabled
-                                          ? 'bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700'
-                                          : 'bg-slate-100 dark:bg-slate-800/50 text-slate-500 dark:text-slate-400 border-slate-300 dark:border-slate-600',
+                                          ? 'border-slate-200 dark:border-slate-700'
+                                          : 'border-slate-300 dark:border-slate-600 opacity-70',
                                       )}>
                                       {(() => {
                                         try {
                                           const schema = (tool as any).schema || (tool as any).input_schema;
-                                          if (!schema) return 'No schema available';
-
                                           const schemaObject = typeof schema === 'string' ? JSON.parse(schema) : schema;
-                                          return JSON.stringify(schemaObject, null, 2);
+                                          return <SchemaRenderer schema={schemaObject} />;
                                         } catch (error) {
-                                          logger.error('Error processing tool schema:', error);
-                                          const schema = (tool as any).schema || (tool as any).input_schema;
-                                          return typeof schema === 'string' ? schema : 'Invalid schema format';
+                                          logger.error('Error rendering schema:', error);
+                                          return <div className="text-xs text-red-500">Error parsing schema</div>;
                                         }
                                       })()}
-                                    </pre>
+                                    </div>
                                   </div>
                                 </div>
                               )}
@@ -773,38 +771,35 @@ const AvailableTools: React.FC<AvailableToolsProps> = ({ tools, onExecute, onRef
                                   {tool.description}
                                 </Typography>
                               )}
-                              <div className="mt-2">
+                              <div className="mt-3">
                                 <Typography
                                   variant="caption"
                                   className={cn(
-                                    'mb-1',
+                                    'mb-1 font-semibold',
                                     isEnabled
-                                      ? 'text-slate-500 dark:text-slate-400'
-                                      : 'text-slate-400 dark:text-slate-500',
+                                      ? 'text-slate-700 dark:text-slate-300'
+                                      : 'text-slate-500 dark:text-slate-500',
                                   )}>
-                                  Schema
+                                  Arguments
                                 </Typography>
-                                <pre
+                                <div
                                   className={cn(
-                                    'text-xs p-2 whitespace-pre-wrap max-h-60 overflow-y-auto rounded border font-mono',
+                                    'bg-white dark:bg-slate-900 rounded border p-2',
                                     isEnabled
-                                      ? 'bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700'
-                                      : 'bg-slate-100 dark:bg-slate-800/50 text-slate-500 dark:text-slate-400 border-slate-300 dark:border-slate-600',
+                                      ? 'border-slate-200 dark:border-slate-700'
+                                      : 'border-slate-300 dark:border-slate-600 opacity-70',
                                   )}>
                                   {(() => {
                                     try {
                                       const schema = (tool as any).schema || (tool as any).input_schema;
-                                      if (!schema) return 'No schema available';
-
                                       const schemaObject = typeof schema === 'string' ? JSON.parse(schema) : schema;
-                                      return JSON.stringify(schemaObject, null, 2);
+                                      return <SchemaRenderer schema={schemaObject} />;
                                     } catch (error) {
-                                      logger.error('Error processing tool schema:', error);
-                                      const schema = (tool as any).schema || (tool as any).input_schema;
-                                      return typeof schema === 'string' ? schema : 'Invalid schema format';
+                                      logger.error('Error rendering schema:', error);
+                                      return <div className="text-xs text-red-500">Error parsing schema</div>;
                                     }
                                   })()}
-                                </pre>
+                                </div>
                               </div>
                             </div>
                           )}
