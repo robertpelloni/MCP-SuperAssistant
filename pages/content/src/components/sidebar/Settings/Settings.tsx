@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useUserPreferences } from '@src/hooks';
 import { Card, CardContent, CardHeader, CardTitle } from '@src/components/ui/card';
-import { Typography, Icon, Button } from '../ui';
+import { Typography, Icon, Button, ToggleWithoutLabel } from '../ui';
 import { AutomationService } from '@src/services/automation.service';
 import { cn } from '@src/lib/utils';
 import { createLogger } from '@extension/shared/lib/logger';
@@ -16,7 +16,8 @@ const DEFAULT_DELAYS = {
 
 const Settings: React.FC = () => {
   const { preferences, updatePreferences } = useUserPreferences();
-  const [activeTab, setActiveTab] = useState<'automation'>('automation');
+  // Using local state for UI management if needed, though preferences come from store
+  const [trustedTools, setTrustedTools] = useState<string[]>([]); // Mock for now, would be in preferences store
 
   // Handle delay input changes
   const handleDelayChange = (type: 'autoInsert' | 'autoSubmit' | 'autoExecute', value: string) => {
@@ -218,6 +219,28 @@ const Settings: React.FC = () => {
                   Use with caution. Wait time allows you to cancel execution.
                 </span>
               </p>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Safety Settings (Trusted Tools Placeholder) */}
+        <Card className="border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm overflow-hidden">
+          <CardHeader className="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-800 p-4">
+            <div className="flex items-center gap-2">
+              <div className="p-1.5 bg-green-100 dark:bg-green-900/30 rounded text-green-600 dark:text-green-400">
+                <Icon name="check" size="sm" />
+              </div>
+              <CardTitle className="text-base font-medium">Safety & Whitelist</CardTitle>
+            </div>
+          </CardHeader>
+          <CardContent className="p-5">
+            <div className="text-sm text-slate-600 dark:text-slate-400 mb-3">
+              Configure which tools are allowed to auto-execute.
+            </div>
+            <div className="p-4 bg-slate-50 dark:bg-slate-800 rounded border border-slate-100 dark:border-slate-700 text-center">
+              <Typography variant="body" className="text-slate-500 dark:text-slate-400 text-sm">
+                Trusted Tools management coming soon in 0.6.0
+              </Typography>
             </div>
           </CardContent>
         </Card>
