@@ -12,7 +12,58 @@ interface InputAreaProps {
 const InputArea: React.FC<InputAreaProps> = ({ onSubmit, onToggleMinimize }) => {
   const [inputText, setInputText] = useState('');
   const [selectedText, setSelectedText] = useState('');
+  const [isListening, setIsListening] = useState(false);
   const { addToast } = useToastStore.getState();
+
+  // Speech Recognition (Type guard for TypeScript)
+  const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+  const recognition = SpeechRecognition ? new SpeechRecognition() : null;
+
+  const toggleVoiceInput = () => {
+    if (!recognition) {
+      addToast({ title: 'Not Supported', message: 'Voice input not supported in this browser', type: 'error' });
+      return;
+    }
+
+    if (isListening) {
+      recognition.stop();
+      setIsListening(false);
+    } else {
+      recognition.start();
+      setIsListening(true);
+      addToast({ title: 'Listening...', message: 'Speak now', type: 'info', duration: 2000 });
+
+      recognition.onresult = (event: any) => {
+        const transcript = event.results[0][0].transcript;
+        setInputText(prev => (prev ? prev + ' ' + transcript : transcript));
+        setIsListening(false);
+      };
+
+      recognition.onerror = (event: any) => {
+        console.error('Speech recognition error', event.error);
+        setIsListening(false);
+        addToast({ title: 'Voice Error', message: 'Could not recognize speech', type: 'error' });
+      };
+
+      recognition.onend = () => setIsListening(false);
+    }
+  };
+
+  // Listen for external import events (e.g. from context menu)
+  useEffect(() => {
+    const handleImport = (e: Event) => {
+      const customEvent = e as CustomEvent;
+      if (customEvent.detail && customEvent.detail.text) {
+        setInputText(prev => {
+          const prefix = prev ? prev + '\n\n' : '';
+          return prefix + `Context: """\n${customEvent.detail.text}\n"""`;
+        });
+      }
+    };
+
+    window.addEventListener('mcp:import-text', handleImport);
+    return () => window.removeEventListener('mcp:import-text', handleImport);
+  }, []);
 
   // Listen for selection changes on the page
   useEffect(() => {
@@ -87,6 +138,17 @@ const InputArea: React.FC<InputAreaProps> = ({ onSubmit, onToggleMinimize }) => 
           className="w-full min-h-[80px] max-h-[200px] p-3 pr-10 text-sm border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none scrollbar-thin scrollbar-thumb-slate-300 dark:scrollbar-thumb-slate-600"
         />
         <div className="absolute bottom-2 right-2 flex gap-1">
+          <Button
+            size="sm"
+            variant="ghost"
+            className={cn(
+              'h-8 w-8 p-0 rounded-full',
+              isListening ? 'text-red-500 bg-red-50 animate-pulse' : 'text-slate-400 hover:text-slate-600',
+            )}
+            onClick={toggleVoiceInput}
+            title="Voice Input">
+            <Icon name={isListening ? 'x' : 'mic'} size="sm" />
+          </Button>
           <Button
             size="sm"
             className="h-8 w-8 p-0 rounded-full bg-blue-600 hover:bg-blue-700 text-white shadow-sm"

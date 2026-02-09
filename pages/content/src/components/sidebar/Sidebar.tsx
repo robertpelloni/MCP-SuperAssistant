@@ -11,6 +11,7 @@ import Settings from './Settings/Settings';
 import Help from './Help/Help';
 import ActivityLog from './Activity/ActivityLog';
 import Dashboard from './Dashboard/Dashboard';
+import MacroList from './Macros/MacroList';
 import CommandPalette from './CommandPalette/CommandPalette';
 import Onboarding from './Onboarding/Onboarding';
 import { useMcpCommunication } from '@src/hooks/useMcpCommunication';
@@ -317,6 +318,26 @@ const Sidebar: React.FC<SidebarProps> = ({ initialPreferences }) => {
     return () => clearTimeout(timeoutId);
   }, [serverStatus, availableTools.length]);
 
+  // Listen for context menu events from background script
+  useEffect(() => {
+    const handleMessage = (message: any) => {
+      if (message.type === 'MCP_IMPORT_SELECTION' && message.text) {
+        // We can't directly set state on InputArea from here without a store or ref
+        // But InputArea listens for 'selectionchange' which might be enough if user just selected
+        // However, context menu might be used on a selection made long ago or programmatically
+        // Ideally, we dispatch a custom event that InputArea listens to
+        const event = new CustomEvent('mcp:import-text', { detail: { text: message.text } });
+        window.dispatchEvent(event);
+
+        // Ensure sidebar is open
+        if (!sidebarVisible) toggleSidebar();
+      }
+    };
+
+    chrome.runtime.onMessage.addListener(handleMessage);
+    return () => chrome.runtime.onMessage.removeListener(handleMessage);
+  }, [sidebarVisible, toggleSidebar]);
+
   // Use store values with fallbacks to initial preferences
   const isMinimized = storeSidebarMinimized ?? initialPreferences?.isMinimized ?? false;
   const sidebarWidth = storeSidebarWidth || initialPreferences?.sidebarWidth || SIDEBAR_DEFAULT_WIDTH;
@@ -332,7 +353,7 @@ const Sidebar: React.FC<SidebarProps> = ({ initialPreferences }) => {
 
   // Local UI state that doesn't need to be in the store
   const [activeTab, setActiveTab] = useState<
-    'availableTools' | 'instructions' | 'activity' | 'dashboard' | 'settings' | 'help'
+    'availableTools' | 'instructions' | 'activity' | 'macros' | 'dashboard' | 'settings' | 'help'
   >('availableTools');
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -365,10 +386,11 @@ const Sidebar: React.FC<SidebarProps> = ({ initialPreferences }) => {
       // Ideally we would focus the input inside AvailableTools
     },
     switchTab: direction => {
-      const tabs: ('availableTools' | 'instructions' | 'activity' | 'dashboard' | 'settings' | 'help')[] = [
+      const tabs: ('availableTools' | 'instructions' | 'activity' | 'macros' | 'dashboard' | 'settings' | 'help')[] = [
         'availableTools',
         'instructions',
         'activity',
+        'macros',
         'dashboard',
         'settings',
         'help',
@@ -996,6 +1018,16 @@ const Sidebar: React.FC<SidebarProps> = ({ initialPreferences }) => {
                   <button
                     className={cn(
                       'py-2 px-4 font-medium text-sm transition-all duration-200',
+                      activeTab === 'macros'
+                        ? 'border-b-2 border-indigo-600 text-indigo-600 dark:border-indigo-400 dark:text-indigo-400'
+                        : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-t-lg',
+                    )}
+                    onClick={() => setActiveTab('macros')}>
+                    Macros
+                  </button>
+                  <button
+                    className={cn(
+                      'py-2 px-4 font-medium text-sm transition-all duration-200',
                       activeTab === 'dashboard'
                         ? 'border-b-2 border-indigo-600 text-indigo-600 dark:border-indigo-400 dark:text-indigo-400'
                         : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-t-lg',
@@ -1067,6 +1099,15 @@ const Sidebar: React.FC<SidebarProps> = ({ initialPreferences }) => {
                   { hidden: activeTab !== 'activity' },
                 )}>
                 <ActivityLog />
+              </div>
+
+              {/* Macros */}
+              <div
+                className={cn(
+                  'h-full overflow-y-auto scrollbar-thin scrollbar-thumb-slate-300 dark:scrollbar-thumb-slate-600 scrollbar-track-transparent',
+                  { hidden: activeTab !== 'macros' },
+                )}>
+                <MacroList />
               </div>
 
               {/* Dashboard */}
