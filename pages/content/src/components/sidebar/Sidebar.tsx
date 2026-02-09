@@ -11,6 +11,8 @@ import Settings from './Settings/Settings';
 import Help from './Help/Help';
 import ActivityLog from './Activity/ActivityLog';
 import Dashboard from './Dashboard/Dashboard';
+import CommandPalette from './CommandPalette/CommandPalette';
+import Onboarding from './Onboarding/Onboarding';
 import { useMcpCommunication } from '@src/hooks/useMcpCommunication';
 import { logMessage } from '@src/utils/helpers';
 import { eventBus } from '@src/events/event-bus';
@@ -332,6 +334,7 @@ const Sidebar: React.FC<SidebarProps> = ({ initialPreferences }) => {
   const [activeTab, setActiveTab] = useState<
     'availableTools' | 'instructions' | 'activity' | 'dashboard' | 'settings' | 'help'
   >('availableTools');
+  const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [isInputMinimized, setIsInputMinimized] = useState(false);
@@ -351,6 +354,9 @@ const Sidebar: React.FC<SidebarProps> = ({ initialPreferences }) => {
     },
     closeSidebar: () => {
       if (!isMinimized) toggleMinimize('shortcut');
+    },
+    toggleCommandPalette: () => {
+      setIsCommandPaletteOpen(prev => !prev);
     },
     focusSearch: () => {
       // This requires passing a ref down to AvailableTools or managing focus globally
@@ -843,7 +849,17 @@ const Sidebar: React.FC<SidebarProps> = ({ initialPreferences }) => {
 
       {/* Main Content Area - Using sliding panel approach */}
       <div className="sidebar-inner-content flex-1 relative overflow-hidden bg-white dark:bg-slate-900">
+        <Onboarding />
         <ToastContainer />
+        <CommandPalette
+          isOpen={isCommandPaletteOpen}
+          onClose={() => setIsCommandPaletteOpen(false)}
+          onNavigate={tab => {
+            setActiveTab(tab);
+            if (!sidebarVisible) toggleSidebar();
+          }}
+          togglePushMode={() => handlePushModeToggle(!isPushMode)}
+        />
         {/* Virtual slide - content always at full width */}
         <div
           ref={contentRef}
@@ -1081,29 +1097,35 @@ const Sidebar: React.FC<SidebarProps> = ({ initialPreferences }) => {
               </div>
             </div>
 
-            {/* Input Area (Always at the bottom) */}
-            {/* <div className="border-t border-slate-200 dark:border-slate-700 flex-shrink-0 bg-white dark:bg-slate-800 shadow-inner">
+            {/* Input Area (Smart Context) */}
+            <div className="border-t border-slate-200 dark:border-slate-700 flex-shrink-0 bg-white dark:bg-slate-800 shadow-inner z-10">
               {!isInputMinimized ? (
-                <div className="relative">
-                  <Button variant="ghost" size="sm" onClick={toggleInputMinimize} className="absolute top-2 right-2">
-                    <Icon name="chevron-down" size="sm" />
-                  </Button>
-                  <InputArea
-                    onSubmit={async text => {
+                <InputArea
+                  onSubmit={async text => {
+                    // In "Push Mode" or overlay, we usually want to insert into the AI's chat box
+                    // But if we have our own input area, we might want to send directly to the AI via adapter
+                    try {
                       await adapter.insertTextIntoInput(text);
-                      await new Promise(resolve => setTimeout(resolve, 300));
-                      await adapter.triggerSubmission();
-                    }}
-                    onToggleMinimize={toggleInputMinimize}
-                  />
-                </div>
+                      // Optional: trigger submission if configured
+                      if (autoSubmit) {
+                        await new Promise(resolve => setTimeout(resolve, 300));
+                        await adapter.triggerSubmission();
+                      }
+                    } catch (e) {
+                      logMessage(`[Sidebar] Error inserting text: ${e}`);
+                    }
+                  }}
+                  onToggleMinimize={toggleInputMinimize}
+                />
               ) : (
-                <Button variant="default" size="sm" onClick={toggleInputMinimize} className="w-full h-10">
-                  <Icon name="chevron-up" size="sm" className="mr-2" />
-                  Show Input
-                </Button>
+                <div className="p-2">
+                  <Button variant="outline" size="sm" onClick={toggleInputMinimize} className="w-full h-8 text-xs">
+                    <Icon name="chevron-up" size="xs" className="mr-2" />
+                    Show Input & Context
+                  </Button>
+                </div>
               )}
-            </div> */}
+            </div>
           </div>
         </div>
       </div>

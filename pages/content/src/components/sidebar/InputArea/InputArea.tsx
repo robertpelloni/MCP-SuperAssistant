@@ -1,12 +1,8 @@
 import type React from 'react';
-import type { KeyboardEvent } from 'react';
-import { useState } from 'react';
-import { Typography, Icon, Button } from '../ui';
+import { useState, useEffect } from 'react';
 import { cn } from '@src/lib/utils';
-import { Card, CardHeader, CardContent } from '@src/components/ui/card';
-import { createLogger } from '@extension/shared/lib/logger';
-
-const logger = createLogger('InputArea');
+import { Icon, Button } from '../ui';
+import { useToastStore } from '@src/stores/toast.store';
 
 interface InputAreaProps {
   onSubmit: (text: string) => void;
@@ -15,83 +11,101 @@ interface InputAreaProps {
 
 const InputArea: React.FC<InputAreaProps> = ({ onSubmit, onToggleMinimize }) => {
   const [inputText, setInputText] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [selectedText, setSelectedText] = useState('');
+  const { addToast } = useToastStore.getState();
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (inputText.trim()) {
-      setIsSubmitting(true);
-      try {
-        // Format as user input
-        const processedText = `<user>\n${inputText}\n</user>`;
-
-        // Wait 200ms before submitting
-        await new Promise(resolve => setTimeout(resolve, 300));
-        onSubmit(processedText);
-        await new Promise(resolve => setTimeout(resolve, 100));
-        setInputText('');
-      } catch (error) {
-        logger.error('Error submitting input:', error);
-      } finally {
-        setIsSubmitting(false);
+  // Listen for selection changes on the page
+  useEffect(() => {
+    const handleSelectionChange = () => {
+      const selection = window.getSelection();
+      if (selection && selection.toString().trim().length > 0) {
+        setSelectedText(selection.toString().trim());
+      } else {
+        setSelectedText('');
       }
+    };
+
+    document.addEventListener('selectionchange', handleSelectionChange);
+    return () => document.removeEventListener('selectionchange', handleSelectionChange);
+  }, []);
+
+  const handleSubmit = () => {
+    if (!inputText.trim()) return;
+    onSubmit(inputText);
+    setInputText('');
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSubmit();
     }
   };
 
-  const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
-    // If Enter is pressed without Shift, submit the form
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      if (inputText.trim()) {
-        handleSubmit(e as unknown as React.FormEvent);
-      }
+  const handleImportSelection = () => {
+    if (selectedText) {
+      setInputText(prev => {
+        const prefix = prev ? prev + '\n\n' : '';
+        return prefix + `Context: """\n${selectedText}\n"""`;
+      });
+      addToast({
+        title: 'Context Added',
+        message: 'Selected text added to input',
+        type: 'success',
+        duration: 2000,
+      });
     }
-    // If Shift+Enter, allow default behavior (new line)
   };
 
   return (
-    <Card className="mt-3 border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
-      <CardHeader className="p-3 border-b border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 flex items-center justify-between">
-        <Typography variant="h4" className="flex items-center">
-          <Icon name="menu" size="sm" className="mr-1.5 text-slate-700 dark:text-slate-300" />
-          Input Area
-        </Typography>
-        {/* <Button variant="ghost" size="sm" onClick={onToggleMinimize}>
-          <Icon name="chevron-down" size="sm" />
-        </Button> */}
-      </CardHeader>
-      <CardContent className="p-3 bg-white dark:bg-slate-900">
-        <form onSubmit={handleSubmit} className="flex flex-col gap-2">
-          <div className="relative">
-            <textarea
-              value={inputText}
-              onChange={e => setInputText(e.target.value)}
-              onKeyDown={handleKeyDown}
-              placeholder="Enter your text here... (Press Enter to submit, Shift+Enter for new line)"
-              className="w-full px-3 py-2 text-sm border border-slate-300 dark:border-slate-600 rounded-md min-h-[100px] resize-y focus:outline-none focus:ring-1 focus:ring-slate-400 dark:focus:ring-slate-500 focus:border-slate-400 dark:focus:border-slate-500 dark:bg-slate-800 dark:text-slate-200 bg-white text-slate-900"
-              disabled={isSubmitting}
-            />
+    <div className="p-3">
+      {/* Context Action Bar */}
+      {selectedText && (
+        <div className="mb-2 flex items-center justify-between bg-indigo-50 dark:bg-indigo-900/30 p-2 rounded border border-indigo-100 dark:border-indigo-800 animate-in slide-in-from-bottom-2 fade-in duration-200">
+          <div className="flex items-center gap-2 overflow-hidden">
+            <Icon name="file-text" size="xs" className="text-indigo-500 flex-shrink-0" />
+            <span className="text-xs text-indigo-700 dark:text-indigo-300 truncate max-w-[200px]">
+              "{selectedText.substring(0, 30)}..."
+            </span>
           </div>
           <Button
-            type="submit"
-            disabled={isSubmitting || !inputText.trim()}
-            className={cn('px-4 py-2 h-9', isSubmitting || !inputText.trim() ? 'opacity-50' : '')}
-            variant={isSubmitting || !inputText.trim() ? 'outline' : 'default'}>
-            {isSubmitting ? (
-              <>
-                <Icon name="refresh" size="sm" className="animate-spin mr-2" />
-                Submitting...
-              </>
-            ) : (
-              <>
-                <Icon name="chevron-right" size="sm" className="mr-1.5" />
-                Submit
-              </>
-            )}
+            size="sm"
+            variant="ghost"
+            className="h-6 px-2 text-xs hover:bg-indigo-100 dark:hover:bg-indigo-800 text-indigo-600 dark:text-indigo-400"
+            onClick={handleImportSelection}>
+            Import
           </Button>
-        </form>
-      </CardContent>
-    </Card>
+        </div>
+      )}
+
+      <div className="relative">
+        <textarea
+          value={inputText}
+          onChange={e => setInputText(e.target.value)}
+          onKeyDown={handleKeyDown}
+          placeholder="Ask AI or use a tool..."
+          className="w-full min-h-[80px] max-h-[200px] p-3 pr-10 text-sm border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none scrollbar-thin scrollbar-thumb-slate-300 dark:scrollbar-thumb-slate-600"
+        />
+        <div className="absolute bottom-2 right-2 flex gap-1">
+          <Button
+            size="sm"
+            className="h-8 w-8 p-0 rounded-full bg-blue-600 hover:bg-blue-700 text-white shadow-sm"
+            onClick={handleSubmit}
+            disabled={!inputText.trim()}>
+            <Icon name="arrow-up-right" size="sm" />
+          </Button>
+        </div>
+      </div>
+      <div className="mt-2 flex justify-between items-center">
+        <button
+          onClick={onToggleMinimize}
+          className="text-xs text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 flex items-center gap-1">
+          <Icon name="chevron-down" size="xs" />
+          Hide Input
+        </button>
+        <span className="text-[10px] text-slate-400">Shift+Enter for new line</span>
+      </div>
+    </div>
   );
 };
 
