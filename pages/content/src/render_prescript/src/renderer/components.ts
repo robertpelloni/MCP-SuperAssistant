@@ -4,7 +4,7 @@ import { CONFIG } from '../core/config';
 import { safelySetContent } from '../utils/index';
 import { storeExecutedFunction, generateContentSignature } from '../mcpexecute/storage';
 import { checkAndDisplayFunctionHistory, createHistoryPanel, updateHistoryPanel } from './functionHistory';
-import { extractJSONParameters, stripLanguageTags } from '../parser/jsonFunctionParser';
+import { extractJSONParameters, stripLanguageTags, extractCleanContent } from '../parser/jsonFunctionParser';
 import { createLogger } from '@extension/shared/lib/logger';
 
 // Add type declarations for the global adapter and mcpClient access
@@ -205,9 +205,12 @@ export const addRawXmlToggle = (blockDiv: HTMLDivElement, rawContent: string): v
     // Try to find the original element with the complete XML
     const originalPre = document.querySelector(`div[data-block-id="${blockId}"]`);
     if (originalPre) {
-      // Use the original content directly
-      rawContent = originalPre.textContent?.trim() || rawContent;
+      // Extract clean JSON content for display (removes localized UI labels)
+      rawContent = extractCleanContent(originalPre.textContent?.trim() || rawContent);
     }
+  } else {
+    // Clean the provided rawContent as well
+    rawContent = extractCleanContent(rawContent);
   }
 
   // Use DocumentFragment for efficient DOM construction
@@ -762,6 +765,10 @@ export const addExecuteButton = (blockDiv: HTMLDivElement, rawContent: string): 
 
         // Update history panel with mcpClient reference
         updateHistoryPanel(historyPanel, executionData, mcpClient);
+<<<<<<< HEAD
+=======
+
+>>>>>>> upstream/main
       } catch (toolError: any) {
         resetButtonState();
 
@@ -786,7 +793,16 @@ export const addExecuteButton = (blockDiv: HTMLDivElement, rawContent: string): 
       const errorMessage = error instanceof Error ? error.message : String(error);
       logger.error('Execute button error:', error);
 
+<<<<<<< HEAD
       displayResult(resultsPanel, loadingIndicator, false, `Unexpected error: ${errorMessage}`);
+=======
+      displayResult(
+        resultsPanel,
+        loadingIndicator,
+        false,
+        `Unexpected error: ${errorMessage}`,
+      );
+>>>>>>> upstream/main
     }
   };
 
@@ -896,10 +912,15 @@ export const extractFunctionParameters = (rawContent: string): Record<string, an
         } else {
           // Try to parse as JSON if it looks like JSON (starts with { or [)
           const trimmedValue = value.trim();
+<<<<<<< HEAD
           if (
             (trimmedValue.startsWith('{') && trimmedValue.endsWith('}')) ||
             (trimmedValue.startsWith('[') && trimmedValue.endsWith(']'))
           ) {
+=======
+          if ((trimmedValue.startsWith('{') && trimmedValue.endsWith('}')) ||
+            (trimmedValue.startsWith('[') && trimmedValue.endsWith(']'))) {
+>>>>>>> upstream/main
             try {
               value = JSON.parse(trimmedValue);
               if (CONFIG.debug) logger.debug(`Auto-parsed JSON for parameter ${name}:`, value);
@@ -1715,7 +1736,11 @@ export const displayResult = (
           new CustomEvent('mcp:tool-execution-complete', {
             detail: {
               result: wrappedResult,
+<<<<<<< HEAD
               skipAutoInsertCheck: false,
+=======
+              skipAutoInsertCheck: false
+>>>>>>> upstream/main
             },
           }),
         );

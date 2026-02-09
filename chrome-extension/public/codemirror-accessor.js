@@ -33,8 +33,122 @@
   const editorData = new WeakMap();
   const eventListeners = new WeakMap();
   const hiddenEditors = new WeakSet();
+  const processedMonacoBlocks = new WeakSet();
 
   let observer = null;
+
+  // ============================================
+  // Monaco Editor Support for Qwen
+  // ============================================
+
+  function extractMonacoContent(monacoEditor) {
+    try {
+      // Extract content from Monaco's view-lines structure
+      const viewLines = monacoEditor.querySelectorAll('.view-lines .view-line');
+      if (viewLines.length === 0) return null;
+
+      const lines = [];
+      viewLines.forEach(line => {
+        // Get all text content from spans, replacing &nbsp; with regular spaces
+        let lineText = '';
+        const spans = line.querySelectorAll('span span');
+        if (spans.length > 0) {
+          spans.forEach(span => {
+            lineText += span.textContent || '';
+          });
+        } else {
+          // Fallback to direct text content
+          lineText = line.textContent || '';
+        }
+        // Replace non-breaking spaces with regular spaces
+        lineText = lineText.replace(/\u00a0/g, ' ');
+        lines.push(lineText);
+      });
+
+      return lines.join('\n');
+    } catch (error) {
+      console.warn('[codemirror] Error extracting Monaco content:', error);
+      return null;
+    }
+  }
+
+  function getQwenCodeBlockLanguage(qwenBlock) {
+    // Try to detect the language from the header
+    const header = qwenBlock.querySelector('.qwen-markdown-code-header > div:first-child');
+    if (header) {
+      return header.textContent?.trim().toLowerCase() || '';
+    }
+    // Also check for language class on qwen-markdown-code-body
+    const body = qwenBlock.querySelector('.qwen-markdown-code-body');
+    if (body) {
+      const classes = body.className.split(' ');
+      const langClass = classes.find(c => c !== 'qwen-markdown-code-body');
+      if (langClass) return langClass.toLowerCase();
+    }
+    return '';
+  }
+
+  function processQwenMonacoBlock(qwenBlock) {
+    if (processedMonacoBlocks.has(qwenBlock)) {
+      // Already processed, just update content if pre exists
+      const existingPre = qwenBlock.parentNode?.querySelector('pre.qwen-monaco-extracted');
+      if (existingPre) {
+        const monacoEditor = qwenBlock.querySelector('.monaco-editor');
+        if (monacoEditor) {
+          const content = extractMonacoContent(monacoEditor);
+          if (content && content !== existingPre.textContent) {
+            existingPre.textContent = content;
+          }
+        }
+      }
+      return;
+    }
+
+    const monacoEditor = qwenBlock.querySelector('.monaco-editor');
+    if (!monacoEditor) return;
+
+    const content = extractMonacoContent(monacoEditor);
+    if (!content) return;
+
+    // Check if this contains function call patterns
+    if (!detectFunctionCallPattern(content)) return;
+
+    const language = getQwenCodeBlockLanguage(qwenBlock);
+    const uniqueId = generateUniqueId();
+
+    console.debug(`[codemirror] Processing Qwen Monaco block with ${language} content`);
+
+    // Mark as processed
+    processedMonacoBlocks.add(qwenBlock);
+
+    // Hide the original qwen-markdown-code block
+    qwenBlock.style.cssText = 'display: none !important; visibility: hidden !important;';
+    qwenBlock.setAttribute('data-monaco-hidden-function-call', 'true');
+
+    // Create a clean pre element with the content
+    const preElement = document.createElement('pre');
+    preElement.className = 'qwen-monaco-extracted';
+    preElement.id = `monaco-hidden-pre-${uniqueId}`;
+    preElement.style.cssText = 'display: none !important; visibility: hidden !important; position: absolute !important; left: -9999px !important;';
+    preElement.setAttribute('data-monaco-source', uniqueId);
+    preElement.setAttribute('data-language', language);
+    preElement.setAttribute('data-cm-has-function-call', 'true');
+    preElement.textContent = content;
+
+    // Insert the pre element after the qwen block
+    qwenBlock.parentNode.insertBefore(preElement, qwenBlock.nextSibling);
+  }
+
+  function scanForQwenMonacoBlocks() {
+    try {
+      const qwenBlocks = document.querySelectorAll('pre.qwen-markdown-code');
+      if (qwenBlocks.length > 0) {
+        qwenBlocks.forEach(processQwenMonacoBlock);
+      }
+    } catch (error) {
+      console.warn('[codemirror] Error scanning Qwen Monaco blocks:', error);
+    }
+  }
 
   function detectFunctionCallPattern(content) {
     if (!content || typeof content !== 'string') return false;
@@ -46,17 +160,28 @@
     );
 
     // Check for XML patterns (opening tags that indicate function calls)
+<<<<<<< HEAD
     const hasXMLPattern =
       cleanedContent.includes('<function_calls>') ||
+=======
+    const hasXMLPattern = cleanedContent.includes('<function_calls>') ||
+>>>>>>> upstream/main
       cleanedContent.includes('<invoke ') ||
       cleanedContent.match(/<[a-zA-Z_][a-zA-Z0-9_-]*\s*[^>]*>/);
 
     // Check for JSON patterns (line-by-line JSON function calls)
+<<<<<<< HEAD
     const hasJSONPattern =
       (cleanedContent.includes('"type"') &&
         (cleanedContent.includes('function_call_start') ||
           cleanedContent.includes('function_call') ||
           cleanedContent.includes('parameter'))) ||
+=======
+    const hasJSONPattern = (cleanedContent.includes('"type"') &&
+      (cleanedContent.includes('function_call_start') ||
+        cleanedContent.includes('function_call') ||
+        cleanedContent.includes('parameter'))) ||
+>>>>>>> upstream/main
       cleanedContent.match(/\{\s*"type"\s*:\s*"function_call/i);
 
     return hasXMLPattern || hasJSONPattern;
@@ -303,10 +428,14 @@
 
   function scanForEditors() {
     try {
+      // Scan for CodeMirror editors
       const editors = document.querySelectorAll('.cm-editor');
       if (editors.length > 0) {
         editors.forEach(processEditor);
       }
+
+      // Also scan for Qwen Monaco blocks
+      scanForQwenMonacoBlocks();
     } catch (error) {
       console.warn('CodeMirror monitor error:', error);
     }
@@ -315,7 +444,11 @@
   function setupMutationObserver() {
     if (observer) return;
 
+<<<<<<< HEAD
     observer = new MutationObserver(mutations => {
+=======
+    observer = new MutationObserver((mutations) => {
+>>>>>>> upstream/main
       let shouldScan = false;
 
       for (const mutation of mutations) {
@@ -323,7 +456,16 @@
         if (mutation.type === 'childList') {
           for (const node of mutation.addedNodes) {
             if (node.nodeType === Node.ELEMENT_NODE) {
+<<<<<<< HEAD
               if (node.classList?.contains('cm-editor') || node.querySelector?.('.cm-editor')) {
+=======
+              if (node.classList?.contains('cm-editor') ||
+                node.querySelector?.('.cm-editor') ||
+                node.classList?.contains('qwen-markdown-code') ||
+                node.querySelector?.('.qwen-markdown-code') ||
+                node.classList?.contains('monaco-editor') ||
+                node.querySelector?.('.monaco-editor')) {
+>>>>>>> upstream/main
                 shouldScan = true;
                 break;
               }
@@ -404,7 +546,7 @@
   }
 
   function cleanupHiddenPreElements() {
-    const hiddenPres = document.querySelectorAll('pre[id^="cm-hidden-pre-"]');
+    const hiddenPres = document.querySelectorAll('pre[id^="cm-hidden-pre-"], pre[id^="monaco-hidden-pre-"]');
     hiddenPres.forEach(pre => pre.remove());
   }
 
@@ -435,10 +577,20 @@
       return document.getElementById(`cm-hidden-pre-${uniqueId}`);
     },
     getHiddenEditors: function () {
+<<<<<<< HEAD
       return Array.from(document.querySelectorAll('.cm-editor[data-cm-hidden-function-call]'));
     },
     getFunctionCallEditors: function () {
       return Array.from(document.querySelectorAll('.cm-editor[data-cm-has-function-call]'));
+=======
+      return Array.from(document.querySelectorAll('.cm-editor[data-cm-hidden-function-call], pre[data-monaco-hidden-function-call]'));
+    },
+    getFunctionCallEditors: function () {
+      return Array.from(document.querySelectorAll('.cm-editor[data-cm-has-function-call], pre[data-cm-has-function-call]'));
+    },
+    getMonacoPreElements: function () {
+      return Array.from(document.querySelectorAll('pre.qwen-monaco-extracted'));
+>>>>>>> upstream/main
     },
     hideEditor: hideEditor,
     showEditor: showEditor,
@@ -451,7 +603,15 @@
     forceUpdateEditor: function (cmEditor) {
       updateEditorDataImmediately(cmEditor);
     },
+    forceUpdateQwenMonaco: function () {
+      scanForQwenMonacoBlocks();
+    },
     stop: stopMonitoring,
     start: startMonitoring,
   };
+<<<<<<< HEAD
 })();
+=======
+
+})();
+>>>>>>> upstream/main

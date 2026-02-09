@@ -123,12 +123,15 @@ const CHUNK_PATTERNS = {
   // Pre-compiled for faster detection
   functionChunkStart: /(<function_calls>|<invoke\s+name="[^"]*"|<parameter\s+name="[^"]*">)/,
   significantChunk: /(<function_calls>|<invoke|<parameter|<\/)/,
-  // JSON patterns
+  // JSON patterns - enhanced for Unicode support
   jsonFunctionStart: /"type"\s*:\s*"function_call_start"/,
   jsonParameter: /"type"\s*:\s*"parameter"/,
   jsonDescription: /"type"\s*:\s*"description"/,
   jsonFunctionEnd: /"type"\s*:\s*"function_call_end"/,
   jsonSignificant: /"type"\s*:\s*"(?:function_call_start|parameter|description|function_call_end)"/,
+  // Enhanced patterns for partial/incomplete JSON during streaming
+  jsonPartialFunctionCall: /"type"\s*:\s*"function_call_/,
+  jsonPartialParameter: /"type"\s*:\s*"parameter"/,
 };
 
 // Track parameter content during streaming to prevent loss
@@ -188,6 +191,7 @@ const getCachedParameterContent = (blockId: string): Map<string, string> => {
 
 /**
  * Ultra-fast chunk detection for immediate streaming response
+ * Enhanced to handle Unicode characters and partial JSON during streaming
  */
 const detectFunctionChunk = (
   content: string,
@@ -204,7 +208,7 @@ const detectFunctionChunk = (
     return { hasNewChunk: false, chunkType: null, isSignificant: false };
   }
 
-  // Check for JSON patterns first
+  // Check for JSON patterns first - handle partial matches during streaming
   if (CHUNK_PATTERNS.jsonFunctionStart.test(newContent)) {
     return { hasNewChunk: true, chunkType: 'function_start', isSignificant: true };
   }
@@ -219,6 +223,12 @@ const detectFunctionChunk = (
 
   if (CHUNK_PATTERNS.jsonFunctionEnd.test(newContent)) {
     return { hasNewChunk: true, chunkType: 'closing', isSignificant: true };
+  }
+
+  // Enhanced: Check for partial/incomplete JSON function calls during streaming
+  // This catches cases where "function_call" is being typed character by character
+  if (CHUNK_PATTERNS.jsonPartialFunctionCall.test(newContent)) {
+    return { hasNewChunk: true, chunkType: 'content', isSignificant: newContent.length > 30 };
   }
 
   // Check for XML patterns
@@ -239,12 +249,23 @@ const detectFunctionChunk = (
   }
 
   // Check if it's any significant content (XML or JSON)
+<<<<<<< HEAD
   if (
     CHUNK_PATTERNS.significantChunk.test(newContent) ||
     CHUNK_PATTERNS.jsonSignificant.test(newContent) ||
     newContent.length > 20
   ) {
     return { hasNewChunk: true, chunkType: 'content', isSignificant: newContent.length > 20 };
+=======
+  // Enhanced to handle Unicode content length detection
+  const contentLength = [...newContent].length; // Count Unicode characters correctly
+  if (
+    CHUNK_PATTERNS.significantChunk.test(newContent) ||
+    CHUNK_PATTERNS.jsonSignificant.test(newContent) ||
+    contentLength > 20
+  ) {
+    return { hasNewChunk: true, chunkType: 'content', isSignificant: contentLength > 20 };
+>>>>>>> upstream/main
   }
 
   return { hasNewChunk: false, chunkType: null, isSignificant: false };

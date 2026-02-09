@@ -26,8 +26,9 @@ export class QwenAdapter extends BaseAdapterPlugin {
   ];
 
   // CSS selectors for Qwen's UI elements
-  // Updated selectors based on current Qwen interface
+  // Updated selectors based on current Qwen interface (Feb 2026 refresh)
   private readonly selectors = {
+<<<<<<< HEAD
     // Primary chat input selectors
     CHAT_INPUT: '#chat-input',
     // Submit button selectors (multiple fallbacks)
@@ -37,15 +38,34 @@ export class QwenAdapter extends BaseAdapterPlugin {
     FILE_INPUT: 'input[type="file"][multiple], input#filesUpload',
     // Main panel and container selectors
     MAIN_PANEL: 'form.flex.w-full.gap-1\.5',
+=======
+    // Primary chat input selectors - new message-input-textarea class
+    CHAT_INPUT: 'textarea.message-input-textarea, #chat-input, textarea.chat-input',
+    // Submit button selectors (multiple fallbacks) - new omni-button and ant-btn classes
+    SUBMIT_BUTTON: 'button.omni-button-content-btn, div.message-input-right-button-send button, button.send-button, div.chat-prompt-send-button button, #send-message-button',
+    // File upload related selectors - new mode-select container
+    FILE_UPLOAD_BUTTON: 'div.mode-select .ant-dropdown-trigger, div.mode-select-open, button.chat-prompt-upload-group-btn, div.upload-group button',
+    FILE_INPUT: 'input#filesUpload, input[type="file"][multiple]',
+    // Main panel and container selectors - new message-input-container
+    MAIN_PANEL: 'div.message-input-container, div.message-input-container-area, div.prompt-input-container',
+>>>>>>> upstream/main
     // Drop zones for file attachment
-    DROP_ZONE: 'textarea#chat-input',
+    DROP_ZONE: 'textarea.message-input-textarea, textarea#chat-input, textarea.chat-input',
     // File preview elements
+<<<<<<< HEAD
     FILE_PREVIEW: 'div._fileListBox_71e98_10',
     // Button insertion points (for MCP popover) - looking for features area
     BUTTON_INSERTION_CONTAINER:
       'div.scrollbar-none.flex.items-center.left-content.operationBtn, div.flex.items-center.pr-2',
+=======
+    FILE_PREVIEW: 'div.prompt-input-file-list',
+    // Button insertion points (for MCP popover) - new message-input-right-button container
+    BUTTON_INSERTION_CONTAINER: 'div.message-input-right-button, div.action-bar-left-btns, div.action-bar-left',
+    // Action bar container - now message-input-container-area contains all elements
+    ACTION_BAR: 'div.message-input-container-area, div.prompt-input-action-bar',
+>>>>>>> upstream/main
     // Alternative insertion points
-    FALLBACK_INSERTION: '#chat-input',
+    FALLBACK_INSERTION: 'div.message-input-container-area, div.prompt-input-action-bar, #chat-input',
   };
 
   // URL patterns for navigation tracking
@@ -459,8 +479,9 @@ export class QwenAdapter extends BaseAdapterPlugin {
   }
 
   /**
-   * Attach a file to the Z chat input
+   * Attach a file to the Qwen chat input
    * Enhanced with better error handling and integration with new architecture
+   * Prioritizes drag-drop as primary method for new UI
    */
   async attachFile(file: File, options?: { inputElement?: HTMLInputElement }): Promise<boolean> {
     this.context.logger.debug(`Attempting to attach file: ${file.name} (${file.size} bytes, ${file.type})`);
@@ -478,28 +499,9 @@ export class QwenAdapter extends BaseAdapterPlugin {
         return false;
       }
 
-      // Method 1: Try using hidden file input element
-      const success1 = await this.attachFileViaInput(file);
+      // Method 1 (Primary): Try drag and drop simulation first - works best with new UI
+      const success1 = await this.attachFileViaDragDrop(file);
       if (success1) {
-        this.emitExecutionCompleted(
-          'attachFile',
-          {
-            fileName: file.name,
-            fileType: file.type,
-            fileSize: file.size,
-          },
-          {
-            success: true,
-            method: 'file-input',
-          },
-        );
-        this.context.logger.debug(`File attached successfully via input: ${file.name}`);
-        return true;
-      }
-
-      // Method 2: Fallback to drag and drop simulation
-      const success2 = await this.attachFileViaDragDrop(file);
-      if (success2) {
         this.emitExecutionCompleted(
           'attachFile',
           {
@@ -513,6 +515,25 @@ export class QwenAdapter extends BaseAdapterPlugin {
           },
         );
         this.context.logger.debug(`File attached successfully via drag-drop: ${file.name}`);
+        return true;
+      }
+
+      // Method 2: Fallback to hidden file input element
+      const success2 = await this.attachFileViaInput(file);
+      if (success2) {
+        this.emitExecutionCompleted(
+          'attachFile',
+          {
+            fileName: file.name,
+            fileType: file.type,
+            fileSize: file.size,
+          },
+          {
+            success: true,
+            method: 'file-input',
+          },
+        );
+        this.context.logger.debug(`File attached successfully via input: ${file.name}`);
         return true;
       }
 
@@ -587,12 +608,31 @@ export class QwenAdapter extends BaseAdapterPlugin {
 
   /**
    * Method 2: Attach file via drag and drop simulation
+   * Updated to target multiple drop zones for new Qwen UI
    */
   private async attachFileViaDragDrop(file: File): Promise<boolean> {
     try {
-      const chatInput = document.querySelector(this.selectors.CHAT_INPUT) as HTMLTextAreaElement;
-      if (!chatInput) {
-        this.context.logger.debug('No chat input found for drag-drop');
+      // Try multiple drop zone selectors for new UI
+      const dropZoneSelectors = [
+        'div.message-input-container',           // New UI main container
+        'div.message-input-container-area',      // New UI inner area
+        'textarea.message-input-textarea',       // New UI textarea
+        this.selectors.CHAT_INPUT,               // Fallback to configured selectors
+        'div.prompt-input-container',            // Legacy container
+      ];
+
+      let dropTarget: HTMLElement | null = null;
+      
+      for (const selector of dropZoneSelectors) {
+        dropTarget = document.querySelector(selector) as HTMLElement;
+        if (dropTarget) {
+          this.context.logger.debug(`Found drop target using selector: ${selector}`);
+          break;
+        }
+      }
+
+      if (!dropTarget) {
+        this.context.logger.debug('No drop target found for drag-drop');
         return false;
       }
 
@@ -600,7 +640,13 @@ export class QwenAdapter extends BaseAdapterPlugin {
       const dataTransfer = new DataTransfer();
       dataTransfer.items.add(file);
 
-      // Create custom events
+      // Simulate full drag sequence: dragenter -> dragover -> drop
+      const dragEnterEvent = new DragEvent('dragenter', {
+        bubbles: true,
+        cancelable: true,
+        dataTransfer: dataTransfer,
+      });
+
       const dragOverEvent = new DragEvent('dragover', {
         bubbles: true,
         cancelable: true,
@@ -613,13 +659,27 @@ export class QwenAdapter extends BaseAdapterPlugin {
         dataTransfer: dataTransfer,
       });
 
-      // Prevent default on dragover to enable drop
-      chatInput.addEventListener('dragover', e => e.preventDefault(), { once: true });
-      chatInput.dispatchEvent(dragOverEvent);
+      // Add event listeners to prevent default and allow drop
+      const preventDefaultHandler = (e: Event) => {
+        e.preventDefault();
+        e.stopPropagation();
+      };
 
-      // Simulate the drop event
-      chatInput.dispatchEvent(dropEvent);
+      dropTarget.addEventListener('dragenter', preventDefaultHandler, { once: true });
+      dropTarget.addEventListener('dragover', preventDefaultHandler, { once: true });
+      dropTarget.addEventListener('drop', preventDefaultHandler, { once: true });
 
+      // Dispatch the full drag sequence
+      dropTarget.dispatchEvent(dragEnterEvent);
+      
+      // Small delay between events for more realistic simulation
+      await new Promise(resolve => setTimeout(resolve, 50));
+      dropTarget.dispatchEvent(dragOverEvent);
+      
+      await new Promise(resolve => setTimeout(resolve, 50));
+      dropTarget.dispatchEvent(dropEvent);
+
+      this.context.logger.debug(`Drag-drop events dispatched to: ${dropTarget.className || dropTarget.tagName}`);
       return true;
     } catch (error) {
       this.context.logger.debug(`Drag-drop method failed: ${error}`);
@@ -953,43 +1013,83 @@ export class QwenAdapter extends BaseAdapterPlugin {
   } | null {
     this.context.logger.debug('Finding button insertion point for MCP popover');
 
-    // Primary strategy: Find the submit button and insert MCP button as sibling to its left
+    // New UI: Find the message-input-right-button container (contains thinking, voice, send buttons)
+    // Insert MCP button before the thinking button
+    const rightButtonContainer = document.querySelector('div.message-input-right-button');
+    if (rightButtonContainer) {
+      this.context.logger.debug('Found message-input-right-button container (new UI)');
+      // Insert before the first child (thinking button)
+      const thinkingButton = rightButtonContainer.querySelector('div.thinking-button');
+      if (thinkingButton) {
+        return { container: rightButtonContainer, insertAfter: null, insertBefore: thinkingButton };
+      }
+      // If no thinking button, insert at the beginning
+      const firstChild = rightButtonContainer.firstElementChild;
+      return { container: rightButtonContainer, insertAfter: null, insertBefore: firstChild };
+    }
+
+    // Alternative new UI: Find the mode-select container (left side with file upload)
+    // and insert MCP button after it
+    const modeSelectContainer = document.querySelector('div.mode-select');
+    if (modeSelectContainer) {
+      this.context.logger.debug('Found mode-select container (new UI)');
+      const parentContainer = modeSelectContainer.parentElement;
+      if (parentContainer) {
+        return { container: parentContainer, insertAfter: modeSelectContainer };
+      }
+    }
+
+    // Legacy UI: Find the action-bar-left-btns container and insert MCP button alongside Thinking/Search buttons
+    const actionBarLeftBtns = document.querySelector('div.action-bar-left-btns');
+    if (actionBarLeftBtns) {
+      this.context.logger.debug('Found action-bar-left-btns container, placing MCP button inside');
+      // Get the last child to insert after it
+      const lastChild = actionBarLeftBtns.lastElementChild;
+      return { container: actionBarLeftBtns, insertAfter: lastChild };
+    }
+
+    // Fallback 1: Find the action-bar-left container
+    const actionBarLeft = document.querySelector('div.action-bar-left');
+    if (actionBarLeft) {
+      this.context.logger.debug('Found action-bar-left container');
+      const btnsContainer = actionBarLeft.querySelector('div.action-bar-left-btns');
+      if (btnsContainer) {
+        const lastChild = btnsContainer.lastElementChild;
+        return { container: btnsContainer, insertAfter: lastChild };
+      }
+      // Insert at the end of action-bar-left if no btns container
+      return { container: actionBarLeft, insertAfter: actionBarLeft.lastElementChild };
+    }
+
+    // Fallback 2: Find the prompt-input-action-bar and insert before send button
+    const actionBar = document.querySelector('div.prompt-input-action-bar');
+    if (actionBar) {
+      this.context.logger.debug('Found prompt-input-action-bar container');
+      const sendButtonContainer = actionBar.querySelector('div.chat-prompt-send-button');
+      if (sendButtonContainer) {
+        return { container: actionBar, insertAfter: null, insertBefore: sendButtonContainer };
+      }
+      return { container: actionBar, insertAfter: actionBar.lastElementChild };
+    }
+
+    // Fallback 3: Find submit button and insert before it
     const submitButton = document.querySelector(this.selectors.SUBMIT_BUTTON);
     if (submitButton) {
       const container = submitButton.parentElement;
       if (container) {
         this.context.logger.debug('Found submit button container, placing MCP button to its left');
-        // Insert before the submit button (to the left)
         return { container, insertAfter: null, insertBefore: submitButton };
       }
     }
 
-    // Fallback 1: Look for the absolute positioned container with submit button
-    const absoluteContainer = document.querySelector('div.flex.items-end.absolute.right-3');
-    if (absoluteContainer) {
-      this.context.logger.debug('Found absolute positioned container');
-      const submitBtn = absoluteContainer.querySelector('#send-message-button');
-      if (submitBtn) {
-        return { container: absoluteContainer, insertAfter: null, insertBefore: submitBtn };
+    // Fallback 4: Look for the chat input container (new or legacy)
+    const messageInputContainer = document.querySelector('div.message-input-container-area, div.prompt-input-container');
+    if (messageInputContainer) {
+      const actionBarEl = messageInputContainer.querySelector('div.message-input-right-button, div.prompt-input-action-bar');
+      if (actionBarEl) {
+        this.context.logger.debug('Found action bar in message input container');
+        return { container: actionBarEl, insertAfter: null };
       }
-    }
-
-    // Fallback 2: Try to find the search/research toggle area
-    const radioGroup = document.querySelector(this.selectors.BUTTON_INSERTION_CONTAINER);
-    if (radioGroup) {
-      const container = radioGroup.closest('div.flex');
-      if (container) {
-        this.context.logger.debug('Found Tools container, placing MCP button next to it');
-        const wrapperDiv = radioGroup.parentElement;
-        return { container, insertAfter: wrapperDiv };
-      }
-    }
-
-    // Fallback 3: Look for the main input area's action buttons container
-    const actionsContainer = document.querySelector('div.flex.items-end');
-    if (actionsContainer) {
-      this.context.logger.debug('Found actions container (fallback)');
-      return { container: actionsContainer, insertAfter: null };
     }
 
     this.context.logger.debug('Could not find suitable insertion point for MCP popover');
@@ -1373,8 +1473,15 @@ export class QwenAdapter extends BaseAdapterPlugin {
    */
   private getQwenButtonStyles(): string {
     return `
-      .mcp-qwen-button-base {
-        /* Base button styling matching Qwen's design */
+      /* MCP button styling to match Qwen's chat-input-feature-btn styling */
+      #mcp-popover-container {
+        display: inline-flex;
+        align-items: center;
+      }
+      
+      .mcp-qwen-button-base,
+      #mcp-popover-container .chat-input-feature-btn {
+        /* Match Qwen's chat-input-feature-btn styling */
         display: inline-flex;
         align-items: center;
         justify-content: center;
@@ -1384,141 +1491,88 @@ export class QwenAdapter extends BaseAdapterPlugin {
         white-space: nowrap;
         user-select: none;
         border-radius: 8px;
-        height: 32px;
-        min-width: 36px;
-        padding: 0 8px;
-        gap: 6px;
+        height: auto;
+        padding: 4px 8px;
+        gap: 4px;
         font-size: 14px;
-        font-weight: 500;
+        font-weight: 400;
         border: none;
         background: transparent;
-        transition: all 300ms ease-out;
-        
-        /* Default colors - using Qwen's theme colors */
-        color: #666;
-        
-        /* Focus states */
-        &:focus {
-          outline: none;
-        }
-        
-        /* Hover states */
-        &:hover {
-          color: #333;
-          background-color: rgba(0, 0, 0, 0.05);
-        }
-        
-        /* Active/selected state */
-        &.mcp-button-active {
-          color: #1890ff;
-          background-color: rgba(24, 144, 255, 0.1);
-        }
-        
-        /* Active button border styling */
-        &.mcp-button-active::before {
-          content: '';
-          position: absolute;
-          inset: 0;
-          pointer-events: none;
-          border-radius: 8px;
-          border: 1px solid #1890ff;
-          transition: all 300ms ease-out;
-          opacity: 1;
-        }
-      }
-      
-      /* Dark mode support */
-      @media (prefers-color-scheme: dark) {
-        .mcp-qwen-button-base {
-          color: #ccc;
-          
-          &:hover {
-            color: #fff;
-            background-color: rgba(255, 255, 255, 0.1);
-          }
-          
-          &.mcp-button-active {
-            color: #40a9ff;
-            background-color: rgba(64, 169, 255, 0.15);
-          }
-          
-          &.mcp-button-active::before {
-            border-color: #40a9ff;
-          }
-        }
-      }
-      
-      .mcp-qwen-button-content {
-        /* Content container styling */
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 6px;
-        min-width: 0;
-        font-weight: 500;
-        position: relative;
-        z-index: 10;
-        height: 32px;
-        min-width: 36px;
-        padding: 4px 8px;
-      }
-      
-      .mcp-qwen-button-text {
-        font-size: 14px;
-        font-weight: 500;
-        line-height: 1.2;
+        transition: all 0.2s ease;
         color: inherit;
       }
       
-      /* Icon styling within button */
+      .mcp-qwen-button-base:hover,
+      #mcp-popover-container .chat-input-feature-btn:hover {
+        background-color: rgba(0, 0, 0, 0.05);
+      }
+      
+      .mcp-qwen-button-base.mcp-button-active,
+      #mcp-popover-container .chat-input-feature-btn.mcp-button-active {
+        color: #1890ff;
+        background-color: rgba(24, 144, 255, 0.08);
+      }
+      
+      .mcp-qwen-button-base .anticon,
       .mcp-qwen-button-base svg,
+      #mcp-popover-container .chat-input-feature-btn-icon {
+        font-size: 16px;
+        width: 16px;
+        height: 16px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+      }
+      
       .mcp-qwen-button-base img {
         width: 16px;
         height: 16px;
-        transition: all 300ms ease-out;
-        flex-shrink: 0;
+        border-radius: 4px;
       }
       
-      .mcp-qwen-button-base img {
-        border-radius: 50%;
-        margin-right: 1px;
+      .mcp-qwen-button-text,
+      #mcp-popover-container .chat-input-feature-btn-text {
+        font-size: 14px;
+        font-weight: 400;
+        line-height: 1.4;
       }
       
-      /* Integration with Qwen's button group layout */
-      .flex.items-center .mcp-qwen-button-base {
-        margin: 0 2px;
+      /* Dark mode support - Qwen uses dark theme by default */
+      .mcp-qwen-button-base:hover {
+        background-color: rgba(255, 255, 255, 0.08);
       }
       
-      /* Focus-visible styling for accessibility */
+      .mcp-qwen-button-base.mcp-button-active {
+        color: #40a9ff;
+        background-color: rgba(64, 169, 255, 0.12);
+      }
+      
+      /* Integration with action-bar-left-btns layout */
+      .action-bar-left-btns #mcp-popover-container,
+      .action-bar-left #mcp-popover-container {
+        margin-left: 0;
+      }
+      
+      /* Focus states for accessibility */
       .mcp-qwen-button-base:focus-visible {
         outline: 2px solid #1890ff;
         outline-offset: 2px;
-        outline-style: dashed;
-      }
-      
-      .mcp-qwen-button-base:focus-visible::before {
-        border-style: dashed !important;
       }
       
       /* Responsive adjustments */
       @media (max-width: 640px) {
-        .mcp-qwen-button-base {
-          height: 28px;
-          min-width: 32px;
-          padding: 0 6px;
+        .mcp-qwen-button-base,
+        #mcp-popover-container .chat-input-feature-btn {
+          padding: 2px 6px;
           font-size: 13px;
         }
         
-        .mcp-qwen-button-content {
-          height: 28px;
-          min-width: 32px;
-          padding: 2px 6px;
-        }
-        
         .mcp-qwen-button-base svg,
+        .mcp-qwen-button-base .anticon,
         .mcp-qwen-button-base img {
           width: 14px;
           height: 14px;
+          font-size: 14px;
         }
       }
     `;

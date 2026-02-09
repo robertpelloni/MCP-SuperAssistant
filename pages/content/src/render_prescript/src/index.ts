@@ -51,11 +51,17 @@ const injectCodeMirrorAccessor = () => {
   injectionAttempted = true;
 
   // Check if script is already present in DOM
+<<<<<<< HEAD
   if (
     document.getElementById('codemirror-accessor-script') ||
     document.getElementById('codemirror-accessor-script-direct') ||
     document.getElementById('codemirror-accessor-page-context')
   ) {
+=======
+  if (document.getElementById('codemirror-accessor-script') ||
+    document.getElementById('codemirror-accessor-script-direct') ||
+    document.getElementById('codemirror-accessor-page-context')) {
+>>>>>>> upstream/main
     if (CONFIG.debug) {
       logger.debug('CodeMirror accessor script already present in DOM, skipping injection');
     }
@@ -73,9 +79,10 @@ const injectCodeMirrorAccessor = () => {
   }
 
   try {
-    // Get the script content from the chrome extension
+    // Get the script URL from the chrome extension
     const scriptUrl = chrome.runtime.getURL('codemirror-accessor.js');
 
+<<<<<<< HEAD
     // Load and inject the script with immediate execution
     fetch(scriptUrl)
       .then(response => response.text())
@@ -85,9 +92,28 @@ const injectCodeMirrorAccessor = () => {
           document.getElementById('codemirror-accessor-script') ||
           typeof (window as any).CodeMirrorAccessor !== 'undefined'
         ) {
+=======
+    // Use src attribute method (CSP-safe) instead of inline textContent
+    // This avoids CSP violations on strict sites like chat.qwen.ai
+    const scriptElement = document.createElement('script');
+    scriptElement.type = 'text/javascript';
+    scriptElement.id = 'codemirror-accessor-script';
+    scriptElement.src = scriptUrl; // Use src instead of textContent to avoid CSP issues
+
+    scriptElement.onload = () => {
+      codeMirrorScriptInjected = true;
+      if (CONFIG.debug) {
+        logger.debug('CodeMirror accessor script loaded successfully via src attribute');
+      }
+
+      // Verify script is active after a short delay
+      setTimeout(() => {
+        if (typeof (window as any).CodeMirrorAccessor !== 'undefined') {
+>>>>>>> upstream/main
           if (CONFIG.debug) {
-            logger.debug('CodeMirror accessor already present, aborting injection');
+            logger.debug('CodeMirror accessor is active and accessible');
           }
+<<<<<<< HEAD
           codeMirrorScriptInjected = true;
           return;
         }
@@ -117,16 +143,29 @@ const injectCodeMirrorAccessor = () => {
             if (!document.getElementById('codemirror-accessor-script-direct')) {
               injectCodeMirrorAccessorAlternative();
             }
+=======
+        } else {
+          logger.debug('CodeMirror accessor script loaded but not accessible - may be in wrong context');
+          // Try alternative injection method only if not already attempted
+          if (!document.getElementById('codemirror-accessor-script-direct')) {
+            injectCodeMirrorAccessorAlternative();
+>>>>>>> upstream/main
           }
-        }, 100);
-      })
-      .catch(error => {
-        logger.debug('Failed to fetch CodeMirror accessor script:', error);
-        // Only try alternative if not already present
-        if (!document.getElementById('codemirror-accessor-script-direct')) {
-          injectCodeMirrorAccessorAlternative();
         }
-      });
+      }, 100);
+    };
+
+    scriptElement.onerror = (error) => {
+      logger.debug('Failed to load CodeMirror accessor script via src:', error);
+      // Only try alternative if not already present
+      if (!document.getElementById('codemirror-accessor-script-direct')) {
+        injectCodeMirrorAccessorAlternative();
+      }
+    };
+
+    // Inject into page context, not content script context
+    (document.head || document.documentElement).appendChild(scriptElement);
+
   } catch (error) {
     logger.debug('Error during CodeMirror script injection:', error);
     // Only try alternative if not already present
@@ -139,10 +178,15 @@ const injectCodeMirrorAccessor = () => {
 // Alternative injection method for when content script context isolation prevents access
 const injectCodeMirrorAccessorAlternative = () => {
   // Prevent multiple alternative injections
+<<<<<<< HEAD
   if (
     document.getElementById('codemirror-accessor-script-direct') ||
     typeof (window as any).CodeMirrorAccessor !== 'undefined'
   ) {
+=======
+  if (document.getElementById('codemirror-accessor-script-direct') ||
+    typeof (window as any).CodeMirrorAccessor !== 'undefined') {
+>>>>>>> upstream/main
     if (CONFIG.debug) {
       logger.debug('CodeMirror accessor already present, skipping alternative injection');
     }
@@ -195,14 +239,19 @@ const injectCodeMirrorAccessorAlternative = () => {
   }
 };
 
-// Page context injection method
+// Page context injection method - CSP-safe version
 const injectCodeMirrorAccessorPageContext = () => {
   // Prevent multiple page context injections
+<<<<<<< HEAD
   if (
     document.getElementById('codemirror-accessor-page-context') ||
     document.querySelector('script[data-cm-accessor-injector]') ||
     typeof (window as any).CodeMirrorAccessor !== 'undefined'
   ) {
+=======
+  if (document.getElementById('codemirror-accessor-page-context') ||
+    typeof (window as any).CodeMirrorAccessor !== 'undefined') {
+>>>>>>> upstream/main
     if (CONFIG.debug) {
       logger.debug('CodeMirror accessor already present, skipping page context injection');
     }
@@ -212,6 +261,7 @@ const injectCodeMirrorAccessorPageContext = () => {
   try {
     const scriptUrl = chrome.runtime.getURL('codemirror-accessor.js');
 
+<<<<<<< HEAD
     // Inject script that loads our accessor into page context
     const injectorScript = document.createElement('script');
     injectorScript.setAttribute('data-cm-accessor-injector', 'true');
@@ -247,9 +297,28 @@ const injectCodeMirrorAccessorPageContext = () => {
         codeMirrorScriptInjected = true;
       }
     }, 200);
+=======
+    // Use src attribute method (CSP-safe) instead of inline script
+    const scriptElement = document.createElement('script');
+    scriptElement.id = 'codemirror-accessor-page-context';
+    scriptElement.src = scriptUrl;
+
+    scriptElement.onload = () => {
+      if (CONFIG.debug) {
+        logger.debug('CodeMirror accessor injected into page context via src');
+      }
+      codeMirrorScriptInjected = true;
+    };
+
+    scriptElement.onerror = () => {
+      logger.error('Failed to inject CodeMirror accessor into page context');
+    };
+
+    (document.head || document.documentElement).appendChild(scriptElement);
+>>>>>>> upstream/main
 
     if (CONFIG.debug) {
-      logger.debug('Attempted page context injection of CodeMirror accessor');
+      logger.debug('Attempting page context injection of CodeMirror accessor');
     }
   } catch (error) {
     logger.error('Page context injection failed:', error);

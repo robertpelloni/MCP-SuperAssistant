@@ -38,9 +38,19 @@ const parseJSONLine = (line: string): JSONFunctionLine | null => {
     const trimmed = line.trim();
     if (!trimmed) return null;
 
-    // Strip language tags and copy-code prefixes that might appear before JSON
-    // Examples: "json{...}", "jsonCopy code{...}", "javascriptCopy{...}"
-    const cleaned = stripLanguageTags(trimmed);
+    // First try: strip language tags (fast path for clean content)
+    let cleaned = stripLanguageTags(trimmed);
+
+    // If cleaned content doesn't start with { or [, extract JSON directly
+    // This handles localized UI labels like "json复制代码{...}"
+    if (cleaned && !cleaned.startsWith('{') && !cleaned.startsWith('[')) {
+      // Find first { or [ and try to extract from there
+      const jsonStart = cleaned.search(/[\[{]/);
+      if (jsonStart > 0) {
+        cleaned = cleaned.substring(jsonStart);
+      }
+    }
+
     if (!cleaned) return null;
 
     const parsed = JSON.parse(cleaned);
@@ -86,6 +96,77 @@ export const stripLanguageTags = (line: string): string => {
   cleaned = cleaned.replace(/^[cC]opy(\s+code)?\s*/i, '');
 
   return cleaned;
+};
+
+/**
+ * Extract JSON objects/arrays directly from content using bracket matching.
+ * Ignores any surrounding text (localized UI labels, language tags, etc.)
+ * This is language-agnostic and handles any prefix/suffix around JSON.
+ */
+export const extractJSONObjects = (content: string): string[] => {
+  const objects: string[] = [];
+  let i = 0;
+
+  while (i < content.length) {
+    // Find start of JSON object or array
+    if (content[i] === '{' || content[i] === '[') {
+      const startChar = content[i];
+      const endChar = startChar === '{' ? '}' : ']';
+      const startIndex = i;
+      let depth = 1;
+      let inString = false;
+      let escapeNext = false;
+      i++;
+
+      while (i < content.length && depth > 0) {
+        const char = content[i];
+
+        if (escapeNext) {
+          escapeNext = false;
+        } else if (char === '\\' && inString) {
+          escapeNext = true;
+        } else if (char === '"') {
+          inString = !inString;
+        } else if (!inString) {
+          if (char === startChar) depth++;
+          else if (char === endChar) depth--;
+        }
+        i++;
+      }
+
+      if (depth === 0) {
+        const jsonStr = content.substring(startIndex, i);
+        // Validate it's actually JSON with expected structure
+        try {
+          const parsed = JSON.parse(jsonStr);
+          // For function calls, ensure it has a 'type' field or is an array
+          if (parsed.type || Array.isArray(parsed)) {
+            objects.push(jsonStr);
+          }
+        } catch {
+          // Not valid JSON, skip
+        }
+      }
+    } else {
+      i++;
+    }
+  }
+
+  return objects;
+};
+
+/**
+ * Extract clean content for display - finds all JSON objects and joins them.
+ * Use this to sanitize content that may contain localized UI labels.
+ */
+export const extractCleanContent = (content: string): string => {
+  const jsonObjects = extractJSONObjects(content);
+  if (jsonObjects.length > 0) {
+    return jsonObjects.join('\n');
+  }
+
+  // Fallback: if no valid JSON found, return original with basic cleanup
+  return content.trim();
 };
 
 /**
@@ -145,12 +226,74 @@ function reconstructJSONObjects(lines: string[]): string[] {
  * Returns detailed information about the JSON function call state
  */
 export const containsJSONFunctionCalls = (block: HTMLElement): FunctionInfo => {
-  // Try to get content from code child if present (for syntax-highlighted blocks)
-  let content = block.textContent?.trim() || '';
+  let content = '';
 
-  const codeChild = block.querySelector('code');
-  if (codeChild && codeChild.textContent) {
-    content = codeChild.textContent.trim();
+  // Skip if this element is inside a function-block (avoid re-parsing rendered UI)
+  if (block.closest('.function-block')) {
+    return {
+      hasFunctionCalls: false,
+      isComplete: false,
+      hasInvoke: false,
+      hasParameters: false,
+      hasClosingTags: false,
+      languageTag: null,
+      detectedBlockType: null,
+      partialTagDetected: false,
+    };
+  }
+
+  // Priority 1: Check if this element IS the hidden pre from codemirror-accessor
+  // Hidden pre elements have id="cm-hidden-pre-*" or data-cm-source attribute
+  const isHiddenPre = block.id?.startsWith('cm-hidden-pre-') ||
+    block.hasAttribute('data-cm-source');
+  if (isHiddenPre && block.textContent) {
+    content = block.textContent.trim();
+    if (CONFIG.debug) {
+      logger.debug('[JSON Parser] Using content from hidden pre element directly');
+    }
+  }
+
+  // Priority 2: Check for hidden pre element linked to this block
+  // This is for Monaco/CodeMirror editors
+  if (!content) {
+    const cmMonitoredId = block.getAttribute('data-cm-monitored');
+    const blockId = block.getAttribute('data-block-id');
+    const cmSourceId = block.getAttribute('data-cm-source');
+    const sourceId = cmMonitoredId || blockId || cmSourceId;
+
+    if (sourceId) {
+      const hiddenPre = document.getElementById(`cm-hidden-pre-${sourceId}`) ||
+        document.querySelector(`pre[data-cm-source="${sourceId}"]`);
+      if (hiddenPre?.textContent) {
+        content = hiddenPre.textContent.trim();
+        if (CONFIG.debug) {
+          logger.debug('[JSON Parser] Using clean content from hidden pre:', sourceId);
+        }
+      }
+    }
+  }
+
+  // Priority 3: Check for code child (for syntax-highlighted blocks, avoiding .function-block children)
+  if (!content) {
+    const codeChild = block.querySelector('code:not(.function-block code)');
+    if (codeChild?.textContent) {
+      content = codeChild.textContent.trim();
+    }
+  }
+
+  // Priority 4: Use raw textContent but extract JSON objects directly
+  if (!content) {
+    const rawContent = block.textContent?.trim() || '';
+    // Use extractJSONObjects to get clean JSON from potentially polluted content
+    const jsonObjects = extractJSONObjects(rawContent);
+    if (jsonObjects.length > 0) {
+      content = jsonObjects.join('\n');
+      if (CONFIG.debug) {
+        logger.debug('[JSON Parser] Extracted', jsonObjects.length, 'JSON objects from raw content');
+      }
+    } else {
+      content = rawContent;
+    }
   }
 
   const result: FunctionInfo = {
@@ -164,17 +307,19 @@ export const containsJSONFunctionCalls = (block: HTMLElement): FunctionInfo => {
     partialTagDetected: false,
   };
 
-  // Always log for debugging (will add CONFIG check later)
+  // Always log for debugging
   if (CONFIG.debug) {
     logger.debug('[JSON Parser] Checking element:', block.tagName, block.className);
     logger.debug('[JSON Parser] Content length:', content.length);
-    logger.debug('[JSON Parser] First 200 chars:', content.substring(0, 200));
+    logger.debug('[JSON Parser] Content preview:', content.substring(0, 200));
   }
 
-  // Quick check: must contain JSON-like patterns (lenient for streaming)
-  const hasTypeField = content.includes('"type"') || content.includes("'type'") || content.includes('type:');
+  // Enhanced quick check: must contain JSON-like patterns (lenient for streaming)
+  // Handle both single and double quotes for type field
+  const hasTypeField = /['"]?type['"]?\s*:/i.test(content) || content.includes('"type"') || content.includes("'type'");
 
   // Accept partial matches during streaming (e.g., "function_ca" while typing "function_call")
+<<<<<<< HEAD
   const hasFunctionCall =
     content.includes('function_call') ||
     (content.includes('"type"') && /function_call_\w*/.test(content)) ||
@@ -182,9 +327,26 @@ export const containsJSONFunctionCalls = (block: HTMLElement): FunctionInfo => {
 
   const hasParameter =
     content.includes('"parameter"') || content.includes("'parameter'") || content.includes('parameter');
+=======
+  // Enhanced to handle Unicode word boundaries
+  const hasFunctionCall =
+    content.includes('function_call') ||
+    (hasTypeField && /function_call_\w*/u.test(content)) ||
+    (hasTypeField && content.includes('function_ca')) || // Partial match
+    (hasTypeField && /function_call_start/u.test(content));
+
+  const hasParameter =
+    content.includes('"parameter"') ||
+    content.includes("'parameter'") ||
+    (hasTypeField && /\bparameter\b/u.test(content));
+>>>>>>> upstream/main
 
   // Also check if it looks like start of JSON object with type field
-  const looksLikeJSONStart = content.includes('{"type"') || content.includes('{ "type"');
+  const looksLikeJSONStart =
+    content.includes('{"type"') ||
+    content.includes('{ "type"') ||
+    content.includes("{'type'") ||
+    content.includes("{ 'type'");
 
   if (CONFIG.debug) {
     logger.debug('[JSON Parser] Pattern check:', {
@@ -218,8 +380,8 @@ export const containsJSONFunctionCalls = (block: HTMLElement): FunctionInfo => {
     lines: [],
   };
 
-  // Parse line by line
-  let lines = content.split('\n');
+  // Parse line by line - enhanced to handle Unicode line separators
+  let lines = content.split(/\r?\n|\u2028|\u2029/);
   let hasPartialJSON = false;
 
   // Detect if JSON objects are on a single line (multiple objects without newlines)
