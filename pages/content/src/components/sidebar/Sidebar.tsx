@@ -1102,7 +1102,7 @@ const Sidebar: React.FC<SidebarProps> = ({ initialPreferences }) => {
                   'h-full overflow-y-auto scrollbar-thin scrollbar-thumb-slate-300 dark:scrollbar-thumb-slate-600 scrollbar-track-transparent',
                   { hidden: activeTab !== 'dashboard' },
                 )}>
-                <Dashboard />
+                <Dashboard onExecute={sendMessage} />
               </div>
 
               {/* Macros */}

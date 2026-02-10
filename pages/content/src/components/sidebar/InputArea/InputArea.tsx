@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { cn } from '@src/lib/utils';
 import { Icon, Button } from '../ui';
 import { useToastStore } from '@src/stores/toast.store';
+import ContextManager from '../ContextManager/ContextManager';
 
 interface InputAreaProps {
   onSubmit: (text: string) => void;
@@ -13,6 +14,7 @@ const InputArea: React.FC<InputAreaProps> = ({ onSubmit, onToggleMinimize }) => 
   const [inputText, setInputText] = useState('');
   const [selectedText, setSelectedText] = useState('');
   const [isListening, setIsListening] = useState(false);
+  const [showContextManager, setShowContextManager] = useState(false);
   const { addToast } = useToastStore.getState();
 
   // Listen for selection changes on the page
@@ -58,12 +60,16 @@ const InputArea: React.FC<InputAreaProps> = ({ onSubmit, onToggleMinimize }) => 
     }
   };
 
+  const handleInsertContext = (content: string) => {
+    setInputText(prev => {
+      const prefix = prev ? prev + '\n\n' : '';
+      return prefix + content;
+    });
+    setShowContextManager(false);
+  };
+
   const toggleListening = () => {
     if (isListening) {
-      // Manual stop not fully supported by simple API usage, usually we rely on auto-stop
-      // But we can reload page or just let it finish.
-      // Actually webkitSpeechRecognition has stop()
-      // For now, let's assume it stops automatically on silence or we just handle start.
       return;
     }
 
@@ -119,7 +125,14 @@ const InputArea: React.FC<InputAreaProps> = ({ onSubmit, onToggleMinimize }) => 
   };
 
   return (
-    <div className="p-3">
+    <div className="p-3 relative">
+      {/* Context Manager Overlay */}
+      {showContextManager && (
+        <div className="absolute bottom-full left-0 right-0 h-[400px] mb-2 z-50 shadow-2xl rounded-t-lg overflow-hidden border border-slate-200 dark:border-slate-700">
+           <ContextManager onInsert={handleInsertContext} onClose={() => setShowContextManager(false)} />
+        </div>
+      )}
+
       {/* Context Action Bar */}
       {selectedText && (
         <div className="mb-2 flex items-center justify-between bg-indigo-50 dark:bg-indigo-900/30 p-2 rounded border border-indigo-100 dark:border-indigo-800 animate-in slide-in-from-bottom-2 fade-in duration-200">
@@ -148,6 +161,20 @@ const InputArea: React.FC<InputAreaProps> = ({ onSubmit, onToggleMinimize }) => 
           className="w-full min-h-[80px] max-h-[200px] p-3 pr-10 text-sm border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none scrollbar-thin scrollbar-thumb-slate-300 dark:scrollbar-thumb-slate-600"
         />
         <div className="absolute bottom-2 right-2 flex gap-1">
+          {/* Context Manager Button */}
+          <Button
+            size="sm"
+            variant="ghost"
+            className={cn(
+              "h-8 w-8 p-0 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300",
+              showContextManager ? "bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300" : ""
+            )}
+            onClick={() => setShowContextManager(!showContextManager)}
+            title="Manage Saved Context"
+          >
+            <Icon name="book" size="sm" />
+          </Button>
+
           {/* Voice Input Button */}
           <Button
             size="sm"

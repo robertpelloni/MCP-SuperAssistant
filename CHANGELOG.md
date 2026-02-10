@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.9.0] - 2024-05-22
+
+### Added
+- **Macro Import/Export**: Share your automation workflows via JSON files.
+- **Enhanced Dashboard**: New analytics charts (Activity over last 7 days) and Quick Macro Access.
+- **Context Manager**: Save, edit, and organize reusable context snippets for quick insertion.
+- **Tooltips & Polish**: Improved UI clarity with tooltips and responsive layouts.
+
 ## [0.8.0] - 2024-05-22
 
 ### Added

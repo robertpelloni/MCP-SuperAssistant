@@ -112,10 +112,18 @@ export const useMcpCommunication = () => {
 
   // Send message / Execute tool
   const sendMessage = useCallback(
-    async (toolName: string, args: any) => {
-      // Handle both (toolName, args) signature and (toolObject) signature if needed
-      // The previous code used sendMessage(tool), but standard usage implies (name, args)
-      // Adapting to (toolName, args) which is cleaner
+    async (toolOrName: string | any, args?: any) => {
+      let toolName: string;
+      let toolArgs: any;
+
+      if (typeof toolOrName === 'string') {
+        toolName = toolOrName;
+        toolArgs = args || {};
+      } else {
+        // Assume it's a tool object { name, arguments } or { name }
+        toolName = toolOrName.name;
+        toolArgs = toolOrName.arguments || args || {};
+      }
 
       try {
         logger.debug('[useMcpCommunication] Executing tool:', toolName);
@@ -126,10 +134,10 @@ export const useMcpCommunication = () => {
           toolName: toolName,
           status: 'pending',
           startTime: Date.now(),
-          args: args,
+          args: toolArgs,
         });
 
-        const result = await mcpClient.callTool(toolName, args || {});
+        const result = await mcpClient.callTool(toolName, toolArgs);
 
         updateExecution(executionId, {
           status: 'success',

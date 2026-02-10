@@ -1,6 +1,5 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
-import { v4 as uuidv4 } from 'uuid';
 
 export type StepType = 'tool' | 'condition' | 'delay';
 export type ActionType = 'continue' | 'stop' | 'goto';
@@ -51,7 +50,7 @@ export const useMacroStore = create<MacroStore>()(
           ...state.macros,
           {
             ...macroData,
-            id: uuidv4(),
+            id: crypto.randomUUID(),
             createdAt: Date.now(),
             updatedAt: Date.now(),
           },

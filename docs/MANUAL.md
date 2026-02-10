@@ -163,3 +163,17 @@ Macros allow you to automate sequences of tool executions. With "Agentic Mode," 
 
 ### Running Macros
 Click the **Play** button on a macro card to execute it. Progress and results are shown in the Activity Log and via toast notifications.
+
+### Macro Management
+*   **Import/Export**: Use the 'Export' button in the Macro Builder to save your workflows as JSON files. Use the 'Import' button in the main Macro list to load them. This allows you to share complex automations with others.
+
+### Dashboard Analytics
+The Dashboard now provides deeper insights:
+*   **Activity Chart**: View your tool usage over the last 7 days.
+*   **Quick Access**: Run your most recently updated macros directly from the dashboard.
+
+### Context Manager
+Located in the input area (click the book icon), the Context Manager allows you to:
+*   **Save Context**: Store frequently used prompts, instructions, or data snippets.
+*   **Insert Context**: Quickly inject saved snippets into your current conversation.
+*   **Manage**: Edit or delete snippets as your workflow evolves.

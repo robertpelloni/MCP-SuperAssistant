@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useMacroStore, type Macro, type MacroStep, type StepType, type ActionType } from '@src/lib/macro.store';
 import { Icon, Typography, Button, Input, Textarea, Select } from '../ui';
-import { v4 as uuidv4 } from 'uuid';
 import { cn } from '@src/lib/utils';
+import { useToastStore } from '@src/stores/toast.store';
 
 interface MacroBuilderProps {
   existingMacro?: Macro | null;
@@ -11,6 +11,7 @@ interface MacroBuilderProps {
 
 const MacroBuilder: React.FC<MacroBuilderProps> = ({ existingMacro, onClose }) => {
   const { addMacro, updateMacro } = useMacroStore();
+  const { addToast } = useToastStore();
   const [name, setName] = useState(existingMacro?.name || '');
   const [description, setDescription] = useState(existingMacro?.description || '');
   const [steps, setSteps] = useState<MacroStep[]>(existingMacro?.steps || []);
@@ -40,9 +41,35 @@ const MacroBuilder: React.FC<MacroBuilderProps> = ({ existingMacro, onClose }) =
     onClose();
   };
 
+  const handleExport = () => {
+    const macroData = {
+      name,
+      description,
+      steps,
+      version: '1.0'
+    };
+
+    const blob = new Blob([JSON.stringify(macroData, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${name.replace(/\s+/g, '_').toLowerCase() || 'macro'}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+
+    addToast({
+      title: 'Exported',
+      message: 'Macro exported successfully',
+      type: 'success',
+      duration: 2000
+    });
+  };
+
   const addStep = (type: StepType) => {
     const newStep: MacroStep = {
-      id: uuidv4(),
+      id: crypto.randomUUID(),
       type,
       // Defaults
       toolName: type === 'tool' && availableTools.length > 0 ? availableTools[0].name : '',
@@ -85,10 +112,16 @@ const MacroBuilder: React.FC<MacroBuilderProps> = ({ existingMacro, onClose }) =
             {existingMacro ? 'Edit Macro' : 'New Macro'}
           </Typography>
         </div>
-        <Button onClick={handleSave} size="sm" className="bg-indigo-600 hover:bg-indigo-700 text-white">
-          <Icon name="save" size="xs" className="mr-1" />
-          Save
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button onClick={handleExport} size="sm" variant="outline" className="hidden sm:flex" title="Export to JSON">
+            <Icon name="download" size="xs" className="mr-1" />
+            Export
+          </Button>
+          <Button onClick={handleSave} size="sm" className="bg-indigo-600 hover:bg-indigo-700 text-white">
+            <Icon name="save" size="xs" className="mr-1" />
+            Save
+          </Button>
+        </div>
       </div>
 
       <div className="flex-1 overflow-y-auto p-4 space-y-6">

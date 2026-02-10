@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { useMacroStore, type Macro } from '@src/lib/macro.store';
 import { Icon, Typography, Button } from '../ui';
 import { Card } from '@src/components/ui/card';
@@ -12,11 +12,12 @@ interface MacroListProps {
 }
 
 const MacroList: React.FC<MacroListProps> = ({ onExecute }) => {
-  const { macros, deleteMacro } = useMacroStore();
+  const { macros, addMacro, deleteMacro } = useMacroStore();
   const { addToast } = useToastStore();
   const [editingMacro, setEditingMacro] = useState<Macro | null>(null);
   const [isCreating, setIsCreating] = useState(false);
   const [runningMacroId, setRunningMacroId] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleDelete = (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -38,6 +39,54 @@ const MacroList: React.FC<MacroListProps> = ({ onExecute }) => {
   const handleCloseBuilder = () => {
     setEditingMacro(null);
     setIsCreating(false);
+  };
+
+  const handleImportClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      try {
+        const content = event.target?.result as string;
+        const macroData = JSON.parse(content);
+
+        // Basic validation
+        if (!macroData.name || !Array.isArray(macroData.steps)) {
+          throw new Error('Invalid macro file format');
+        }
+
+        addMacro({
+          name: macroData.name + ' (Imported)',
+          description: macroData.description || '',
+          steps: macroData.steps,
+        });
+
+        addToast({
+          title: 'Import Successful',
+          message: `Imported "${macroData.name}"`,
+          type: 'success',
+          duration: 3000,
+        });
+      } catch (error) {
+        addToast({
+          title: 'Import Failed',
+          message: error instanceof Error ? error.message : 'Unknown error',
+          type: 'error',
+          duration: 5000,
+        });
+      } finally {
+        // Reset input
+        if (fileInputRef.current) {
+          fileInputRef.current.value = '';
+        }
+      }
+    };
+    reader.readAsText(file);
   };
 
   const handleRun = async (macro: Macro, e: React.MouseEvent) => {
@@ -93,10 +142,23 @@ const MacroList: React.FC<MacroListProps> = ({ onExecute }) => {
         <Typography variant="h4" className="font-semibold text-slate-800 dark:text-slate-100">
           Macros
         </Typography>
-        <Button onClick={handleCreate} size="sm" className="flex items-center gap-1">
-          <Icon name="plus" size="xs" />
-          New Macro
-        </Button>
+        <div className="flex items-center gap-2">
+          <input
+            type="file"
+            ref={fileInputRef}
+            onChange={handleFileChange}
+            accept=".json"
+            className="hidden"
+          />
+          <Button onClick={handleImportClick} size="sm" variant="outline" className="flex items-center gap-1 hidden sm:flex" title="Import from JSON">
+            <Icon name="upload" size="xs" className="mr-1" />
+            Import
+          </Button>
+          <Button onClick={handleCreate} size="sm" className="flex items-center gap-1">
+            <Icon name="plus" size="xs" />
+            New
+          </Button>
+        </div>
       </div>
 
       <div className="flex-1 overflow-y-auto min-h-0 space-y-3 pr-1 scrollbar-thin scrollbar-thumb-slate-300 dark:scrollbar-thumb-slate-600">
@@ -106,9 +168,14 @@ const MacroList: React.FC<MacroListProps> = ({ onExecute }) => {
             <Typography variant="body" className="text-sm">
               No macros created yet
             </Typography>
-            <Button variant="ghost" size="sm" onClick={handleCreate} className="mt-2 text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300">
-              Create your first macro
-            </Button>
+            <div className="flex gap-2 mt-3">
+               <Button variant="outline" size="sm" onClick={handleImportClick}>
+                Import Macro
+              </Button>
+              <Button variant="ghost" size="sm" onClick={handleCreate} className="text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300">
+                Create Macro
+              </Button>
+            </div>
           </div>
         ) : (
           macros.map((macro) => (
