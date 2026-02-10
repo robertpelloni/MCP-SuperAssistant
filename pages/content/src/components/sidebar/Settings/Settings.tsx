@@ -5,6 +5,7 @@ import { useActivityStore } from '@src/stores/activity.store';
 import { useToastStore } from '@src/stores/toast.store';
 import { Card, CardContent, CardHeader, CardTitle } from '@src/components/ui/card';
 import { Typography, Icon, Button, ToggleWithoutLabel } from '../ui';
+import { ThemeSelector } from './ThemeSelector';
 import { AutomationService } from '@src/services/automation.service';
 import { cn } from '@src/lib/utils';
 import { createLogger } from '@extension/shared/lib/logger';
@@ -150,6 +151,21 @@ const Settings: React.FC = () => {
       </div>
 
       <div className="space-y-4">
+        {/* Appearance Settings */}
+        <Card className="border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm overflow-hidden">
+          <CardHeader className="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-800 p-4">
+             <div className="flex items-center gap-2">
+               <div className="p-1.5 bg-fuchsia-100 dark:bg-fuchsia-900/30 rounded text-fuchsia-600 dark:text-fuchsia-400">
+                 <Icon name="sun" size="sm" />
+               </div>
+               <CardTitle className="text-base font-medium">Appearance</CardTitle>
+             </div>
+          </CardHeader>
+          <CardContent className="p-5">
+            <ThemeSelector />
+          </CardContent>
+        </Card>
+
         {/* Automation Settings */}
         <Card className="border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm overflow-hidden">
           <CardHeader className="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-800 p-4">

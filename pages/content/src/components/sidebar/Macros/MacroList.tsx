@@ -1,120 +1,169 @@
-import type React from 'react';
-import { useState } from 'react';
-import { useMacroStore, type Macro } from '@src/stores/macro.store';
-import { useMcpCommunication } from '@src/hooks/useMcpCommunication';
-import { Card, CardContent } from '@src/components/ui/card';
-import { Typography, Button, Icon } from '../ui';
-import { cn } from '@src/lib/utils';
+import React, { useState } from 'react';
+import { useMacroStore, type Macro } from '@src/lib/macro.store';
+import { Icon, Typography, Button } from '../ui';
+import { Card } from '@src/components/ui/card';
 import MacroBuilder from './MacroBuilder';
+import { MacroRunner } from '@src/lib/macro.runner';
 import { useToastStore } from '@src/stores/toast.store';
+import { cn } from '@src/lib/utils';
 
-const MacroList: React.FC = () => {
-  const { macros, removeMacro } = useMacroStore();
-  const { sendMessage } = useMcpCommunication();
-  const { addToast } = useToastStore.getState();
+interface MacroListProps {
+  onExecute: (toolName: string, args: any) => Promise<any>;
+}
+
+const MacroList: React.FC<MacroListProps> = ({ onExecute }) => {
+  const { macros, deleteMacro } = useMacroStore();
+  const { addToast } = useToastStore();
+  const [editingMacro, setEditingMacro] = useState<Macro | null>(null);
   const [isCreating, setIsCreating] = useState(false);
   const [runningMacroId, setRunningMacroId] = useState<string | null>(null);
 
-  const handleRunMacro = async (macro: Macro) => {
+  const handleDelete = (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (confirm('Are you sure you want to delete this macro?')) {
+      deleteMacro(id);
+    }
+  };
+
+  const handleEdit = (macro: Macro) => {
+    setEditingMacro(macro);
+    setIsCreating(false);
+  };
+
+  const handleCreate = () => {
+    setEditingMacro(null);
+    setIsCreating(true);
+  };
+
+  const handleCloseBuilder = () => {
+    setEditingMacro(null);
+    setIsCreating(false);
+  };
+
+  const handleRun = async (macro: Macro, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (runningMacroId) return;
+
     setRunningMacroId(macro.id);
-    addToast({ title: 'Macro Started', message: `Running "${macro.name}"...`, type: 'info' });
+    addToast({
+      title: 'Starting Macro',
+      message: `Running "${macro.name}"...`,
+      type: 'info',
+      duration: 2000,
+    });
+
+    const runner = new MacroRunner(onExecute, (msg, type) => {
+      // Optional: more granular feedback could go here
+      // For now we rely on the runner throwing or completing
+      console.log(`[Macro: ${macro.name}] [${type}] ${msg}`);
+    });
 
     try {
-      for (const step of macro.steps) {
-        // In a real scenario, we'd pipe the output of previous steps to the next
-        // For now, we just run them sequentially
-        await sendMessage({ name: step.toolName, args: step.arguments });
-      }
-      addToast({ title: 'Macro Completed', message: `"${macro.name}" finished successfully`, type: 'success' });
+      await runner.run(macro);
+      addToast({
+        title: 'Macro Completed',
+        message: `"${macro.name}" finished successfully.`,
+        type: 'success',
+        duration: 3000,
+      });
     } catch (error) {
-      addToast({ title: 'Macro Failed', message: String(error), type: 'error' });
+      addToast({
+        title: 'Macro Failed',
+        message: error instanceof Error ? error.message : String(error),
+        type: 'error',
+        duration: 5000,
+      });
     } finally {
       setRunningMacroId(null);
     }
   };
 
-  if (isCreating) {
-    return <MacroBuilder onCancel={() => setIsCreating(false)} onSave={() => setIsCreating(false)} />;
+  if (isCreating || editingMacro) {
+    return (
+      <MacroBuilder
+        existingMacro={editingMacro}
+        onClose={handleCloseBuilder}
+      />
+    );
   }
 
   return (
     <div className="flex flex-col h-full space-y-4 p-4">
-      <div className="flex items-center justify-between">
-        <div>
-          <Typography variant="h4" className="font-semibold text-slate-800 dark:text-slate-100">
-            Macros
-          </Typography>
-          <Typography variant="caption" className="text-slate-500 dark:text-slate-400">
-            Automate tasks with tool chains.
-          </Typography>
-        </div>
-        <Button size="sm" onClick={() => setIsCreating(true)} className="bg-indigo-600 hover:bg-indigo-700 text-white">
-          <Icon name="play" size="xs" className="mr-1" /> New
+      <div className="flex justify-between items-center mb-2">
+        <Typography variant="h4" className="font-semibold text-slate-800 dark:text-slate-100">
+          Macros
+        </Typography>
+        <Button onClick={handleCreate} size="sm" className="flex items-center gap-1">
+          <Icon name="plus" size="xs" />
+          New Macro
         </Button>
       </div>
 
-      <div className="flex-1 overflow-y-auto space-y-3">
+      <div className="flex-1 overflow-y-auto min-h-0 space-y-3 pr-1 scrollbar-thin scrollbar-thumb-slate-300 dark:scrollbar-thumb-slate-600">
         {macros.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-40 text-slate-400 dark:text-slate-500 border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-lg">
-            <Icon name="lightning" size="lg" className="mb-2 opacity-50" />
+            <Icon name="code" size="lg" className="mb-2 opacity-50" />
             <Typography variant="body" className="text-sm">
               No macros created yet
             </Typography>
+            <Button variant="ghost" size="sm" onClick={handleCreate} className="mt-2 text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300">
+              Create your first macro
+            </Button>
           </div>
         ) : (
-          macros.map(macro => (
-            <Card key={macro.id} className="border-slate-200 dark:border-slate-700 hover:shadow-md transition-shadow">
-              <CardContent className="p-4">
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <Typography variant="subtitle" className="font-semibold text-slate-800 dark:text-slate-200">
+          macros.map((macro) => (
+            <Card
+              key={macro.id}
+              className={cn(
+                "border overflow-hidden transition-all duration-200 hover:shadow-md cursor-pointer group",
+                runningMacroId === macro.id ? "ring-2 ring-indigo-500 border-transparent" : ""
+              )}
+              onClick={() => handleEdit(macro)}
+            >
+              <div className="p-3 bg-white dark:bg-slate-900 flex items-start justify-between">
+                <div className="flex items-start gap-3 overflow-hidden w-full">
+                  <div
+                    className={cn(
+                      "p-2 rounded-full flex-shrink-0 transition-colors z-10",
+                      runningMacroId === macro.id
+                        ? "bg-indigo-100 text-indigo-700 animate-pulse"
+                        : "bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-100 dark:hover:bg-indigo-900/40"
+                    )}
+                    onClick={(e) => handleRun(macro, e)}
+                    title="Run Macro"
+                  >
+                    <Icon name={runningMacroId === macro.id ? "loader" : "play"} size="sm" className={runningMacroId === macro.id ? "animate-spin" : ""} />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <Typography variant="subtitle" className="font-medium text-slate-800 dark:text-slate-200 truncate">
                       {macro.name}
                     </Typography>
-                    <Typography variant="caption" className="text-slate-500 block mt-1">
-                      {macro.steps.length} steps • {macro.description}
+                    <Typography variant="body" className="text-xs text-slate-500 dark:text-slate-400 line-clamp-1 mt-0.5">
+                      {macro.description || 'No description'}
                     </Typography>
-                  </div>
-                  <div className="flex gap-2">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="h-8 w-8 p-0 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 border-slate-200 dark:border-slate-700"
-                      onClick={() => removeMacro(macro.id)}>
-                      <Icon name="x" size="xs" />
-                    </Button>
-                    <Button
-                      size="sm"
-                      className={cn(
-                        'h-8 px-3',
-                        runningMacroId === macro.id ? 'bg-slate-400' : 'bg-green-600 hover:bg-green-700 text-white',
-                      )}
-                      onClick={() => handleRunMacro(macro)}
-                      disabled={!!runningMacroId}>
-                      {runningMacroId === macro.id ? (
-                        <Icon name="refresh" size="xs" className="animate-spin" />
-                      ) : (
-                        <div className="flex items-center">
-                          <Icon name="play" size="xs" className="mr-1" /> Run
-                        </div>
-                      )}
-                    </Button>
-                  </div>
-                </div>
-
-                {/* Steps Preview */}
-                <div className="mt-3 flex items-center gap-1 overflow-x-auto pb-1 scrollbar-hide">
-                  {macro.steps.map((step, idx) => (
-                    <div key={step.id} className="flex items-center shrink-0">
-                      <div className="px-2 py-1 bg-slate-100 dark:bg-slate-800 rounded text-[10px] text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 max-w-[100px] truncate">
-                        {step.toolName}
-                      </div>
-                      {idx < macro.steps.length - 1 && (
-                        <Icon name="chevron-right" size="xs" className="text-slate-300 mx-1" />
-                      )}
+                    <div className="mt-2 flex items-center gap-2">
+                      <span className="text-[10px] bg-slate-100 dark:bg-slate-800 text-slate-500 px-1.5 py-0.5 rounded border border-slate-200 dark:border-slate-700">
+                        {macro.steps.length} steps
+                      </span>
+                      <span className="text-[10px] text-slate-400">
+                        Updated {new Date(macro.updatedAt).toLocaleDateString()}
+                      </span>
                     </div>
-                  ))}
+                  </div>
+
+                  <div className="flex flex-col gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                     <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7 text-slate-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded"
+                        onClick={(e) => handleDelete(macro.id, e)}
+                        title="Delete Macro"
+                      >
+                        <Icon name="trash" size="xs" />
+                      </Button>
+                  </div>
                 </div>
-              </CardContent>
+              </div>
             </Card>
           ))
         )}

@@ -141,3 +141,25 @@ A: Yes. The extension communicates directly with your local proxy. Your data (fi
 
 **Q: Which AI models work best?**
 A: Models with strong function calling capabilities (like GPT-4, Claude 3.5 Sonnet) work best.
+
+## Macros & Agentic Mode
+
+### Overview
+Macros allow you to automate sequences of tool executions. With "Agentic Mode," you can add conditional logic and loops to create powerful workflows that adapt based on tool outputs.
+
+### Creating a Macro
+1.  Go to the **Macros** tab in the sidebar.
+2.  Click **New Macro**.
+3.  Enter a name and description.
+4.  Add steps:
+    *   **Tool**: Execute a specific tool with predefined arguments.
+    *   **Condition**: Check a condition (JavaScript expression) and branch execution (Continue, Stop, Go to Step).
+    *   **Delay**: Wait for a specified duration.
+
+### Agentic Capabilities
+*   **Variables**: Access previous results using `{{lastResult}}` in tool arguments.
+*   **Conditionals**: Evaluate expressions like `lastResult.status === 'success'` to decide the next step.
+*   **Loops**: Use "Go to Step" actions to retry steps or iterate until a condition is met.
+
+### Running Macros
+Click the **Play** button on a macro card to execute it. Progress and results are shown in the Activity Log and via toast notifications.

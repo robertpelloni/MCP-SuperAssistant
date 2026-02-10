@@ -3,7 +3,6 @@ import type { SiteType } from './base/BaseSidebarManager';
 import { BaseSidebarManager } from './base/BaseSidebarManager';
 import { logMessage } from '@src/utils/helpers';
 import Sidebar from './Sidebar';
-import { FloatingButton } from '../FloatingButton/FloatingButton';
 import type { UserPreferences } from '@src/types/stores';
 import { useUIStore } from '@src/stores/ui.store';
 
@@ -189,12 +188,7 @@ export class SidebarManager extends BaseSidebarManager {
     const userPreferences = getZustandPreferences();
     logMessage('[SidebarManager] Creating sidebar content with fresh Zustand preferences');
 
-    return (
-      <React.Fragment>
-        <Sidebar initialPreferences={userPreferences} />
-        <FloatingButton />
-      </React.Fragment>
-    );
+    return <Sidebar initialPreferences={userPreferences} />;
   }
 
   /**

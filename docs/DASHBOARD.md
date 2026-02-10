@@ -1,17 +1,17 @@
 # Project Dashboard
 
-**Current Version**: 0.7.0
+**Current Version**: 0.6.2
 **Build Date**: 2024-05-22
 
 ## Submodules & Packages
 
 | Name | Location | Type | Version |
 |------|----------|------|---------|
-| `chrome-extension` | `/chrome-extension` | App | 0.7.0 |
-| `content-script` | `/pages/content` | UI | 0.7.0 |
-| `ui` | `/packages/ui` | Lib | 0.7.0 |
-| `shared` | `/packages/shared` | Lib | 0.7.0 |
-| `storage` | `/packages/storage` | Lib | 0.7.0 |
+| `chrome-extension` | `/chrome-extension` | App | 0.6.2 |
+| `content-script` | `/pages/content` | UI | 0.6.2 |
+| `ui` | `/packages/ui` | Lib | 0.6.2 |
+| `shared` | `/packages/shared` | Lib | 0.6.2 |
+| `storage` | `/packages/storage` | Lib | 0.6.2 |
 
 ## Directory Structure
 
