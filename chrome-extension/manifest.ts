@@ -49,7 +49,7 @@ const manifest = {
     '*://*.chat.qwen.ai/*',
   ],
 
-  permissions: ['storage', 'clipboardWrite'],
+  permissions: ['storage', 'clipboardWrite', 'contextMenus'],
   // permissions: ['storage', 'scripting', 'clipboardWrite'],
   // options_page: 'options/index.html',
   background: {

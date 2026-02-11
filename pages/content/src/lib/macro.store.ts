@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 
-export type StepType = 'tool' | 'condition' | 'delay';
+export type StepType = 'tool' | 'condition' | 'delay' | 'set_variable';
 export type ActionType = 'continue' | 'stop' | 'goto';
 
 export interface MacroStep {
@@ -21,6 +21,10 @@ export interface MacroStep {
 
   // For 'delay' type
   delayMs?: number;
+
+  // For 'set_variable' type
+  variableName?: string;
+  variableValue?: string; // Expression or static value
 }
 
 export interface Macro {

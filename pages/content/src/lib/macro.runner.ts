@@ -51,6 +51,36 @@ export class MacroRunner {
           await new Promise(r => setTimeout(r, delay));
           currentStepIndex++;
 
+        } else if (step.type === 'set_variable') {
+          const name = step.variableName;
+          const valueExpr = step.variableValue || '';
+
+          if (name) {
+            // Check if valueExpr is a simple string or an expression
+            // For now, simple evaluation of "lastResult.prop" or static string
+            let value = valueExpr;
+
+            // Basic resolution of variables in the value expression
+            if (valueExpr === 'lastResult') {
+                value = lastResult;
+            } else if (valueExpr.startsWith('lastResult.')) {
+                const path = valueExpr.replace('lastResult.', '');
+                value = path.split('.').reduce((o, k) => (o || {})[k], lastResult);
+            } else if (valueExpr.startsWith('env.')) {
+                const path = valueExpr.replace('env.', '');
+                value = path.split('.').reduce((o, k) => (o || {})[k], env);
+            } else if (valueExpr === 'allResults') {
+                value = results;
+            } else if (!isNaN(Number(valueExpr))) {
+                value = Number(valueExpr);
+            }
+            // else treat as string literal
+
+            env[name] = value;
+            this.onLog(`Variable set: ${name} = ${JSON.stringify(value)}`, 'info');
+          }
+          currentStepIndex++;
+
         } else if (step.type === 'condition') {
           const condition = step.expression || 'false';
           let conditionResult = false;
@@ -100,10 +130,29 @@ export class MacroRunner {
     const walk = (obj: any) => {
       for (const key in obj) {
         if (typeof obj[key] === 'string') {
-          if (obj[key] === '{{lastResult}}') {
-              obj[key] = lastResult;
-          } else if (obj[key].includes('{{')) {
-              // Basic replacement if needed, though strictly we might want structured substitution
+          const val = obj[key];
+          // Check for variable substitution: {{variableName}}
+          if (val.match(/^\{\{[\w\d\.]+\}\}$/)) {
+             // Exact match substitution (preserves type)
+             const varName = val.slice(2, -2);
+             if (varName === 'lastResult') obj[key] = lastResult;
+             else if (env[varName] !== undefined) obj[key] = env[varName];
+             else if (varName.startsWith('lastResult.')) {
+                 const path = varName.replace('lastResult.', '');
+                 obj[key] = path.split('.').reduce((o: any, k: string) => (o || {})[k], lastResult);
+             }
+          } else if (val.includes('{{')) {
+             // String interpolation
+             obj[key] = val.replace(/\{\{([\w\d\.]+)\}\}/g, (_: string, varName: string) => {
+                 if (varName === 'lastResult') return JSON.stringify(lastResult);
+                 if (env[varName] !== undefined) return String(env[varName]);
+                 if (varName.startsWith('lastResult.')) {
+                     const path = varName.replace('lastResult.', '');
+                     const res = path.split('.').reduce((o: any, k: string) => (o || {})[k], lastResult);
+                     return res !== undefined ? String(res) : '';
+                 }
+                 return '';
+             });
           }
         } else if (typeof obj[key] === 'object' && obj[key] !== null) {
           walk(obj[key]);

@@ -163,6 +163,9 @@ const MacroBuilder: React.FC<MacroBuilderProps> = ({ existingMacro, onClose }) =
               <Button size="xs" variant="outline" onClick={() => addStep('delay')}>
                 <Icon name="clock" size="xs" className="mr-1" /> Delay
               </Button>
+              <Button size="xs" variant="outline" onClick={() => addStep('set_variable')}>
+                <Icon name="database" size="xs" className="mr-1" /> Set Var
+              </Button>
             </div>
           </div>
 
@@ -320,6 +323,29 @@ const MacroBuilder: React.FC<MacroBuilderProps> = ({ existingMacro, onClose }) =
                         onChange={(e) => updateStep(step.id, { delayMs: parseInt(e.target.value) || 0 })}
                         className="w-full"
                       />
+                    </div>
+                  )}
+
+                  {step.type === 'set_variable' && (
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="text-xs font-medium text-slate-500 mb-1 block">Variable Name</label>
+                        <Input
+                          value={step.variableName}
+                          onChange={(e) => updateStep(step.id, { variableName: e.target.value })}
+                          placeholder="e.g., myData"
+                          className="w-full"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-xs font-medium text-slate-500 mb-1 block">Value (Expression)</label>
+                        <Input
+                          value={step.variableValue}
+                          onChange={(e) => updateStep(step.id, { variableValue: e.target.value })}
+                          placeholder="lastResult.output"
+                          className="w-full"
+                        />
+                      </div>
                     </div>
                   )}
                 </div>

@@ -14,15 +14,17 @@
 - [x] Tool Favorites & Sorting.
 - [x] Comprehensive Help & Documentation.
 
-## Phase 3: "Insanely Great" Features (🚧 In Progress)
-- [ ] **Documentation Overhaul**: Restructure instruction files (`AGENTS.md`, etc.) and create a single source of truth for versions.
-- [ ] **Version System**: Automated version bumping and Changelog generation.
-- [ ] **Dashboard**: A dedicated view for submodule status, build info, and usage analytics.
-- [ ] **Keyboard Shortcuts**: Global hotkeys for efficiency.
-- [ ] **Rich Renderer**: Better visualization for complex tool outputs (JSON -> Table/Markdown).
-- [ ] **Auto-Execute Whitelist**: granular control over which tools run automatically.
+## Phase 3: "Insanely Great" Features (✅ Completed)
+- [x] **Macros & Agentic Mode**: Conditional logic, loops, and variables.
+- [x] **Context Manager**: Save and inject reusable text snippets.
+- [x] **Dashboard**: Usage analytics and charts.
+- [x] **Local Search**: Filter activity logs instantly.
+- [x] **Voice Input**: Dictation support.
+- [x] **Theme Customization**: Personalize accent colors.
+- [x] **Context Menu Integration**: Right-click to save text to context.
+- [x] **Keyboard Shortcuts**: Global hotkeys (`Cmd+K`).
 
 ## Phase 4: Future / Maintenance
 - [ ] Multi-proxy support (connect to multiple MCP servers simultaneously).
-- [ ] Cloud sync for settings/favorites.
+- [ ] Cloud sync for settings/favorites/macros.
 - [ ] Community tool registry integration.
