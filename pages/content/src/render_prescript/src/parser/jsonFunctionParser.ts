@@ -319,15 +319,6 @@ export const containsJSONFunctionCalls = (block: HTMLElement): FunctionInfo => {
   const hasTypeField = /['"]?type['"]?\s*:/i.test(content) || content.includes('"type"') || content.includes("'type'");
 
   // Accept partial matches during streaming (e.g., "function_ca" while typing "function_call")
-<<<<<<< HEAD
-  const hasFunctionCall =
-    content.includes('function_call') ||
-    (content.includes('"type"') && /function_call_\w*/.test(content)) ||
-    (content.includes('"type"') && content.includes('function_ca')); // Partial match
-
-  const hasParameter =
-    content.includes('"parameter"') || content.includes("'parameter'") || content.includes('parameter');
-=======
   // Enhanced to handle Unicode word boundaries
   const hasFunctionCall =
     content.includes('function_call') ||
@@ -339,7 +330,6 @@ export const containsJSONFunctionCalls = (block: HTMLElement): FunctionInfo => {
     content.includes('"parameter"') ||
     content.includes("'parameter'") ||
     (hasTypeField && /\bparameter\b/u.test(content));
->>>>>>> upstream/main
 
   // Also check if it looks like start of JSON object with type field
   const looksLikeJSONStart =

@@ -100,117 +100,6 @@ export const WEBSITE_CONFIGS: Array<{
         function_result_selector: ['div.relative.items-end'],
       },
     },
-<<<<<<< HEAD
-  },
-  {
-    urlPattern: 'openrouter.ai',
-    config: {
-      targetSelectors: ['pre'],
-      streamingContainerSelectors: ['pre'],
-      function_result_selector: [
-        'div.min-w-0.w-full.overflow-hidden',
-        // 'div.flex.max-w-full.flex-col.relative.overflow-auto.gap-1.items-end',
-        // 'div.flex',
-        // 'div.flex.items-end',
-      ],
-    },
-  },
-  {
-    urlPattern: 'chatgpt.com',
-    config: {
-      targetSelectors: ['pre'],
-      streamingContainerSelectors: ['pre'],
-      function_result_selector: ['div[data-message-author-role="user"]'],
-    },
-  },
-  {
-    urlPattern: 'chat.openai.com',
-    config: {
-      targetSelectors: ['pre'],
-      streamingContainerSelectors: ['pre'],
-      function_result_selector: ['div[data-message-author-role="user"]'],
-    },
-  },
-  {
-    urlPattern: 'kagi.com',
-    config: {
-      targetSelectors: ['.content pre', '.codehilite', 'pre'],
-      streamingContainerSelectors: ['pre', '.content'],
-      function_result_selector: ['div[data-author="user"]'],
-    },
-  },
-  {
-    urlPattern: 'chat.deepseek.com',
-    config: {
-      targetSelectors: ['pre', 'code'],
-      streamingContainerSelectors: ['pre', 'code'],
-      function_result_selector: ['div._9663006'],
-    },
-  },
-  {
-    urlPattern: 't3.chat',
-    config: {
-      targetSelectors: ['pre'],
-      streamingContainerSelectors: ['pre'],
-      function_result_selector: ['div[aria-label="Your message"]'],
-    },
-  },
-  {
-    urlPattern: 'chat.mistral.ai',
-    config: {
-      targetSelectors: ['pre'],
-      streamingContainerSelectors: ['pre'],
-      function_result_selector: ['div[data-message-part-type="answer"]', '.select-text'],
-    },
-  },
-  {
-    urlPattern: 'github.com/copilot',
-    config: {
-      targetSelectors: ['pre'],
-      streamingContainerSelectors: ['pre'],
-      function_result_selector: ['.UserMessage-module__container--cAvvK', '.ChatMessage-module__userMessage--xvIFp'],
-    },
-  },
-  {
-    urlPattern: 'kimi.com',
-    config: {
-      targetSelectors: ['pre'],
-      streamingContainerSelectors: ['pre'],
-      function_result_selector: ['div[class*="user-content"]'],
-    },
-  },
-  {
-    urlPattern: 'chat.z.ai',
-    config: {
-      // targetSelectors: ['pre[id^="cm-hidden-pre-"]'],
-      // streamingContainerSelectors: ['pre[id^="cm-hidden-pre-"]'],
-      targetSelectors: ['pre'],
-      streamingContainerSelectors: ['pre'],
-      function_result_selector: ['div.chat-user'],
-      useCodeMirrorExtraction: true,
-    },
-  },
-  {
-    urlPattern: 'chat.qwen.ai',
-    config: {
-      targetSelectors: ['pre', 'code'],
-      streamingContainerSelectors: ['pre', 'code'],
-      function_result_selector: ['.user-message-text-content', 'div.user-message-content'],
-      // function_result_selector: ['div.chat-user'],
-      useCodeMirrorExtraction: true,
-    },
-  },
-  // Add more website-specific configurations as needed
-  // Example:
-  // {
-  //   urlPattern: 'example.com',
-  //   config: {
-  //     targetSelectors: ['.custom-selector'],
-  //     streamingContainerSelectors: ['.custom-container']
-  //   }
-  // }
-];
-=======
     {
       urlPattern: 'openrouter.ai',
       config: {
@@ -325,7 +214,6 @@ export const WEBSITE_CONFIGS: Array<{
     //   }
     // }
   ];
->>>>>>> upstream/main
 
 /**
  * Gets the appropriate configuration based on the current URL

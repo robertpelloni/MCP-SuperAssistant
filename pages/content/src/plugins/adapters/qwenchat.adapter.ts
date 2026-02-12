@@ -22,23 +22,12 @@ export class QwenAdapter extends BaseAdapterPlugin {
     'text-insertion',
     'form-submission',
     'file-attachment',
-    'dom-manipulation',
+    'dom-manipulation'
   ];
 
   // CSS selectors for Qwen's UI elements
   // Updated selectors based on current Qwen interface (Feb 2026 refresh)
   private readonly selectors = {
-<<<<<<< HEAD
-    // Primary chat input selectors
-    CHAT_INPUT: '#chat-input',
-    // Submit button selectors (multiple fallbacks)
-    SUBMIT_BUTTON: '#send-message-button, button._sendMessageButton_71e98_48',
-    // File upload related selectors
-    FILE_UPLOAD_BUTTON: 'button[aria-controls*="upload"], input[type="file"]',
-    FILE_INPUT: 'input[type="file"][multiple], input#filesUpload',
-    // Main panel and container selectors
-    MAIN_PANEL: 'form.flex.w-full.gap-1\.5',
-=======
     // Primary chat input selectors - new message-input-textarea class
     CHAT_INPUT: 'textarea.message-input-textarea, #chat-input, textarea.chat-input',
     // Submit button selectors (multiple fallbacks) - new omni-button and ant-btn classes
@@ -48,22 +37,14 @@ export class QwenAdapter extends BaseAdapterPlugin {
     FILE_INPUT: 'input#filesUpload, input[type="file"][multiple]',
     // Main panel and container selectors - new message-input-container
     MAIN_PANEL: 'div.message-input-container, div.message-input-container-area, div.prompt-input-container',
->>>>>>> upstream/main
     // Drop zones for file attachment
     DROP_ZONE: 'textarea.message-input-textarea, textarea#chat-input, textarea.chat-input',
     // File preview elements
-<<<<<<< HEAD
-    FILE_PREVIEW: 'div._fileListBox_71e98_10',
-    // Button insertion points (for MCP popover) - looking for features area
-    BUTTON_INSERTION_CONTAINER:
-      'div.scrollbar-none.flex.items-center.left-content.operationBtn, div.flex.items-center.pr-2',
-=======
     FILE_PREVIEW: 'div.prompt-input-file-list',
     // Button insertion points (for MCP popover) - new message-input-right-button container
     BUTTON_INSERTION_CONTAINER: 'div.message-input-right-button, div.action-bar-left-btns, div.action-bar-left',
     // Action bar container - now message-input-container-area contains all elements
     ACTION_BAR: 'div.message-input-container-area, div.prompt-input-action-bar',
->>>>>>> upstream/main
     // Alternative insertion points
     FALLBACK_INSERTION: 'div.message-input-container-area, div.prompt-input-action-bar, #chat-input',
   };
@@ -136,7 +117,7 @@ export class QwenAdapter extends BaseAdapterPlugin {
     // Emit activation event for store synchronization
     this.context.eventBus.emit('adapter:activated', {
       pluginName: this.name,
-      timestamp: Date.now(),
+      timestamp: Date.now()
     });
   }
 
@@ -162,7 +143,7 @@ export class QwenAdapter extends BaseAdapterPlugin {
     // Emit deactivation event
     this.context.eventBus.emit('adapter:deactivated', {
       pluginName: this.name,
-      timestamp: Date.now(),
+      timestamp: Date.now()
     });
   }
 
@@ -871,7 +852,7 @@ export class QwenAdapter extends BaseAdapterPlugin {
     // Start observing
     this.mutationObserver.observe(document.body, {
       childList: true,
-      subtree: true,
+      subtree: true
     });
 
     this.domObserversSetup = true;
@@ -881,9 +862,7 @@ export class QwenAdapter extends BaseAdapterPlugin {
     // Allow multiple calls for UI integration (for re-injection after page changes)
     // but log it for debugging
     if (this.uiIntegrationSetup) {
-      this.context.logger.debug(
-        `UI integration already set up for instance #${this.instanceId}, re-injecting for page changes`,
-      );
+      this.context.logger.debug(`UI integration already set up for instance #${this.instanceId}, re-injecting for page changes`);
     } else {
       this.context.logger.debug(`Setting up UI integration for Qwen adapter instance #${this.instanceId}`);
       this.uiIntegrationSetup = true;
@@ -1006,11 +985,7 @@ export class QwenAdapter extends BaseAdapterPlugin {
     }
   }
 
-  private findButtonInsertionPoint(): {
-    container: Element;
-    insertAfter: Element | null;
-    insertBefore?: Element | null;
-  } | null {
+  private findButtonInsertionPoint(): { container: Element; insertAfter: Element | null; insertBefore?: Element | null } | null {
     this.context.logger.debug('Finding button insertion point for MCP popover');
 
     // New UI: Find the message-input-right-button container (contains thinking, voice, send buttons)
@@ -1096,11 +1071,7 @@ export class QwenAdapter extends BaseAdapterPlugin {
     return null;
   }
 
-  private injectMCPPopover(insertionPoint: {
-    container: Element;
-    insertAfter: Element | null;
-    insertBefore?: Element | null;
-  }): void {
+  private injectMCPPopover(insertionPoint: { container: Element; insertAfter: Element | null; insertBefore?: Element | null }): void {
     this.context.logger.debug('Injecting MCP popover into Qwen interface');
 
     try {
@@ -1347,8 +1318,8 @@ export class QwenAdapter extends BaseAdapterPlugin {
         parameters,
         result,
         timestamp: Date.now(),
-        status: 'success',
-      },
+        status: 'success'
+      }
     });
   }
 

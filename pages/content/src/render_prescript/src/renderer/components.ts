@@ -765,10 +765,7 @@ export const addExecuteButton = (blockDiv: HTMLDivElement, rawContent: string): 
 
         // Update history panel with mcpClient reference
         updateHistoryPanel(historyPanel, executionData, mcpClient);
-<<<<<<< HEAD
-=======
 
->>>>>>> upstream/main
       } catch (toolError: any) {
         resetButtonState();
 
@@ -786,6 +783,7 @@ export const addExecuteButton = (blockDiv: HTMLDivElement, rawContent: string): 
 
         displayResult(resultsPanel, loadingIndicator, false, errorMessage);
       }
+
     } catch (error: any) {
       resetButtonState();
       resultsPanel.style.display = 'block';
@@ -793,16 +791,12 @@ export const addExecuteButton = (blockDiv: HTMLDivElement, rawContent: string): 
       const errorMessage = error instanceof Error ? error.message : String(error);
       logger.error('Execute button error:', error);
 
-<<<<<<< HEAD
-      displayResult(resultsPanel, loadingIndicator, false, `Unexpected error: ${errorMessage}`);
-=======
       displayResult(
         resultsPanel,
         loadingIndicator,
         false,
         `Unexpected error: ${errorMessage}`,
       );
->>>>>>> upstream/main
     }
   };
 
@@ -912,15 +906,8 @@ export const extractFunctionParameters = (rawContent: string): Record<string, an
         } else {
           // Try to parse as JSON if it looks like JSON (starts with { or [)
           const trimmedValue = value.trim();
-<<<<<<< HEAD
-          if (
-            (trimmedValue.startsWith('{') && trimmedValue.endsWith('}')) ||
-            (trimmedValue.startsWith('[') && trimmedValue.endsWith(']'))
-          ) {
-=======
           if ((trimmedValue.startsWith('{') && trimmedValue.endsWith('}')) ||
             (trimmedValue.startsWith('[') && trimmedValue.endsWith(']'))) {
->>>>>>> upstream/main
             try {
               value = JSON.parse(trimmedValue);
               if (CONFIG.debug) logger.debug(`Auto-parsed JSON for parameter ${name}:`, value);
@@ -1647,8 +1634,7 @@ export const displayResult = (
     // Handle auto-attachment for large results
     if (
       rawResultText.length > MAX_INSERT_LENGTH &&
-      adapter &&
-      adapterSupportsCapability('file-attachment') &&
+      adapter && adapterSupportsCapability('file-attachment') &&
       WEBSITE_NAME_FOR_MAX_INSERT_LENGTH_CHECK.includes(websiteName)
     ) {
       logger.debug(`Auto-attaching file: Result length (${rawResultText.length}) exceeds ${MAX_INSERT_LENGTH}`);
@@ -1736,11 +1722,7 @@ export const displayResult = (
           new CustomEvent('mcp:tool-execution-complete', {
             detail: {
               result: wrappedResult,
-<<<<<<< HEAD
-              skipAutoInsertCheck: false,
-=======
               skipAutoInsertCheck: false
->>>>>>> upstream/main
             },
           }),
         );

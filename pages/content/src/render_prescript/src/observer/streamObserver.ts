@@ -249,14 +249,6 @@ const detectFunctionChunk = (
   }
 
   // Check if it's any significant content (XML or JSON)
-<<<<<<< HEAD
-  if (
-    CHUNK_PATTERNS.significantChunk.test(newContent) ||
-    CHUNK_PATTERNS.jsonSignificant.test(newContent) ||
-    newContent.length > 20
-  ) {
-    return { hasNewChunk: true, chunkType: 'content', isSignificant: newContent.length > 20 };
-=======
   // Enhanced to handle Unicode content length detection
   const contentLength = [...newContent].length; // Count Unicode characters correctly
   if (
@@ -265,7 +257,6 @@ const detectFunctionChunk = (
     contentLength > 20
   ) {
     return { hasNewChunk: true, chunkType: 'content', isSignificant: contentLength > 20 };
->>>>>>> upstream/main
   }
 
   return { hasNewChunk: false, chunkType: null, isSignificant: false };
