@@ -20,7 +20,7 @@ const DEFAULT_DELAYS = {
 const Settings: React.FC = () => {
   const { preferences, updatePreferences } = useUserPreferences();
   // Using local state for UI management if needed, though preferences come from store
-  const [trustedTools, setTrustedTools] = useState<string[]>([]); // Mock for now, would be in preferences store
+  const [newToolInput, setNewToolInput] = useState('');
 
   // Handle delay input changes
   const handleDelayChange = (type: 'autoInsert' | 'autoSubmit' | 'autoExecute', value: string) => {
@@ -81,7 +81,7 @@ const Settings: React.FC = () => {
       activeProfileId: useProfileStore.getState().activeProfileId,
       logs: useActivityStore.getState().logs,
       favorites: JSON.parse(localStorage.getItem('mcpFavorites') || '[]'),
-      version: '0.6.1',
+      version: '0.7.0',
       timestamp: new Date().toISOString(),
     };
 
@@ -308,20 +308,30 @@ const Settings: React.FC = () => {
               <input
                 type="text"
                 placeholder="Enter tool name (e.g., filesystem.read_file)"
+                value={newToolInput}
+                onChange={e => setNewToolInput(e.target.value)}
                 className="flex-1 px-3 py-2 text-sm border rounded-md bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-600 text-slate-900 dark:text-slate-100"
                 onKeyDown={e => {
                   if (e.key === 'Enter') {
-                    const val = e.currentTarget.value.trim();
-                    if (val && !trustedTools.includes(val)) {
-                      const newTools = [...trustedTools, val];
-                      setTrustedTools(newTools);
-                      updatePreferences({ trustedTools: newTools });
-                      e.currentTarget.value = '';
+                    const val = newToolInput.trim();
+                    if (val && !(preferences.trustedTools || []).includes(val)) {
+                      updatePreferences({ trustedTools: [...(preferences.trustedTools || []), val] });
+                      setNewToolInput('');
                     }
                   }
                 }}
               />
-              <Button size="sm" variant="outline" className="border-slate-300 dark:border-slate-600">
+              <Button
+                size="sm"
+                variant="outline"
+                className="border-slate-300 dark:border-slate-600"
+                onClick={() => {
+                  const val = newToolInput.trim();
+                  if (val && !(preferences.trustedTools || []).includes(val)) {
+                    updatePreferences({ trustedTools: [...(preferences.trustedTools || []), val] });
+                    setNewToolInput('');
+                  }
+                }}>
                 Add
               </Button>
             </div>
@@ -334,7 +344,6 @@ const Settings: React.FC = () => {
                   <button
                     onClick={() => {
                       const newTools = (preferences.trustedTools || []).filter(t => t !== tool);
-                      setTrustedTools(newTools);
                       updatePreferences({ trustedTools: newTools });
                     }}
                     className="hover:text-green-900 dark:hover:text-green-100">

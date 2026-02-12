@@ -1,6 +1,4 @@
 import { useEffect, useCallback } from 'react';
-import { useSidebarState } from './useSidebarState'; // Assuming this exists or will be created
-import { useToastStore } from '@src/stores/toast.store';
 
 type ShortcutAction = 'toggleSidebar' | 'closeSidebar' | 'searchTools' | 'switchTab' | 'testConnection';
 
@@ -11,7 +9,6 @@ export const useKeyboardShortcuts = (actions: {
   switchTab: (direction: 'next' | 'prev') => void;
   testConnection?: () => void;
 }) => {
-  const { addToast } = useToastStore.getState();
 
   const handleKeyDown = useCallback(
     (event: KeyboardEvent) => {

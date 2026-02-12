@@ -5,6 +5,15 @@ import { Card, CardContent, CardHeader, CardTitle } from '@src/components/ui/car
 import { Typography, Icon } from '../ui';
 import { cn } from '@src/lib/utils';
 
+const APP_VERSION = '0.7.0';
+
+const SHORTCUTS = [
+  { keys: 'Alt + Shift + S', action: 'Toggle Sidebar' },
+  { keys: 'Escape', action: 'Close Sidebar' },
+  { keys: '/', action: 'Focus Search' },
+  { keys: 'Ctrl + ←/→', action: 'Switch Tabs' },
+] as const;
+
 const Dashboard: React.FC = () => {
   const { logs } = useActivityStore();
 
@@ -35,13 +44,20 @@ const Dashboard: React.FC = () => {
 
   return (
     <div className="flex flex-col h-full space-y-4 p-4 overflow-y-auto">
-      <div className="flex flex-col space-y-2">
-        <Typography variant="h4" className="font-semibold text-slate-800 dark:text-slate-100">
-          Dashboard
-        </Typography>
-        <Typography variant="caption" className="text-slate-500 dark:text-slate-400">
-          Overview of your activity and tool usage.
-        </Typography>
+      <div className="flex items-center justify-between">
+        <div className="flex flex-col space-y-1">
+          <Typography variant="h4" className="font-semibold text-slate-800 dark:text-slate-100">
+            Dashboard
+          </Typography>
+          <Typography variant="caption" className="text-slate-500 dark:text-slate-400">
+            Overview of your activity and tool usage.
+          </Typography>
+        </div>
+        <div className="px-2.5 py-1 bg-indigo-50 dark:bg-indigo-900/30 rounded-full border border-indigo-200 dark:border-indigo-800">
+          <Typography variant="caption" className="font-mono text-xs font-semibold text-indigo-600 dark:text-indigo-400">
+            v{APP_VERSION}
+          </Typography>
+        </div>
       </div>
 
       <div className="grid grid-cols-2 gap-3">
@@ -105,6 +121,27 @@ const Dashboard: React.FC = () => {
                 </Typography>
               </div>
             </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Keyboard Shortcuts Reference */}
+      <Card className="border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm">
+        <CardHeader className="pb-2 border-b border-slate-100 dark:border-slate-800">
+          <CardTitle className="text-sm font-semibold text-slate-700 dark:text-slate-300">Keyboard Shortcuts</CardTitle>
+        </CardHeader>
+        <CardContent className="p-3">
+          <div className="space-y-2">
+            {SHORTCUTS.map(s => (
+              <div key={s.keys} className="flex items-center justify-between">
+                <Typography variant="caption" className="text-slate-600 dark:text-slate-400">
+                  {s.action}
+                </Typography>
+                <kbd className="px-2 py-0.5 text-[10px] font-mono bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 rounded border border-slate-200 dark:border-slate-700">
+                  {s.keys}
+                </kbd>
+              </div>
+            ))}
           </div>
         </CardContent>
       </Card>

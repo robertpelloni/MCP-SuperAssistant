@@ -68,6 +68,7 @@ export interface UserPreferences {
   isMinimized: boolean;
   customInstructions: string;
   customInstructionsEnabled: boolean;
+  trustedTools?: string[];
 }
 
 export interface Notification {

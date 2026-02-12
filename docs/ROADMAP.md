@@ -1,28 +1,44 @@
-# Project Roadmap
+# Roadmap
 
-## Phase 1: Core Functionality (✅ Completed)
-- [x] Basic MCP Client implementation.
-- [x] Sidebar UI with Available Tools list.
-- [x] Proxy connection support (SSE).
-- [x] Tool execution integration with Chat UI.
+## Phase 1: Foundation ✅
+- [x] MCP Client implementation
+- [x] Chrome Extension scaffold (Manifest V3)
+- [x] Sidebar UI with tab navigation
+- [x] Tool discovery and display
+- [x] Tool execution pipeline
+- [x] Result insertion into chat
+- [x] Proxy server for SSE/WebSocket bridging
+- [x] Multi-platform adapters (ChatGPT, Claude, Gemini, Perplexity, DeepSeek, etc.)
 
-## Phase 2: Robustness & UX (✅ Completed)
-- [x] Activity Logging system (persistence, filtering).
-- [x] Toast Notification system.
-- [x] Settings UI polish (sliders, groups).
-- [x] Server Status monitoring (Ping/Latency).
-- [x] Tool Favorites & Sorting.
-- [x] Comprehensive Help & Documentation.
+## Phase 2: Power Features ✅
+- [x] Auto-Submit: Automatically submit the AI's response button
+- [x] Auto-Insert: Automatically insert tool results into the chat
+- [x] Auto-Execute: Automatically execute tool calls detected in AI output
+- [x] Multi-Profile: Save and switch between MCP server configurations
+- [x] Push Mode: Real-time tool result streaming
+- [x] Custom Instructions: Inject system-level instructions per conversation
+- [x] Connection Health: Ping latency and server status monitoring
+- [x] FunctionBlock Parser: Detect and parse tool calls from rendered HTML
 
-## Phase 3: "Insanely Great" Features (🚧 In Progress)
-- [ ] **Documentation Overhaul**: Restructure instruction files (`AGENTS.md`, etc.) and create a single source of truth for versions.
-- [ ] **Version System**: Automated version bumping and Changelog generation.
-- [ ] **Dashboard**: A dedicated view for submodule status, build info, and usage analytics.
-- [ ] **Keyboard Shortcuts**: Global hotkeys for efficiency.
-- [ ] **Rich Renderer**: Better visualization for complex tool outputs (JSON -> Table/Markdown).
-- [ ] **Auto-Execute Whitelist**: granular control over which tools run automatically.
+## Phase 3: Polish & Documentation ✅
+- [x] Activity Log with rich rendering (JSON, Markdown, Images)
+- [x] Toast notification system
+- [x] Analytics Dashboard (runs, success rate, most-used tool)
+- [x] Dashboard version display & keyboard shortcuts reference
+- [x] Global keyboard shortcuts (Alt+Shift+S, /, Ctrl+Arrow, Escape)
+- [x] Auto-Execute trusted tools whitelist (Settings UI + store persistence)
+- [x] Documentation overhaul (AGENTS.md, CLAUDE.md, GEMINI.md, GPT.md, VISION.md)
+- [x] Version synchronization system (VERSION file as source of truth)
+- [x] Settings data export/import
+- [x] Favorites & sorting for tools
 
-## Phase 4: Future / Maintenance
-- [ ] Multi-proxy support (connect to multiple MCP servers simultaneously).
-- [ ] Cloud sync for settings/favorites.
-- [ ] Community tool registry integration.
+## Phase 4: Advanced (Planned)
+- [ ] Test suite: Unit tests (Vitest), e2e tests (Playwright)
+- [ ] Tool chaining: Compose multi-step tool pipelines
+- [ ] Resource browser: Browse MCP server resources
+- [ ] Prompt templates: Save and reuse common prompts
+- [ ] Plugin marketplace: Community adapters and extensions
+- [ ] Notification center: Aggregated error/success history
+- [ ] Accessibility audit: WCAG 2.1 AA compliance
+- [ ] i18n: Multi-language support
+- [ ] Firefox extension: Full cross-browser support

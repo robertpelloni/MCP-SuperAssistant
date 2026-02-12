@@ -11,6 +11,7 @@ if [[ "$1" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
     perl -i -pe"s/$current_version/'$1'/" "$0"
   '  {} \;
 
+  echo "$1" > VERSION
   echo "Updated versions to $1";
 else
   echo "Version format <$1> isn't correct, proper format is <0.0.0>";
