@@ -37,7 +37,7 @@ const SchemaRenderer: React.FC<SchemaRendererProps> = ({ schema, className }) =>
               className="border-b border-slate-100 dark:border-slate-800 last:border-0 hover:bg-slate-50 dark:hover:bg-slate-800/50">
               <td className="py-2 pl-1 pr-4 align-top">
                 <div className="flex items-center gap-1.5">
-                  <code className="bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded text-indigo-600 dark:text-indigo-400 font-mono text-[11px]">
+                  <code className="bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded text-primary-600 dark:text-primary-400 font-mono text-[11px]">
                     {name}
                   </code>
                   {required.includes(name) && (

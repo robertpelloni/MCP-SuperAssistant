@@ -1,4 +1,4 @@
-import { useUserPreferences } from '@src/hooks';
+import { useUIStore } from '@src/stores/ui.store';
 
 export class AutomationService {
   private static instance: AutomationService;
@@ -12,40 +12,39 @@ export class AutomationService {
     return AutomationService.instance;
   }
 
-  // Helper to get current prefs from store
+  // Helper to get current prefs from store - use store directly
   private getPreferences() {
-    return useUserPreferences.getState().preferences;
+    return useUIStore.getState().preferences;
   }
 
   public shouldAutoExecute(toolName: string): boolean {
     const prefs = this.getPreferences();
 
-    // Global auto-execute toggle must be on
-    if (!prefs.autoExecuteDelay && prefs.autoExecuteDelay !== 0) {
-      // If delay is undefined/null, we assume auto-execute is OFF (since it relies on a timer)
-      // Actually, checking if the feature is enabled usually depends on how we stored "enabled" state.
-      // In Settings.tsx, we treat `autoExecuteDelay` existence as the feature being potentially active,
-      // but usually there's a separate boolean.
-      // Based on previous code, we only have delays. Let's assume if delay is set, it's enabled?
-      // Wait, let's look at `Settings.tsx`. We have `autoExecuteDelay`.
-      // If we want a whitelist, we need to implement it.
-      return false;
+    // Check if autoExecute is enabled (by checking if delay is set, though better to have a bool)
+    // In Settings.tsx, we see `autoExecuteDelay` being managed.
+    // Assuming if delay is valid, it's ON.
+    if (prefs.autoExecuteDelay === undefined || prefs.autoExecuteDelay === null) {
+        return false;
     }
 
-    // If whitelist is empty, we might allow all (dangerous) or none (safe).
-    // For "Insanely Great" safety, we should strictly enforce whitelist if the feature is "Auto-Execute Safe Mode".
-    // However, the current requirement implies we need to add the whitelist logic.
+    const whitelist = prefs.autoExecuteWhitelist || [];
 
-    const whitelist = prefs.trustedTools || [];
+    // Safety Logic:
+    // If whitelist has items, we STRICTLY only allow tools in the whitelist.
     if (whitelist.length > 0) {
       return whitelist.includes(toolName);
     }
 
-    // Fallback: If no whitelist defined, behave as before (allow all if global setting is on)?
-    // Or better: Default to requiring manual approval unless whitelisted.
-    // Let's stick to: "If global auto-execute is ON, we execute."
-    // AND "If a whitelist exists, we ONLY execute if in whitelist."
-    return true;
+    // If whitelist is empty, it means "Trust None" or "Trust All"?
+    // In a high-security context ("Safe Mode"), empty whitelist should mean NO auto-execution.
+    // But for usability, if the user hasn't configured a whitelist but turned on the feature...
+    // Let's default to safe: If autoExecute is ON, but no whitelist, we require confirmation?
+    // OR we follow the global setting.
+    // Given the "Insanely Great" requirement for robustness, let's allow it but log a warning?
+    // Actually, `Settings.tsx` shows "Tools listed here will auto-execute".
+    // This implies that ONLY tools listed there will auto-execute.
+    // So if whitelist is empty, NOTHING auto-executes.
+    return false;
   }
 
   public async updateAutomationStateOnWindow() {
@@ -55,7 +54,7 @@ export class AutomationService {
       autoInsertDelay: prefs.autoInsertDelay,
       autoSubmitDelay: prefs.autoSubmitDelay,
       autoExecuteDelay: prefs.autoExecuteDelay,
-      trustedTools: prefs.trustedTools,
+      autoExecuteWhitelist: prefs.autoExecuteWhitelist,
     };
   }
 }

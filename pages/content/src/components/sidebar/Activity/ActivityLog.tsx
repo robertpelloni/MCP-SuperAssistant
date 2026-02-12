@@ -9,12 +9,29 @@ import { cn } from '@src/lib/utils';
 const ActivityLog: React.FC = () => {
   const { logs, clearLogs, removeLog } = useActivityStore();
   const [filter, setFilter] = useState<'all' | LogType>('all');
+  const [searchQuery, setSearchQuery] = useState('');
   const [expandedLogId, setExpandedLogId] = useState<string | null>(null);
 
   const filteredLogs = useMemo(() => {
-    if (filter === 'all') return logs;
-    return logs.filter(log => log.type === filter);
-  }, [logs, filter]);
+    let result = logs;
+
+    // Apply type filter
+    if (filter !== 'all') {
+      result = result.filter(log => log.type === filter);
+    }
+
+    // Apply search query
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      result = result.filter(log =>
+        log.title.toLowerCase().includes(query) ||
+        (log.detail && log.detail.toLowerCase().includes(query)) ||
+        (log.metadata && JSON.stringify(log.metadata).toLowerCase().includes(query))
+      );
+    }
+
+    return result;
+  }, [logs, filter, searchQuery]);
 
   const getStatusColor = (status: LogStatus) => {
     switch (status) {
@@ -67,6 +84,28 @@ const ActivityLog: React.FC = () => {
             <Icon name="x" size="xs" className="mr-1" />
             Clear
           </Button>
+        </div>
+
+        {/* Search */}
+        <div className="relative">
+          <input
+            type="text"
+            placeholder="Search logs..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full px-3 py-2 pl-9 text-xs border border-slate-300 dark:border-slate-600 rounded bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+          <div className="absolute left-2.5 top-2.5">
+            <Icon name="search" size="xs" className="text-slate-400" />
+          </div>
+          {searchQuery && (
+            <button
+              onClick={() => setSearchQuery('')}
+              className="absolute right-2.5 top-2.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
+            >
+              <Icon name="x" size="xs" />
+            </button>
+          )}
         </div>
 
         {/* Filters */}

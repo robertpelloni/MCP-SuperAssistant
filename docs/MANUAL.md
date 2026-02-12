@@ -141,3 +141,39 @@ A: Yes. The extension communicates directly with your local proxy. Your data (fi
 
 **Q: Which AI models work best?**
 A: Models with strong function calling capabilities (like GPT-4, Claude 3.5 Sonnet) work best.
+
+## Macros & Agentic Mode
+
+### Overview
+Macros allow you to automate sequences of tool executions. With "Agentic Mode," you can add conditional logic and loops to create powerful workflows that adapt based on tool outputs.
+
+### Creating a Macro
+1.  Go to the **Macros** tab in the sidebar.
+2.  Click **New Macro**.
+3.  Enter a name and description.
+4.  Add steps:
+    *   **Tool**: Execute a specific tool with predefined arguments.
+    *   **Condition**: Check a condition (JavaScript expression) and branch execution (Continue, Stop, Go to Step).
+    *   **Delay**: Wait for a specified duration.
+
+### Agentic Capabilities
+*   **Variables**: Access previous results using `{{lastResult}}` in tool arguments.
+*   **Conditionals**: Evaluate expressions like `lastResult.status === 'success'` to decide the next step.
+*   **Loops**: Use "Go to Step" actions to retry steps or iterate until a condition is met.
+
+### Running Macros
+Click the **Play** button on a macro card to execute it. Progress and results are shown in the Activity Log and via toast notifications.
+
+### Macro Management
+*   **Import/Export**: Use the 'Export' button in the Macro Builder to save your workflows as JSON files. Use the 'Import' button in the main Macro list to load them. This allows you to share complex automations with others.
+
+### Dashboard Analytics
+The Dashboard now provides deeper insights:
+*   **Activity Chart**: View your tool usage over the last 7 days.
+*   **Quick Access**: Run your most recently updated macros directly from the dashboard.
+
+### Context Manager
+Located in the input area (click the book icon), the Context Manager allows you to:
+*   **Save Context**: Store frequently used prompts, instructions, or data snippets.
+*   **Insert Context**: Quickly inject saved snippets into your current conversation.
+*   **Manage**: Edit or delete snippets as your workflow evolves.

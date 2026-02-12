@@ -633,6 +633,13 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     handleVersionUpdate(message, sendResponse);
     return true; // Async response
   }
+  // MCP Context Save handling
+  else if (message.type === 'mcp:save-context') {
+    logger.debug('[Content] Received save context request', message.payload);
+    eventBus.emit('context:save', message.payload);
+    sendResponse({ success: true });
+    return false; // Sync response
+  }
 
   // Always return true if you want to use sendResponse asynchronously
   return true;

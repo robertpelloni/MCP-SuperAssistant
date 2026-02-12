@@ -36,7 +36,7 @@ const Help: React.FC = () => {
       <Icon
         name={iconName}
         size="sm"
-        className={cn('mr-2 flex-shrink-0', activeSection === section ? 'text-indigo-600 dark:text-indigo-400' : '')}
+        className={cn('mr-2 flex-shrink-0', activeSection === section ? 'text-primary-600 dark:text-primary-400' : '')}
       />
       <span className="truncate">{label}</span>
     </Button>
@@ -176,7 +176,7 @@ const Help: React.FC = () => {
               <div className="grid grid-cols-1 gap-3">
                 <div className="border border-slate-100 dark:border-slate-700 p-3 rounded-lg">
                   <Typography variant="subtitle" className="font-semibold text-sm flex items-center gap-2">
-                    <Icon name="search" size="xs" className="text-indigo-500" /> Tool Detection
+                    <Icon name="search" size="xs" className="text-primary-500" /> Tool Detection
                   </Typography>
                   <Typography variant="body" className="text-xs mt-1 text-slate-600 dark:text-slate-400">
                     The extension automatically detects when the AI wants to call a tool. It presents a "Call Tool" card
@@ -520,7 +520,7 @@ const Help: React.FC = () => {
                     variant="outline"
                     size="sm"
                     className="w-full justify-start h-10 hover:bg-slate-50 dark:hover:bg-slate-800">
-                    <Icon name="life-buoy" size="sm" className="mr-3 text-indigo-500" />
+                    <Icon name="life-buoy" size="sm" className="mr-3 text-primary-500" />
                     Report an Issue on GitHub
                   </Button>
                 </a>
@@ -533,7 +533,7 @@ const Help: React.FC = () => {
                     variant="outline"
                     size="sm"
                     className="w-full justify-start h-10 hover:bg-slate-50 dark:hover:bg-slate-800">
-                    <Icon name="arrow-up-right" size="sm" className="mr-3 text-indigo-500" />
+                    <Icon name="arrow-up-right" size="sm" className="mr-3 text-primary-500" />
                     Official Website
                   </Button>
                 </a>

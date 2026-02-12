@@ -11,6 +11,10 @@ import Settings from './Settings/Settings';
 import Help from './Help/Help';
 import ActivityLog from './Activity/ActivityLog';
 import Dashboard from './Dashboard/Dashboard';
+import MacroList from './Macros/MacroList';
+import SystemInfo from './System/SystemInfo';
+import CommandPalette from './CommandPalette/CommandPalette';
+import Onboarding from './Onboarding/Onboarding';
 import { useMcpCommunication } from '@src/hooks/useMcpCommunication';
 import { logMessage } from '@src/utils/helpers';
 import { eventBus } from '@src/events/event-bus';
@@ -83,6 +87,55 @@ const Sidebar: React.FC<SidebarProps> = ({ initialPreferences }) => {
   } = useSidebarState();
   const { preferences, updatePreferences } = useUserPreferences();
   const { status: connectionStatus } = useConnectionStatus();
+
+  // Apply accent color
+  useEffect(() => {
+    const accentColor = preferences.accentColor || 'indigo';
+    const root = document.documentElement;
+    // Map of tailwind colors to hex values (simplified approximation for CSS vars)
+    const colorMap: Record<string, Record<number, string>> = {
+      indigo: {
+        50: '#eef2ff', 100: '#e0e7ff', 200: '#c7d2fe', 300: '#a5b4fc',
+        400: '#818cf8', 500: '#6366f1', 600: '#4f46e5', 700: '#4338ca',
+        800: '#3730a3', 900: '#312e81'
+      },
+      blue: {
+        50: '#eff6ff', 100: '#dbeafe', 200: '#bfdbfe', 300: '#93c5fd',
+        400: '#60a5fa', 500: '#3b82f6', 600: '#2563eb', 700: '#1d4ed8',
+        800: '#1e40af', 900: '#1e3a8a'
+      },
+      green: {
+        50: '#f0fdf4', 100: '#dcfce7', 200: '#bbf7d0', 300: '#86efac',
+        400: '#4ade80', 500: '#22c55e', 600: '#16a34a', 700: '#15803d',
+        800: '#166534', 900: '#14532d'
+      },
+      purple: {
+        50: '#faf5ff', 100: '#f3e8ff', 200: '#e9d5ff', 300: '#d8b4fe',
+        400: '#c084fc', 500: '#a855f7', 600: '#9333ea', 700: '#7e22ce',
+        800: '#6b21a8', 900: '#581c87'
+      },
+      red: {
+        50: '#fef2f2', 100: '#fee2e2', 200: '#fecaca', 300: '#fca5a5',
+        400: '#f87171', 500: '#ef4444', 600: '#dc2626', 700: '#b91c1c',
+        800: '#991b1b', 900: '#7f1d1d'
+      },
+      orange: {
+        50: '#fff7ed', 100: '#ffedd5', 200: '#fed7aa', 300: '#fdba74',
+        400: '#fb923c', 500: '#f97316', 600: '#ea580c', 700: '#c2410c',
+        800: '#9a3412', 900: '#7c2d12'
+      },
+    };
+
+    const colors = colorMap[accentColor] || colorMap['indigo'];
+    const root = sidebarRef.current;
+
+    if (root) {
+      Object.entries(colors).forEach(([shade, value]) => {
+        root.style.setProperty(`--color-primary-${shade}`, value);
+      });
+      root.setAttribute('data-accent', accentColor);
+    }
+  }, [preferences.accentColor]);
 
   // Error states that could block rendering
   const [initializationError, setInitializationError] = useState<string | null>(null);
@@ -291,6 +344,22 @@ const Sidebar: React.FC<SidebarProps> = ({ initialPreferences }) => {
     });
     unsubscribeCallbacks.push(unsubscribeBridgeRestored);
 
+    // Listen for context menu save action
+    const unsubscribeContextSave = eventBus.on('context:save', data => {
+      logMessage(`[Sidebar] Received context save request: ${data.content.substring(0, 20)}...`);
+      // We'll handle this by opening the Context Manager or just adding it
+      // For now, let's just add a toast and maybe open the manager
+      addToast({
+        title: 'Text Selected',
+        message: 'Text copied from context menu. Open Context Manager to save.',
+        type: 'info',
+        duration: 3000,
+      });
+      // In a real implementation, we might want to auto-open the Context Manager
+      // or pass this data to the InputArea
+    });
+    unsubscribeCallbacks.push(unsubscribeContextSave);
+
     // Cleanup all event listeners
     return () => {
       unsubscribeCallbacks.forEach(unsubscribe => unsubscribe());
@@ -330,8 +399,9 @@ const Sidebar: React.FC<SidebarProps> = ({ initialPreferences }) => {
 
   // Local UI state that doesn't need to be in the store
   const [activeTab, setActiveTab] = useState<
-    'availableTools' | 'instructions' | 'activity' | 'dashboard' | 'settings' | 'help'
+    'availableTools' | 'instructions' | 'activity' | 'dashboard' | 'macros' | 'settings' | 'help' | 'system'
   >('availableTools');
+  const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [isInputMinimized, setIsInputMinimized] = useState(false);
@@ -352,6 +422,9 @@ const Sidebar: React.FC<SidebarProps> = ({ initialPreferences }) => {
     closeSidebar: () => {
       if (!isMinimized) toggleMinimize('shortcut');
     },
+    toggleCommandPalette: () => {
+      setIsCommandPaletteOpen(prev => !prev);
+    },
     focusSearch: () => {
       // This requires passing a ref down to AvailableTools or managing focus globally
       // For now, let's just switch to the tab
@@ -359,13 +432,15 @@ const Sidebar: React.FC<SidebarProps> = ({ initialPreferences }) => {
       // Ideally we would focus the input inside AvailableTools
     },
     switchTab: direction => {
-      const tabs: ('availableTools' | 'instructions' | 'activity' | 'dashboard' | 'settings' | 'help')[] = [
+      const tabs: ('availableTools' | 'instructions' | 'activity' | 'dashboard' | 'macros' | 'settings' | 'help' | 'system')[] = [
         'availableTools',
         'instructions',
         'activity',
         'dashboard',
+        'macros',
         'settings',
         'help',
+        'system',
       ];
       const currentIndex = tabs.indexOf(activeTab);
       let nextIndex = direction === 'next' ? currentIndex + 1 : currentIndex - 1;
@@ -755,7 +830,7 @@ const Sidebar: React.FC<SidebarProps> = ({ initialPreferences }) => {
           onResize={handleResize}
           minWidth={SIDEBAR_DEFAULT_WIDTH}
           maxWidth={500}
-          className="absolute left-0 top-0 bottom-0 w-1 cursor-ew-resize hover:bg-indigo-400 dark:hover:bg-indigo-600 z-[60] transition-colors duration-300"
+          className="absolute left-0 top-0 bottom-0 w-1 cursor-ew-resize hover:bg-primary-400 dark:hover:bg-primary-600 z-[60] transition-colors duration-300"
         />
       )}
 
@@ -813,7 +888,7 @@ const Sidebar: React.FC<SidebarProps> = ({ initialPreferences }) => {
                 <Icon
                   name={getCurrentThemeIcon()}
                   size="sm"
-                  className="transition-all text-indigo-600 dark:text-indigo-400"
+                  className="transition-all text-primary-600 dark:text-primary-400"
                 />
                 <span className="sr-only">Toggle theme</span>
               </Button>
@@ -843,7 +918,17 @@ const Sidebar: React.FC<SidebarProps> = ({ initialPreferences }) => {
 
       {/* Main Content Area - Using sliding panel approach */}
       <div className="sidebar-inner-content flex-1 relative overflow-hidden bg-white dark:bg-slate-900">
+        <Onboarding />
         <ToastContainer />
+        <CommandPalette
+          isOpen={isCommandPaletteOpen}
+          onClose={() => setIsCommandPaletteOpen(false)}
+          onNavigate={tab => {
+            setActiveTab(tab);
+            if (!sidebarVisible) toggleSidebar();
+          }}
+          togglePushMode={() => handlePushModeToggle(!isPushMode)}
+        />
         {/* Virtual slide - content always at full width */}
         <div
           ref={contentRef}
@@ -951,7 +1036,7 @@ const Sidebar: React.FC<SidebarProps> = ({ initialPreferences }) => {
                     className={cn(
                       'py-2 px-4 font-medium text-sm transition-all duration-200',
                       activeTab === 'availableTools'
-                        ? 'border-b-2 border-indigo-600 text-indigo-600 dark:border-indigo-400 dark:text-indigo-400'
+                        ? 'border-b-2 border-primary-600 text-primary-600 dark:border-primary-400 dark:text-primary-400'
                         : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-t-lg',
                     )}
                     onClick={() => setActiveTab('availableTools')}>
@@ -961,7 +1046,7 @@ const Sidebar: React.FC<SidebarProps> = ({ initialPreferences }) => {
                     className={cn(
                       'py-2 px-4 font-medium text-sm transition-all duration-200',
                       activeTab === 'instructions'
-                        ? 'border-b-2 border-indigo-600 text-indigo-600 dark:border-indigo-400 dark:text-indigo-400'
+                        ? 'border-b-2 border-primary-600 text-primary-600 dark:border-primary-400 dark:text-primary-400'
                         : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-t-lg',
                     )}
                     onClick={() => setActiveTab('instructions')}>
@@ -971,7 +1056,7 @@ const Sidebar: React.FC<SidebarProps> = ({ initialPreferences }) => {
                     className={cn(
                       'py-2 px-4 font-medium text-sm transition-all duration-200',
                       activeTab === 'activity'
-                        ? 'border-b-2 border-indigo-600 text-indigo-600 dark:border-indigo-400 dark:text-indigo-400'
+                        ? 'border-b-2 border-primary-600 text-primary-600 dark:border-primary-400 dark:text-primary-400'
                         : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-t-lg',
                     )}
                     onClick={() => setActiveTab('activity')}>
@@ -981,7 +1066,7 @@ const Sidebar: React.FC<SidebarProps> = ({ initialPreferences }) => {
                     className={cn(
                       'py-2 px-4 font-medium text-sm transition-all duration-200',
                       activeTab === 'dashboard'
-                        ? 'border-b-2 border-indigo-600 text-indigo-600 dark:border-indigo-400 dark:text-indigo-400'
+                        ? 'border-b-2 border-primary-600 text-primary-600 dark:border-primary-400 dark:text-primary-400'
                         : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-t-lg',
                     )}
                     onClick={() => setActiveTab('dashboard')}>
@@ -990,8 +1075,18 @@ const Sidebar: React.FC<SidebarProps> = ({ initialPreferences }) => {
                   <button
                     className={cn(
                       'py-2 px-4 font-medium text-sm transition-all duration-200',
+                      activeTab === 'macros'
+                        ? 'border-b-2 border-primary-600 text-primary-600 dark:border-primary-400 dark:text-primary-400'
+                        : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-t-lg',
+                    )}
+                    onClick={() => setActiveTab('macros')}>
+                    Macros
+                  </button>
+                  <button
+                    className={cn(
+                      'py-2 px-4 font-medium text-sm transition-all duration-200',
                       activeTab === 'settings'
-                        ? 'border-b-2 border-indigo-600 text-indigo-600 dark:border-indigo-400 dark:text-indigo-400'
+                        ? 'border-b-2 border-primary-600 text-primary-600 dark:border-primary-400 dark:text-primary-400'
                         : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-t-lg',
                     )}
                     onClick={() => setActiveTab('settings')}>
@@ -1000,8 +1095,18 @@ const Sidebar: React.FC<SidebarProps> = ({ initialPreferences }) => {
                   <button
                     className={cn(
                       'py-2 px-4 font-medium text-sm transition-all duration-200',
+                      activeTab === 'system'
+                        ? 'border-b-2 border-primary-600 text-primary-600 dark:border-primary-400 dark:text-primary-400'
+                        : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-t-lg',
+                    )}
+                    onClick={() => setActiveTab('system')}>
+                    System
+                  </button>
+                  <button
+                    className={cn(
+                      'py-2 px-4 font-medium text-sm transition-all duration-200',
                       activeTab === 'help'
-                        ? 'border-b-2 border-indigo-600 text-indigo-600 dark:border-indigo-400 dark:text-indigo-400'
+                        ? 'border-b-2 border-primary-600 text-primary-600 dark:border-primary-400 dark:text-primary-400'
                         : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-t-lg',
                     )}
                     onClick={() => setActiveTab('help')}>
@@ -1059,7 +1164,16 @@ const Sidebar: React.FC<SidebarProps> = ({ initialPreferences }) => {
                   'h-full overflow-y-auto scrollbar-thin scrollbar-thumb-slate-300 dark:scrollbar-thumb-slate-600 scrollbar-track-transparent',
                   { hidden: activeTab !== 'dashboard' },
                 )}>
-                <Dashboard />
+                <Dashboard onExecute={sendMessage} />
+              </div>
+
+              {/* Macros */}
+              <div
+                className={cn(
+                  'h-full overflow-y-auto scrollbar-thin scrollbar-thumb-slate-300 dark:scrollbar-thumb-slate-600 scrollbar-track-transparent',
+                  { hidden: activeTab !== 'macros' },
+                )}>
+                <MacroList onExecute={sendMessage} />
               </div>
 
               {/* Settings */}
@@ -1069,6 +1183,15 @@ const Sidebar: React.FC<SidebarProps> = ({ initialPreferences }) => {
                   { hidden: activeTab !== 'settings' },
                 )}>
                 <Settings />
+              </div>
+
+              {/* System */}
+              <div
+                className={cn(
+                  'h-full overflow-y-auto scrollbar-thin scrollbar-thumb-slate-300 dark:scrollbar-thumb-slate-600 scrollbar-track-transparent',
+                  { hidden: activeTab !== 'system' },
+                )}>
+                <SystemInfo />
               </div>
 
               {/* Help */}
@@ -1081,29 +1204,35 @@ const Sidebar: React.FC<SidebarProps> = ({ initialPreferences }) => {
               </div>
             </div>
 
-            {/* Input Area (Always at the bottom) */}
-            {/* <div className="border-t border-slate-200 dark:border-slate-700 flex-shrink-0 bg-white dark:bg-slate-800 shadow-inner">
+            {/* Input Area (Smart Context) */}
+            <div className="border-t border-slate-200 dark:border-slate-700 flex-shrink-0 bg-white dark:bg-slate-800 shadow-inner z-10">
               {!isInputMinimized ? (
-                <div className="relative">
-                  <Button variant="ghost" size="sm" onClick={toggleInputMinimize} className="absolute top-2 right-2">
-                    <Icon name="chevron-down" size="sm" />
-                  </Button>
-                  <InputArea
-                    onSubmit={async text => {
+                <InputArea
+                  onSubmit={async text => {
+                    // In "Push Mode" or overlay, we usually want to insert into the AI's chat box
+                    // But if we have our own input area, we might want to send directly to the AI via adapter
+                    try {
                       await adapter.insertTextIntoInput(text);
-                      await new Promise(resolve => setTimeout(resolve, 300));
-                      await adapter.triggerSubmission();
-                    }}
-                    onToggleMinimize={toggleInputMinimize}
-                  />
-                </div>
+                      // Optional: trigger submission if configured
+                      if (autoSubmit) {
+                        await new Promise(resolve => setTimeout(resolve, 300));
+                        await adapter.triggerSubmission();
+                      }
+                    } catch (e) {
+                      logMessage(`[Sidebar] Error inserting text: ${e}`);
+                    }
+                  }}
+                  onToggleMinimize={toggleInputMinimize}
+                />
               ) : (
-                <Button variant="default" size="sm" onClick={toggleInputMinimize} className="w-full h-10">
-                  <Icon name="chevron-up" size="sm" className="mr-2" />
-                  Show Input
-                </Button>
+                <div className="p-2">
+                  <Button variant="outline" size="sm" onClick={toggleInputMinimize} className="w-full h-8 text-xs">
+                    <Icon name="chevron-up" size="xs" className="mr-2" />
+                    Show Input & Context
+                  </Button>
+                </div>
               )}
-            </div> */}
+            </div>
           </div>
         </div>
       </div>

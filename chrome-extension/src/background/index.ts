@@ -585,6 +585,26 @@ chrome.runtime.onInstalled.addListener(async details => {
   // initializeExtension().catch(err => logger.error("Error re-initializing after install:", err));
 });
 
+// Setup context menu
+chrome.runtime.onInstalled.addListener(() => {
+  chrome.contextMenus.create({
+    id: 'save-to-mcp-context',
+    title: 'Save to MCP Context',
+    contexts: ['selection'],
+  });
+});
+
+chrome.contextMenus.onClicked.addListener((info, tab) => {
+  if (info.menuItemId === 'save-to-mcp-context' && tab?.id) {
+    chrome.tabs.sendMessage(tab.id, {
+      type: 'mcp:save-context',
+      payload: {
+        content: info.selectionText,
+      },
+    });
+  }
+});
+
 chrome.runtime.onStartup.addListener(() => {
   logger.debug('Browser startup detected.');
   sendAnalyticsEvent('browser_startup', {});

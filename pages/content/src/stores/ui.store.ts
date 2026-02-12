@@ -58,6 +58,8 @@ const initialUserPreferences: UserPreferences = {
   autoInsertDelay: 2, // Default delay in seconds
   autoExecuteDelay: 2, // Default delay in seconds
   autoSubmitDelay: 2, // Default delay in seconds
+  accentColor: 'indigo',
+  autoExecuteWhitelist: [],
 };
 
 const initialState: Omit<
