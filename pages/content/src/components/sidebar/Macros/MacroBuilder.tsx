@@ -184,8 +184,8 @@ const MacroBuilder: React.FC<MacroBuilderProps> = ({ existingMacro, onClose }) =
                     <span className={cn(
                       "text-xs font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full border",
                       step.type === 'tool' ? "bg-blue-50 text-blue-600 border-blue-100 dark:bg-blue-900/20 dark:text-blue-400 dark:border-blue-900" :
-                      step.type === 'condition' ? "bg-amber-50 text-amber-600 border-amber-100 dark:bg-amber-900/20 dark:text-amber-400 dark:border-amber-900" :
-                      "bg-slate-50 text-slate-600 border-slate-100 dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700"
+                        step.type === 'condition' ? "bg-amber-50 text-amber-600 border-amber-100 dark:bg-amber-900/20 dark:text-amber-400 dark:border-amber-900" :
+                          "bg-slate-50 text-slate-600 border-slate-100 dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700"
                     )}>
                       {step.type}
                     </span>
@@ -235,7 +235,7 @@ const MacroBuilder: React.FC<MacroBuilderProps> = ({ existingMacro, onClose }) =
                               // Better: Use a string buffer or simple text input for now.
                             }
                           }}
-                          placeholder="{ \"arg\": \"value\" }"
+                          placeholder={'{ "arg": "value" }'}
                           className="font-mono text-xs h-24"
                         />
                         <p className="text-[10px] text-slate-400 mt-1">
