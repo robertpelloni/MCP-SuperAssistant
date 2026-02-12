@@ -41,8 +41,8 @@ The project uses pnpm workspaces. These are not git submodules but internal pack
 
 | Package | Path | Version | Description |
 | :--- | :--- | :--- | :--- |
-| `chrome-extension` | `chrome-extension/` | 1.0.0-rc1 | The build entry point for the extension. |
-| `content` | `pages/content/` | 1.0.0-rc1 | The frontend UI (Sidebar) injected into pages. |
+| `chrome-extension` | `chrome-extension/` | 1.1.0 | The build entry point for the extension. |
+| `content` | `pages/content/` | 1.1.0 | The frontend UI (Sidebar) injected into pages. |
 | `@extension/shared` | `packages/shared/` | workspace:* | Shared utilities and logger. |
 | `@extension/storage` | `packages/storage/` | workspace:* | Type-safe wrappers for `chrome.storage`. |
 | `@extension/env` | `packages/env/` | workspace:* | Environment variable handling. |
@@ -56,7 +56,7 @@ The project uses pnpm workspaces. These are not git submodules but internal pack
 ## Versioning
 
 The single source of truth for the project version is the `VERSION` file in the root directory.
-Currently: `1.0.0-rc1`
+Currently: `1.1.0`
 
 When updating the version:
 1.  Update `VERSION`.

@@ -13,6 +13,7 @@ import { getPreviousExecution, getPreviousExecutionLegacy, generateContentSignat
 import type { ParamValueElement } from '../core/types';
 import { extractJSONFunctionInfo, extractJSONParameters } from '../parser/jsonFunctionParser';
 import { createLogger } from '@extension/shared/lib/logger';
+import { AutomationService } from '@src/services/automation.service';
 
 // Define custom property for tracking scroll state
 
@@ -1508,6 +1509,12 @@ export const renderFunctionCall = (block: HTMLPreElement, isProcessingRef: { cur
       if (contentSignature && !executionTracker.isFunctionExecuted(callId, contentSignature, functionName)) {
         if (autoExecuteEnabled !== true) {
           logger.debug(`Auto-execution disabled by user settings for block ${blockId} (${functionName})`);
+          return true;
+        }
+
+        // Check whitelist
+        if (!AutomationService.getInstance().shouldAutoExecute(functionName)) {
+          logger.debug(`Auto-execution blocked by whitelist for block ${blockId} (${functionName})`);
           return true;
         }
 

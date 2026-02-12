@@ -12,6 +12,7 @@ import Help from './Help/Help';
 import ActivityLog from './Activity/ActivityLog';
 import Dashboard from './Dashboard/Dashboard';
 import MacroList from './Macros/MacroList';
+import SystemInfo from './System/SystemInfo';
 import CommandPalette from './CommandPalette/CommandPalette';
 import Onboarding from './Onboarding/Onboarding';
 import { useMcpCommunication } from '@src/hooks/useMcpCommunication';
@@ -398,7 +399,7 @@ const Sidebar: React.FC<SidebarProps> = ({ initialPreferences }) => {
 
   // Local UI state that doesn't need to be in the store
   const [activeTab, setActiveTab] = useState<
-    'availableTools' | 'instructions' | 'activity' | 'dashboard' | 'macros' | 'settings' | 'help'
+    'availableTools' | 'instructions' | 'activity' | 'dashboard' | 'macros' | 'settings' | 'help' | 'system'
   >('availableTools');
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -431,7 +432,7 @@ const Sidebar: React.FC<SidebarProps> = ({ initialPreferences }) => {
       // Ideally we would focus the input inside AvailableTools
     },
     switchTab: direction => {
-      const tabs: ('availableTools' | 'instructions' | 'activity' | 'dashboard' | 'macros' | 'settings' | 'help')[] = [
+      const tabs: ('availableTools' | 'instructions' | 'activity' | 'dashboard' | 'macros' | 'settings' | 'help' | 'system')[] = [
         'availableTools',
         'instructions',
         'activity',
@@ -439,6 +440,7 @@ const Sidebar: React.FC<SidebarProps> = ({ initialPreferences }) => {
         'macros',
         'settings',
         'help',
+        'system',
       ];
       const currentIndex = tabs.indexOf(activeTab);
       let nextIndex = direction === 'next' ? currentIndex + 1 : currentIndex - 1;
@@ -1093,6 +1095,16 @@ const Sidebar: React.FC<SidebarProps> = ({ initialPreferences }) => {
                   <button
                     className={cn(
                       'py-2 px-4 font-medium text-sm transition-all duration-200',
+                      activeTab === 'system'
+                        ? 'border-b-2 border-primary-600 text-primary-600 dark:border-primary-400 dark:text-primary-400'
+                        : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-t-lg',
+                    )}
+                    onClick={() => setActiveTab('system')}>
+                    System
+                  </button>
+                  <button
+                    className={cn(
+                      'py-2 px-4 font-medium text-sm transition-all duration-200',
                       activeTab === 'help'
                         ? 'border-b-2 border-primary-600 text-primary-600 dark:border-primary-400 dark:text-primary-400'
                         : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-t-lg',
@@ -1171,6 +1183,15 @@ const Sidebar: React.FC<SidebarProps> = ({ initialPreferences }) => {
                   { hidden: activeTab !== 'settings' },
                 )}>
                 <Settings />
+              </div>
+
+              {/* System */}
+              <div
+                className={cn(
+                  'h-full overflow-y-auto scrollbar-thin scrollbar-thumb-slate-300 dark:scrollbar-thumb-slate-600 scrollbar-track-transparent',
+                  { hidden: activeTab !== 'system' },
+                )}>
+                <SystemInfo />
               </div>
 
               {/* Help */}

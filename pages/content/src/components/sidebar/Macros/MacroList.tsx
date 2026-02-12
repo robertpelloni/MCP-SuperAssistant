@@ -17,6 +17,8 @@ const MacroList: React.FC<MacroListProps> = ({ onExecute }) => {
   const [editingMacro, setEditingMacro] = useState<Macro | null>(null);
   const [isCreating, setIsCreating] = useState(false);
   const [runningMacroId, setRunningMacroId] = useState<string | null>(null);
+  const [importUrl, setImportUrl] = useState('');
+  const [showImportUrlInput, setShowImportUrlInput] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleDelete = (id: string, e: React.MouseEvent) => {
@@ -43,6 +45,55 @@ const MacroList: React.FC<MacroListProps> = ({ onExecute }) => {
 
   const handleImportClick = () => {
     fileInputRef.current?.click();
+  };
+
+  const handleImportUrlClick = () => {
+    setShowImportUrlInput(!showImportUrlInput);
+  };
+
+  const handleImportFromUrl = async () => {
+    if (!importUrl.trim()) return;
+
+    try {
+      addToast({
+        title: 'Importing...',
+        message: 'Fetching macro from URL...',
+        type: 'info',
+        duration: 2000,
+      });
+
+      const response = await fetch(importUrl);
+      if (!response.ok) throw new Error('Failed to fetch macro');
+
+      const macroData = await response.json();
+
+      // Basic validation
+      if (!macroData.name || !Array.isArray(macroData.steps)) {
+        throw new Error('Invalid macro file format');
+      }
+
+      addMacro({
+        name: macroData.name + ' (Imported)',
+        description: macroData.description || '',
+        steps: macroData.steps,
+      });
+
+      addToast({
+        title: 'Import Successful',
+        message: `Imported "${macroData.name}"`,
+        type: 'success',
+        duration: 3000,
+      });
+      setImportUrl('');
+      setShowImportUrlInput(false);
+    } catch (error) {
+      addToast({
+        title: 'Import Failed',
+        message: error instanceof Error ? error.message : 'Unknown error',
+        type: 'error',
+        duration: 5000,
+      });
+    }
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -150,16 +201,37 @@ const MacroList: React.FC<MacroListProps> = ({ onExecute }) => {
             accept=".json"
             className="hidden"
           />
-          <Button onClick={handleImportClick} size="sm" variant="outline" className="flex items-center gap-1 hidden sm:flex" title="Import from JSON">
-            <Icon name="upload" size="xs" className="mr-1" />
-            Import
-          </Button>
+          <div className="flex gap-1">
+            <Button onClick={handleImportUrlClick} size="sm" variant="ghost" className="h-8 w-8 p-0" title="Import from URL">
+              <Icon name="globe" size="xs" />
+            </Button>
+            <Button onClick={handleImportClick} size="sm" variant="outline" className="flex items-center gap-1 hidden sm:flex" title="Import from JSON">
+              <Icon name="upload" size="xs" className="mr-1" />
+              Import
+            </Button>
+          </div>
           <Button onClick={handleCreate} size="sm" className="flex items-center gap-1">
             <Icon name="plus" size="xs" />
             New
           </Button>
         </div>
       </div>
+
+      {showImportUrlInput && (
+        <div className="flex gap-2 mb-2 animate-in slide-in-from-top-2">
+          <input
+            type="text"
+            value={importUrl}
+            onChange={(e) => setImportUrl(e.target.value)}
+            placeholder="https://example.com/macro.json"
+            className="flex-1 px-3 py-1.5 text-xs border rounded bg-white dark:bg-slate-800 border-slate-300 dark:border-slate-600 focus:ring-1 focus:ring-primary-500"
+            onKeyDown={(e) => e.key === 'Enter' && handleImportFromUrl()}
+          />
+          <Button size="sm" onClick={handleImportFromUrl} disabled={!importUrl}>
+            Go
+          </Button>
+        </div>
+      )}
 
       <div className="flex-1 overflow-y-auto min-h-0 space-y-3 pr-1 scrollbar-thin scrollbar-thumb-slate-300 dark:scrollbar-thumb-slate-600">
         {macros.length === 0 ? (

@@ -24,7 +24,8 @@
 - [x] **Context Menu Integration**: Right-click to save text to context.
 - [x] **Keyboard Shortcuts**: Global hotkeys (`Cmd+K`).
 
-## Phase 4: Future / Maintenance
+## Phase 4: Maintenance & Community (🚧 In Progress)
+- [x] **System Status Dashboard**: View build info and project structure.
+- [x] **Community Registry**: Import Macros from URL.
 - [ ] Multi-proxy support (connect to multiple MCP servers simultaneously).
 - [ ] Cloud sync for settings/favorites/macros.
-- [ ] Community tool registry integration.
