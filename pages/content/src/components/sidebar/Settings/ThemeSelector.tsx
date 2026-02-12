@@ -5,7 +5,7 @@ import { Icon } from '../ui';
 
 const ACCENT_COLORS = [
   { id: 'blue', name: 'Blue', class: 'bg-blue-600' },
-  { id: 'indigo', name: 'Indigo', class: 'bg-indigo-600' },
+  { id: 'indigo', name: 'Indigo', class: 'bg-primary-600' },
   { id: 'violet', name: 'Violet', class: 'bg-violet-600' },
   { id: 'purple', name: 'Purple', class: 'bg-purple-600' },
   { id: 'fuchsia', name: 'Fuchsia', class: 'bg-fuchsia-600' },

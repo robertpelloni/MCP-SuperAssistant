@@ -92,13 +92,47 @@ const Sidebar: React.FC<SidebarProps> = ({ initialPreferences }) => {
     const accentColor = preferences.accentColor || 'indigo';
     const root = document.documentElement;
     // Map of tailwind colors to hex values (simplified approximation for CSS vars)
-    // Ideally we inject a full style tag, but for this "polish" step, we can rely on
-    // Tailwind's class injection in ThemeSelector or a simple data-attribute on the sidebar root
-    // to switch which utility classes are active, OR we can set a CSS variable that
-    // a custom Tailwind config uses.
-    // For now, let's set a data attribute on the sidebar container and use CSS.
-    if (sidebarRef.current) {
-        sidebarRef.current.setAttribute('data-accent', accentColor);
+    const colorMap: Record<string, Record<number, string>> = {
+      indigo: {
+        50: '#eef2ff', 100: '#e0e7ff', 200: '#c7d2fe', 300: '#a5b4fc',
+        400: '#818cf8', 500: '#6366f1', 600: '#4f46e5', 700: '#4338ca',
+        800: '#3730a3', 900: '#312e81'
+      },
+      blue: {
+        50: '#eff6ff', 100: '#dbeafe', 200: '#bfdbfe', 300: '#93c5fd',
+        400: '#60a5fa', 500: '#3b82f6', 600: '#2563eb', 700: '#1d4ed8',
+        800: '#1e40af', 900: '#1e3a8a'
+      },
+      green: {
+        50: '#f0fdf4', 100: '#dcfce7', 200: '#bbf7d0', 300: '#86efac',
+        400: '#4ade80', 500: '#22c55e', 600: '#16a34a', 700: '#15803d',
+        800: '#166534', 900: '#14532d'
+      },
+      purple: {
+        50: '#faf5ff', 100: '#f3e8ff', 200: '#e9d5ff', 300: '#d8b4fe',
+        400: '#c084fc', 500: '#a855f7', 600: '#9333ea', 700: '#7e22ce',
+        800: '#6b21a8', 900: '#581c87'
+      },
+      red: {
+        50: '#fef2f2', 100: '#fee2e2', 200: '#fecaca', 300: '#fca5a5',
+        400: '#f87171', 500: '#ef4444', 600: '#dc2626', 700: '#b91c1c',
+        800: '#991b1b', 900: '#7f1d1d'
+      },
+      orange: {
+        50: '#fff7ed', 100: '#ffedd5', 200: '#fed7aa', 300: '#fdba74',
+        400: '#fb923c', 500: '#f97316', 600: '#ea580c', 700: '#c2410c',
+        800: '#9a3412', 900: '#7c2d12'
+      },
+    };
+
+    const colors = colorMap[accentColor] || colorMap['indigo'];
+    const root = sidebarRef.current;
+
+    if (root) {
+      Object.entries(colors).forEach(([shade, value]) => {
+        root.style.setProperty(`--color-primary-${shade}`, value);
+      });
+      root.setAttribute('data-accent', accentColor);
     }
   }, [preferences.accentColor]);
 
@@ -794,7 +828,7 @@ const Sidebar: React.FC<SidebarProps> = ({ initialPreferences }) => {
           onResize={handleResize}
           minWidth={SIDEBAR_DEFAULT_WIDTH}
           maxWidth={500}
-          className="absolute left-0 top-0 bottom-0 w-1 cursor-ew-resize hover:bg-indigo-400 dark:hover:bg-indigo-600 z-[60] transition-colors duration-300"
+          className="absolute left-0 top-0 bottom-0 w-1 cursor-ew-resize hover:bg-primary-400 dark:hover:bg-primary-600 z-[60] transition-colors duration-300"
         />
       )}
 
@@ -852,7 +886,7 @@ const Sidebar: React.FC<SidebarProps> = ({ initialPreferences }) => {
                 <Icon
                   name={getCurrentThemeIcon()}
                   size="sm"
-                  className="transition-all text-indigo-600 dark:text-indigo-400"
+                  className="transition-all text-primary-600 dark:text-primary-400"
                 />
                 <span className="sr-only">Toggle theme</span>
               </Button>
@@ -1000,7 +1034,7 @@ const Sidebar: React.FC<SidebarProps> = ({ initialPreferences }) => {
                     className={cn(
                       'py-2 px-4 font-medium text-sm transition-all duration-200',
                       activeTab === 'availableTools'
-                        ? 'border-b-2 border-indigo-600 text-indigo-600 dark:border-indigo-400 dark:text-indigo-400'
+                        ? 'border-b-2 border-primary-600 text-primary-600 dark:border-primary-400 dark:text-primary-400'
                         : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-t-lg',
                     )}
                     onClick={() => setActiveTab('availableTools')}>
@@ -1010,7 +1044,7 @@ const Sidebar: React.FC<SidebarProps> = ({ initialPreferences }) => {
                     className={cn(
                       'py-2 px-4 font-medium text-sm transition-all duration-200',
                       activeTab === 'instructions'
-                        ? 'border-b-2 border-indigo-600 text-indigo-600 dark:border-indigo-400 dark:text-indigo-400'
+                        ? 'border-b-2 border-primary-600 text-primary-600 dark:border-primary-400 dark:text-primary-400'
                         : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-t-lg',
                     )}
                     onClick={() => setActiveTab('instructions')}>
@@ -1020,7 +1054,7 @@ const Sidebar: React.FC<SidebarProps> = ({ initialPreferences }) => {
                     className={cn(
                       'py-2 px-4 font-medium text-sm transition-all duration-200',
                       activeTab === 'activity'
-                        ? 'border-b-2 border-indigo-600 text-indigo-600 dark:border-indigo-400 dark:text-indigo-400'
+                        ? 'border-b-2 border-primary-600 text-primary-600 dark:border-primary-400 dark:text-primary-400'
                         : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-t-lg',
                     )}
                     onClick={() => setActiveTab('activity')}>
@@ -1030,7 +1064,7 @@ const Sidebar: React.FC<SidebarProps> = ({ initialPreferences }) => {
                     className={cn(
                       'py-2 px-4 font-medium text-sm transition-all duration-200',
                       activeTab === 'dashboard'
-                        ? 'border-b-2 border-indigo-600 text-indigo-600 dark:border-indigo-400 dark:text-indigo-400'
+                        ? 'border-b-2 border-primary-600 text-primary-600 dark:border-primary-400 dark:text-primary-400'
                         : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-t-lg',
                     )}
                     onClick={() => setActiveTab('dashboard')}>
@@ -1040,7 +1074,7 @@ const Sidebar: React.FC<SidebarProps> = ({ initialPreferences }) => {
                     className={cn(
                       'py-2 px-4 font-medium text-sm transition-all duration-200',
                       activeTab === 'macros'
-                        ? 'border-b-2 border-indigo-600 text-indigo-600 dark:border-indigo-400 dark:text-indigo-400'
+                        ? 'border-b-2 border-primary-600 text-primary-600 dark:border-primary-400 dark:text-primary-400'
                         : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-t-lg',
                     )}
                     onClick={() => setActiveTab('macros')}>
@@ -1050,7 +1084,7 @@ const Sidebar: React.FC<SidebarProps> = ({ initialPreferences }) => {
                     className={cn(
                       'py-2 px-4 font-medium text-sm transition-all duration-200',
                       activeTab === 'settings'
-                        ? 'border-b-2 border-indigo-600 text-indigo-600 dark:border-indigo-400 dark:text-indigo-400'
+                        ? 'border-b-2 border-primary-600 text-primary-600 dark:border-primary-400 dark:text-primary-400'
                         : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-t-lg',
                     )}
                     onClick={() => setActiveTab('settings')}>
@@ -1060,7 +1094,7 @@ const Sidebar: React.FC<SidebarProps> = ({ initialPreferences }) => {
                     className={cn(
                       'py-2 px-4 font-medium text-sm transition-all duration-200',
                       activeTab === 'help'
-                        ? 'border-b-2 border-indigo-600 text-indigo-600 dark:border-indigo-400 dark:text-indigo-400'
+                        ? 'border-b-2 border-primary-600 text-primary-600 dark:border-primary-400 dark:text-primary-400'
                         : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-t-lg',
                     )}
                     onClick={() => setActiveTab('help')}>

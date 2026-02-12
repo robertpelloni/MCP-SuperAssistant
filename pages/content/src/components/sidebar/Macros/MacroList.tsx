@@ -172,7 +172,7 @@ const MacroList: React.FC<MacroListProps> = ({ onExecute }) => {
                <Button variant="outline" size="sm" onClick={handleImportClick}>
                 Import Macro
               </Button>
-              <Button variant="ghost" size="sm" onClick={handleCreate} className="text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300">
+              <Button variant="ghost" size="sm" onClick={handleCreate} className="text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300">
                 Create Macro
               </Button>
             </div>
@@ -183,7 +183,7 @@ const MacroList: React.FC<MacroListProps> = ({ onExecute }) => {
               key={macro.id}
               className={cn(
                 "border overflow-hidden transition-all duration-200 hover:shadow-md cursor-pointer group",
-                runningMacroId === macro.id ? "ring-2 ring-indigo-500 border-transparent" : ""
+                runningMacroId === macro.id ? "ring-2 ring-primary-500 border-transparent" : ""
               )}
               onClick={() => handleEdit(macro)}
             >
@@ -193,8 +193,8 @@ const MacroList: React.FC<MacroListProps> = ({ onExecute }) => {
                     className={cn(
                       "p-2 rounded-full flex-shrink-0 transition-colors z-10",
                       runningMacroId === macro.id
-                        ? "bg-indigo-100 text-indigo-700 animate-pulse"
-                        : "bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-100 dark:hover:bg-indigo-900/40"
+                        ? "bg-primary-100 text-primary-700 animate-pulse"
+                        : "bg-primary-50 dark:bg-primary-900/20 text-primary-600 dark:text-primary-400 hover:bg-primary-100 dark:hover:bg-primary-900/40"
                     )}
                     onClick={(e) => handleRun(macro, e)}
                     title="Run Macro"

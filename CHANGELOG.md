@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.1.0] - 2024-05-22
+
+### Added
+- **Auto-Execute Whitelist**: Granular control to trust specific tools for automatic execution in `Settings`.
+- **Dynamic Theming**: Full support for custom accent colors (Indigo, Blue, Green, Purple, Red, Orange) applied across the entire UI.
+- **Context Menu Integration**: Seamless "Save to MCP Context" workflow directly from web page selections.
+- **Macro Improvements**: Added support for variables (`Set Variable`) and robust error handling.
+
+## [1.0.0-rc1] - 2024-05-22
+
+### Added
+- **Context Menu Integration**: Added 'Save to MCP Context' right-click menu item.
+- **Macro Variables**: Added 'Set Variable' step to macros.
+
 ## [0.9.0] - 2024-05-22
 
 ### Added

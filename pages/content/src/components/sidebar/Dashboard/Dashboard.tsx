@@ -163,12 +163,12 @@ const Dashboard: React.FC<DashboardProps> = ({ onExecute }) => {
                     {day.count} executions
                  </div>
                 <div
-                  className="w-full bg-indigo-100 dark:bg-indigo-900/30 rounded-t hover:bg-indigo-200 dark:hover:bg-indigo-800/50 transition-colors relative"
+                  className="w-full bg-primary-100 dark:bg-primary-900/30 rounded-t hover:bg-primary-200 dark:hover:bg-primary-800/50 transition-colors relative"
                   style={{ height: `${(day.count / stats.maxActivity) * 100}%` }}
                 >
                    {/* Bar fill for actual count */}
                    <div
-                      className="absolute bottom-0 left-0 right-0 bg-indigo-500 dark:bg-indigo-500 rounded-t opacity-80"
+                      className="absolute bottom-0 left-0 right-0 bg-primary-500 dark:bg-primary-500 rounded-t opacity-80"
                       style={{ height: day.count > 0 ? '4px' : '0' }}
                    />
                 </div>
@@ -234,8 +234,8 @@ const Dashboard: React.FC<DashboardProps> = ({ onExecute }) => {
         <CardContent className="p-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-indigo-50 dark:bg-indigo-900/30 rounded">
-                <Icon name="tool" size="sm" className="text-indigo-600 dark:text-indigo-400" />
+              <div className="p-2 bg-primary-50 dark:bg-primary-900/30 rounded">
+                <Icon name="tool" size="sm" className="text-primary-600 dark:text-primary-400" />
               </div>
               <div>
                 <Typography variant="subtitle" className="font-medium text-slate-800 dark:text-slate-200">

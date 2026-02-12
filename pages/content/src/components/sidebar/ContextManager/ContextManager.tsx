@@ -8,15 +8,17 @@ import { Card } from '@src/components/ui/card';
 interface ContextManagerProps {
   onInsert: (content: string) => void;
   onClose: () => void;
+  initialContent?: string;
 }
 
-const ContextManager: React.FC<ContextManagerProps> = ({ onInsert, onClose }) => {
+const ContextManager: React.FC<ContextManagerProps> = ({ onInsert, onClose, initialContent }) => {
   const { contexts, addContext, updateContext, deleteContext } = useContextStore();
   const { addToast } = useToastStore();
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [isCreating, setIsCreating] = useState(false);
+  // Auto-start creation if initialContent is provided
+  const [isCreating, setIsCreating] = useState(!!initialContent);
   const [editName, setEditName] = useState('');
-  const [editContent, setEditContent] = useState('');
+  const [editContent, setEditContent] = useState(initialContent || '');
 
   const handleCreate = () => {
     setEditingId(null);
@@ -111,7 +113,7 @@ const ContextManager: React.FC<ContextManagerProps> = ({ onInsert, onClose }) =>
               <Button variant="ghost" size="sm" onClick={() => setIsCreating(false)}>
                 Cancel
               </Button>
-              <Button size="sm" onClick={handleSave} className="bg-indigo-600 hover:bg-indigo-700 text-white">
+              <Button size="sm" onClick={handleSave} className="bg-primary-600 hover:bg-primary-700 text-white">
                 Save
               </Button>
             </div>
@@ -131,7 +133,7 @@ const ContextManager: React.FC<ContextManagerProps> = ({ onInsert, onClose }) =>
             ) : (
               <div className="space-y-2">
                 {contexts.map((ctx) => (
-                  <Card key={ctx.id} className="group border hover:border-indigo-300 dark:hover:border-indigo-700 transition-colors">
+                  <Card key={ctx.id} className="group border hover:border-primary-300 dark:hover:border-primary-700 transition-colors">
                     <div className="p-3">
                       <div className="flex justify-between items-start mb-2">
                         <Typography variant="subtitle" className="font-medium text-slate-800 dark:text-slate-200 truncate pr-2">
@@ -161,7 +163,7 @@ const ContextManager: React.FC<ContextManagerProps> = ({ onInsert, onClose }) =>
                         <Button
                           size="xs"
                           variant="secondary"
-                          className="h-6 text-xs bg-indigo-50 hover:bg-indigo-100 text-indigo-700 dark:bg-indigo-900/20 dark:hover:bg-indigo-900/40 dark:text-indigo-300 border-indigo-100 dark:border-indigo-800"
+                          className="h-6 text-xs bg-primary-50 hover:bg-primary-100 text-primary-700 dark:bg-primary-900/20 dark:hover:bg-primary-900/40 dark:text-primary-300 border-primary-100 dark:border-primary-800"
                           onClick={() => {
                             onInsert(ctx.content);
                             onClose();

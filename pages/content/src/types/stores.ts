@@ -68,6 +68,8 @@ export interface UserPreferences {
   isMinimized: boolean;
   customInstructions: string;
   customInstructionsEnabled: boolean;
+  accentColor: string;
+  autoExecuteWhitelist: string[]; // List of trusted tool names
 }
 
 export interface Notification {

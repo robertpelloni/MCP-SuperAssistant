@@ -117,7 +117,7 @@ const MacroBuilder: React.FC<MacroBuilderProps> = ({ existingMacro, onClose }) =
             <Icon name="download" size="xs" className="mr-1" />
             Export
           </Button>
-          <Button onClick={handleSave} size="sm" className="bg-indigo-600 hover:bg-indigo-700 text-white">
+          <Button onClick={handleSave} size="sm" className="bg-primary-600 hover:bg-primary-700 text-white">
             <Icon name="save" size="xs" className="mr-1" />
             Save
           </Button>

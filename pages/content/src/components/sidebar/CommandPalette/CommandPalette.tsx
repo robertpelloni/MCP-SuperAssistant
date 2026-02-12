@@ -159,7 +159,7 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose, onNavi
                 className={cn(
                   'px-4 py-2 flex items-center cursor-pointer text-sm',
                   index === selectedIndex
-                    ? 'bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 border-l-2 border-indigo-500'
+                    ? 'bg-primary-50 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 border-l-2 border-primary-500'
                     : 'text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 border-l-2 border-transparent',
                 )}
                 onClick={() => {
@@ -170,7 +170,7 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose, onNavi
                 <Icon
                   name={cmd.icon}
                   size="sm"
-                  className={cn('mr-3', index === selectedIndex ? 'text-indigo-500' : 'text-slate-400')}
+                  className={cn('mr-3', index === selectedIndex ? 'text-primary-500' : 'text-slate-400')}
                 />
                 <span className="flex-1">{cmd.title}</span>
                 {cmd.shortcut && <span className="text-xs text-slate-400 font-mono">{cmd.shortcut}</span>}

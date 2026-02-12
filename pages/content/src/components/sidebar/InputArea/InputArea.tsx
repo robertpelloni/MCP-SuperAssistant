@@ -10,11 +10,14 @@ interface InputAreaProps {
   onToggleMinimize: () => void;
 }
 
+import { eventBus } from '@src/events/event-bus';
+
 const InputArea: React.FC<InputAreaProps> = ({ onSubmit, onToggleMinimize }) => {
   const [inputText, setInputText] = useState('');
   const [selectedText, setSelectedText] = useState('');
   const [isListening, setIsListening] = useState(false);
   const [showContextManager, setShowContextManager] = useState(false);
+  const [contextManagerInitialContent, setContextManagerInitialContent] = useState<string>('');
   const { addToast } = useToastStore.getState();
 
   // Listen for selection changes on the page
@@ -29,7 +32,17 @@ const InputArea: React.FC<InputAreaProps> = ({ onSubmit, onToggleMinimize }) => 
     };
 
     document.addEventListener('selectionchange', handleSelectionChange);
-    return () => document.removeEventListener('selectionchange', handleSelectionChange);
+
+    // Listen for context save events from sidebar/background
+    const unsubscribeContextSave = eventBus.on('context:save', (data) => {
+        setContextManagerInitialContent(data.content);
+        setShowContextManager(true);
+    });
+
+    return () => {
+        document.removeEventListener('selectionchange', handleSelectionChange);
+        unsubscribeContextSave();
+    };
   }, []);
 
   const handleSubmit = () => {
@@ -129,23 +142,30 @@ const InputArea: React.FC<InputAreaProps> = ({ onSubmit, onToggleMinimize }) => 
       {/* Context Manager Overlay */}
       {showContextManager && (
         <div className="absolute bottom-full left-0 right-0 h-[400px] mb-2 z-50 shadow-2xl rounded-t-lg overflow-hidden border border-slate-200 dark:border-slate-700">
-           <ContextManager onInsert={handleInsertContext} onClose={() => setShowContextManager(false)} />
+           <ContextManager
+             onInsert={handleInsertContext}
+             onClose={() => {
+                 setShowContextManager(false);
+                 setContextManagerInitialContent('');
+             }}
+             initialContent={contextManagerInitialContent}
+           />
         </div>
       )}
 
       {/* Context Action Bar */}
       {selectedText && (
-        <div className="mb-2 flex items-center justify-between bg-indigo-50 dark:bg-indigo-900/30 p-2 rounded border border-indigo-100 dark:border-indigo-800 animate-in slide-in-from-bottom-2 fade-in duration-200">
+        <div className="mb-2 flex items-center justify-between bg-primary-50 dark:bg-primary-900/30 p-2 rounded border border-primary-100 dark:border-primary-800 animate-in slide-in-from-bottom-2 fade-in duration-200">
           <div className="flex items-center gap-2 overflow-hidden">
-            <Icon name="file-text" size="xs" className="text-indigo-500 flex-shrink-0" />
-            <span className="text-xs text-indigo-700 dark:text-indigo-300 truncate max-w-[200px]">
+            <Icon name="file-text" size="xs" className="text-primary-500 flex-shrink-0" />
+            <span className="text-xs text-primary-700 dark:text-primary-300 truncate max-w-[200px]">
               "{selectedText.substring(0, 30)}..."
             </span>
           </div>
           <Button
             size="sm"
             variant="ghost"
-            className="h-6 px-2 text-xs hover:bg-indigo-100 dark:hover:bg-indigo-800 text-indigo-600 dark:text-indigo-400"
+            className="h-6 px-2 text-xs hover:bg-primary-100 dark:hover:bg-primary-800 text-primary-600 dark:text-primary-400"
             onClick={handleImportSelection}>
             Import
           </Button>
