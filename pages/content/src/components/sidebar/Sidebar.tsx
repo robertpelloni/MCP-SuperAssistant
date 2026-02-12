@@ -91,8 +91,6 @@ const Sidebar: React.FC<SidebarProps> = ({ initialPreferences }) => {
   // Apply accent color
   useEffect(() => {
     const accentColor = preferences.accentColor || 'indigo';
-    const root = document.documentElement;
-    // Map of tailwind colors to hex values (simplified approximation for CSS vars)
     const colorMap: Record<string, Record<number, string>> = {
       indigo: {
         50: '#eef2ff', 100: '#e0e7ff', 200: '#c7d2fe', 300: '#a5b4fc',
