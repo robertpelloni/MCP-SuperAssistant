@@ -1,14 +1,14 @@
 # Roadmap
 
 ## Phase 1: Foundation ✅
-- [x] MCP Client implementation
+- [x] MCP Client implementation (JSON-RPC, tool discovery)
 - [x] Chrome Extension scaffold (Manifest V3)
 - [x] Sidebar UI with tab navigation
 - [x] Tool discovery and display
 - [x] Tool execution pipeline
 - [x] Result insertion into chat
-- [x] Proxy server for SSE/WebSocket bridging
-- [x] Multi-platform adapters (ChatGPT, Claude, Gemini, Perplexity, DeepSeek, etc.)
+- [x] Proxy server for SSE/WebSocket/Streamable HTTP bridging
+- [x] Multi-platform adapters (ChatGPT, Gemini, Perplexity, Grok, DeepSeek, etc.)
 
 ## Phase 2: Power Features ✅
 - [x] Auto-Submit: Automatically submit the AI's response button
@@ -19,6 +19,9 @@
 - [x] Custom Instructions: Inject system-level instructions per conversation
 - [x] Connection Health: Ping latency and server status monitoring
 - [x] FunctionBlock Parser: Detect and parse tool calls from rendered HTML
+- [x] Macro System: User-defined automation pipelines with variables and conditions
+- [x] Context Manager: Save/manage text snippets via context menu and UI
+- [x] Command Palette: Quick-access search for tools and actions
 
 ## Phase 3: Polish & Documentation ✅
 - [x] Activity Log with rich rendering (JSON, Markdown, Images)
@@ -31,14 +34,19 @@
 - [x] Version synchronization system (VERSION file as source of truth)
 - [x] Settings data export/import
 - [x] Favorites & sorting for tools
+- [x] Firefox extension support (Manifest V3 with background.scripts transform)
+- [x] Edge extension support (Chromium-compatible, same dist/)
+- [x] Onboarding flow for new users
+- [x] System Info panel
 
 ## Phase 4: Advanced (Planned)
 - [ ] Test suite: Unit tests (Vitest), e2e tests (Playwright)
-- [ ] Tool chaining: Compose multi-step tool pipelines
+- [ ] Tool chaining: Compose multi-step tool pipelines visually
 - [ ] Resource browser: Browse MCP server resources
 - [ ] Prompt templates: Save and reuse common prompts
 - [ ] Plugin marketplace: Community adapters and extensions
 - [ ] Notification center: Aggregated error/success history
 - [ ] Accessibility audit: WCAG 2.1 AA compliance
-- [ ] i18n: Multi-language support
-- [ ] Firefox extension: Full cross-browser support
+- [ ] i18n: Multi-language support (infrastructure exists in `packages/i18n`)
+- [ ] Cloud Sync: Sync macros and context across devices
+- [ ] Multi-Proxy: Connect to multiple MCP servers simultaneously

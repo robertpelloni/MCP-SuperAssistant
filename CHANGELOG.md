@@ -4,8 +4,16 @@ All notable changes to this project will be documented in this file.
 
 ## [0.7.1] - 2026-02-12
 
-### Changed
-- Placeholder for changes in version 0.7.1.
+### Added
+- **Input, Textarea, Select UI components**: Created missing sidebar form components (`Input.tsx`, `Textarea.tsx`, `Select.tsx`) used by ContextManager and MacroBuilder.
+- **icon-16.png**: Generated 16×16 icon for extension manifest (resized from icon-128).
+
+### Fixed
+- **CRLF line endings**: Converted bash scripts (`update_version.sh`, `set_global_env.sh`, `copy_env.sh`) to LF. Added `.gitattributes` to prevent recurrence.
+- **Duplicate variable declaration**: Removed unused `root` variable in Sidebar.tsx accent color theming.
+- **Invalid JSX escape**: Fixed backslash escape in MacroBuilder.tsx placeholder attribute using template literal syntax.
+- **Missing UI barrel exports**: Added `Input`, `Textarea`, `Select` exports to `ui/index.ts` so ContextManager and MacroBuilder imports resolve.
+- **Merge conflict markers**: Resolved 10+ files with leftover `<<<<<<<`/`>>>>>>>` conflict markers from prior merges.
 
 ## [0.7.0] - 2026-02-12
 

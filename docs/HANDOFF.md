@@ -1,28 +1,51 @@
 # Handoff Protocol
 
-**Date**: 2024-05-22
-**Version**: 1.1.0
-**Previous Agent**: Jules (Google)
+**Date**: 2026-02-12
+**Version**: 0.7.1
+**Status**: Build clean (Chrome ✅ Firefox ✅ Edge ✅)
 
 ## Status Summary
-We have successfully implemented and polished the "Insanely Great" feature set for v1.1.0. The project is in a robust, feature-complete state for the current roadmap.
 
-## Key Accomplishments (v1.1.0)
-1.  **Auto-Execute Whitelist**: A safe mode that strictly enforces allowed tools.
-2.  **Dynamic Theming**: A robust engine allowing users to switch accent colors (Indigo, Blue, Green, etc.).
-3.  **Context Integration**: Context Menu ("Save to MCP Context") is wired up to the `ContextManager` UI.
-4.  **Macro Variables**: Macros now support `Set Variable` steps and variable substitution (`{{var}}`).
+The project is in a stable, buildable state at v0.7.1. All merge conflicts from feature branch integration have been resolved, build errors fixed, and documentation refreshed. Chrome, Firefox, and Edge extension builds pass 12/12 tasks.
 
-## Next Steps (Phase 4)
-The next agent should focus on the "Future / Maintenance" phase items in the Roadmap:
-1.  **Cloud Sync**: Investigating methods to sync `macro.store` and `context.store` across devices (Chrome Sync or external).
-2.  **Multi-Proxy Support**: Extending `McpClient` to handle multiple connection URIs simultaneously.
-3.  **Community Registry**: A way to import shared Macros from a URL.
+## Recent Accomplishments (v0.7.1)
+
+1.  **Build Error Resolution**: Fixed CRLF bash scripts, duplicate variable declaration, JSX escape error, and missing UI components.
+2.  **Missing UI Components**: Created `Input.tsx`, `Textarea.tsx`, `Select.tsx` in the sidebar UI barrel for ContextManager and MacroBuilder.
+3.  **Missing Icon**: Generated `icon-16.png` (16×16) from icon-128 for manifest compliance.
+4.  **Documentation Refresh**: Updated all 11 docs files to reflect accurate v0.7.1 state.
+5.  **Firefox/Edge Support**: Verified Firefox build (ManifestParser converts service_worker → scripts) and Edge (loads Chrome dist directly).
+
+## Current Feature Inventory
+
+- **16 platform adapters**: ChatGPT, Gemini, AI Studio, Perplexity, Grok, DeepSeek, OpenRouter, T3 Chat, GitHub Copilot, Mistral, Kimi, Qwen, Z Chat + base/default/example
+- **14 sidebar components**: Dashboard, Tools, Activity, Settings, Help, Instructions, Macros, Context Manager, Command Palette, Server Status, Onboarding, System Info, Input Area
+- **10 Zustand stores**: ui, connection, tool, app, config, activity, adapter, profile, toast + macro/context in lib
+- **3 transport protocols**: SSE, WebSocket, Streamable HTTP
+- **3 browser targets**: Chrome, Firefox, Edge
+
+## Next Steps (Phase 4 Priorities)
+
+1.  **Test Suite**: Add Vitest unit tests for stores and services; Playwright for e2e.
+2.  **Tool Chaining**: Visual multi-step tool pipeline composer.
+3.  **Resource Browser**: Browse and inspect MCP server resources.
+4.  **Cloud Sync**: Sync macros and context across devices.
+5.  **Multi-Proxy**: Connect to multiple MCP servers simultaneously.
 
 ## Critical Files for Next Agent
--   `docs/DEEP_ANALYSIS.md`: Read this first! It explains *how* everything works.
--   `pages/content/src/components/sidebar/Settings/Settings.tsx`: Where users configure the new features.
--   `pages/content/src/services/automation.service.ts`: The logic engine for whitelisting.
 
-## Final Note
-The codebase is clean. Dependencies (like `uuid` vs `crypto`) have been standardized. Proceed with confidence.
+-   `docs/AGENTS.md`: Universal instructions — read first.
+-   `docs/DEEP_ANALYSIS.md`: Technical architecture deep dive.
+-   `docs/DASHBOARD.md`: Full inventory (adapters, stores, components, packages).
+-   `pages/content/src/stores/`: All Zustand state management.
+-   `pages/content/src/plugins/adapters/`: Per-platform adapter implementations.
+-   `packages/dev-utils/lib/manifest-parser/impl.ts`: Firefox manifest transform.
+
+## Build Commands
+
+```bash
+pnpm install          # Install dependencies
+pnpm build            # Chrome/Edge production build → dist/
+pnpm build:firefox    # Firefox production build → dist/
+pnpm dev              # Development watch mode
+```

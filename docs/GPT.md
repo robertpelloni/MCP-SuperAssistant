@@ -1,6 +1,7 @@
 # GPT-Specific Instructions
 
 > **Base**: Read [AGENTS.md](./AGENTS.md) first. This file contains GPT/OpenAI-specific addenda.
+> **Codex 5.3**: These instructions also apply to you. Follow the same coding style and commit conventions.
 
 ## Coding Style
 - Same as universal standards: functional React, TypeScript strict, Tailwind CSS, shadcn/ui.

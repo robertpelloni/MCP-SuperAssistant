@@ -262,8 +262,8 @@ In such cases, use better models which are meant for tool calling or have better
 
 ### Prerequisites
 
-- Node.js (v16+)
-- pnpm
+- Node.js (v22.12+)
+- pnpm (v9.15+)
 
 ### Setup
 
@@ -274,12 +274,25 @@ pnpm install
 # Start development server
 pnpm dev
 
-# Build for production
+# Build for production (Chrome/Edge)
 pnpm build
+
+# Build for Firefox
+pnpm build:firefox
 
 # Create zip package for distribution
 pnpm zip
 ```
+
+### Loading the Extension
+
+| Browser | URL | Steps |
+|---------|-----|-------|
+| **Chrome** | `chrome://extensions` | Enable Developer mode → Load unpacked → select `dist/` |
+| **Edge** | `edge://extensions` | Enable Developer mode → Load unpacked → select `dist/` |
+| **Firefox** | `about:debugging` | This Firefox → Load Temporary Add-on → select `dist/manifest.json` |
+
+> **Note**: Chrome and Firefox builds share the same `dist/` output directory. Run `pnpm build` for Chrome/Edge or `pnpm build:firefox` for Firefox — they cannot coexist.
 
 ## Contributing
 

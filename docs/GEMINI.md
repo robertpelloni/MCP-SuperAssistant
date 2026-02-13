@@ -21,6 +21,7 @@
 - Use Conventional Commits: `feat:`, `fix:`, `chore:`, `docs:`.
 - Include version bump in commit messages.
 - Commit and push after each completed feature; do not batch unrelated changes.
+- **Always run `pnpm build` before pushing** to verify the extension compiles cleanly (12/12 tasks).
 
 ## Autonomous Operation
 - When instructed to "keep going" or "continue", proceed through the roadmap items sequentially.

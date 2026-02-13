@@ -2,17 +2,19 @@
 
 **Project**: MCP SuperAssistant
 **Repository**: `robertpelloni/mcp-superassistant` (fork of `srbhptl39/MCP-SuperAssistant`)
+**Version**: `0.7.1`
 **Goal**: Create the ultimate browser-based AI operating system via MCP.
 
 > [!IMPORTANT]
 > **All LLM agents must read this file before making any changes.**
 > Model-specific instructions are in `CLAUDE.md`, `GEMINI.md`, and `GPT.md` — they reference this document as their base.
+> **Codex 5.3**: Also read `GPT.md` — same family addenda apply.
 
 ---
 
 ## 1. Project Overview
 
-MCP SuperAssistant is a Chrome extension that bridges the **Model Context Protocol (MCP)** with web-based AI platforms (ChatGPT, Claude, Perplexity, Google AI Studio, etc.). It injects a sidebar UI into these platforms, enabling tool discovery, execution, and result insertion — all powered by a local proxy server.
+MCP SuperAssistant is a Chrome/Edge/Firefox extension that bridges the **Model Context Protocol (MCP)** with web-based AI platforms (ChatGPT, Gemini, Perplexity, Grok, DeepSeek, OpenRouter, T3 Chat, GitHub Copilot, Mistral, Kimi, Qwen, Z Chat, and more). It injects a sidebar UI into these platforms, enabling tool discovery, execution, and result insertion — all powered by a local proxy server.
 
 ### Architecture
 
@@ -22,10 +24,10 @@ AI Website ↔ Chrome Extension (Content Script) ↔ SSE/WS Proxy ↔ MCP Server
 
 - **`chrome-extension/`**: Manifest V3 config, background service workers, popup UI.
 - **`pages/content/`**: Core React app injected into web pages (Sidebar, Tools, MCP Client).
-  - `src/components/sidebar/`: Sidebar tabs (Dashboard, AvailableTools, Activity, Settings, Help, Instructions).
+  - `src/components/sidebar/`: 14 sidebar tab components (Dashboard, AvailableTools, Activity, Settings, Help, Instructions, Macros, ContextManager, CommandPalette, ServerStatus, Onboarding, System, InputArea).
   - `src/hooks/`: React hooks for stores, events, adapters, keyboard shortcuts.
   - `src/stores/`: Zustand stores (app, ui, tool, connection, activity, toast, config, profile, adapter).
-  - `src/plugins/adapters/`: Per-site adapters (ChatGPT, Claude, Gemini, Perplexity, etc.).
+  - `src/plugins/adapters/`: 16 per-site adapters (ChatGPT, Gemini, AI Studio, Perplexity, Grok, DeepSeek, OpenRouter, T3 Chat, GitHub Copilot, Mistral, Kimi, Qwen, Z Chat + base/default/example).
   - `src/services/`: Business logic (automation).
   - `src/types/`: TypeScript interfaces.
   - `src/render_prescript/`: DOM rendering and tool detection (functionBlock parser).
@@ -43,9 +45,9 @@ The canonical version lives in the **`VERSION`** file at the project root. All o
 ### Rules
 1. Read the current version from `VERSION`.
 2. If you make *any* change, **increment the version**:
-   - **Patch** (`0.7.0` → `0.7.1`): Bug fixes, typos, minor tweaks.
-   - **Minor** (`0.7.0` → `0.8.0`): New features, UI additions.
-   - **Major** (`0.7.0` → `1.0.0`): Breaking changes, architecture overhauls.
+   - **Patch** (`0.7.1` → `0.7.2`): Bug fixes, typos, minor tweaks.
+   - **Minor** (`0.7.1` → `0.8.0`): New features, UI additions.
+   - **Major** (`0.7.1` → `1.0.0`): Breaking changes, architecture overhauls.
 3. Update `CHANGELOG.md` with a new entry under the new version, following [Keep a Changelog](https://keepachangelog.com/) format.
 4. Run `pnpm run update-version <new_version>` to propagate version to all `package.json` files and the `VERSION` file.
 5. **Commit message must reference the version bump**: e.g., `feat: Add Dashboard shortcuts (v0.7.1)`.
@@ -111,7 +113,7 @@ pnpm lint
 - **MANUAL.md**: User-facing documentation (setup, features, troubleshooting).
 - **CHANGELOG.md**: Version history (developer-facing).
 - **AGENTS.md** (this file): Universal instructions for all LLM agents.
-- **CLAUDE.md / GEMINI.md / GPT.md**: Model-specific addenda.
+- **CLAUDE.md / GEMINI.md / GPT.md**: Model-specific addenda (Codex 5.3 uses GPT.md).
 
 Update the relevant docs whenever you change features, architecture, or configuration.
 
@@ -144,7 +146,10 @@ pnpm build:firefox
 pnpm zip
 ```
 
-The built extension is output to `dist/`. Load via `chrome://extensions` → Developer Mode → Load Unpacked.
+The built extension is output to `dist/`. Load via:
+- **Chrome**: `chrome://extensions` → Developer Mode → Load Unpacked → select `dist/`
+- **Edge**: `edge://extensions` → Developer Mode → Load Unpacked → select `dist/`
+- **Firefox**: `about:debugging` → This Firefox → Load Temporary Add-on → select `dist/manifest.json`
 
 ---
 
