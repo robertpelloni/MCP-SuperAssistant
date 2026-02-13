@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.7.1] - 2026-02-12
+
+### Changed
+- Placeholder for changes in version 0.7.1.
+
 ## [0.7.0] - 2026-02-12
 
 ### Added
