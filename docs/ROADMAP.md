@@ -24,8 +24,10 @@
 - [x] **Context Menu Integration**: Right-click to save text to context.
 - [x] **Keyboard Shortcuts**: Global hotkeys (`Cmd+K`).
 
-## Phase 4: Maintenance & Community (🚧 In Progress)
+## Phase 4: Maintenance & Architecture (🚧 In Progress)
 - [x] **System Status Dashboard**: View build info and project structure.
 - [x] **Community Registry**: Import Macros from URL.
+- [x] **Plugin Architecture**: Modular system for adapters and features (v1.3.0).
+- [x] **Unified Initialization**: Centralized startup logic (v1.3.0).
 - [ ] Multi-proxy support (connect to multiple MCP servers simultaneously).
 - [ ] Cloud sync for settings/favorites/macros.

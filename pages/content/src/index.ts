@@ -38,62 +38,7 @@ import { initializeAllServices, cleanupAllServices } from './services';
 
 const logger = createLogger('content_script');
 
-function setupSidebarRecovery(): void {
-  // Watch for the case where push mode is enabled but sidebar isn't visible
-  const recoveryInterval = setInterval(() => {
-    try {
-      // Check if there's an active sidebar manager
-      const sidebarManager = (window as any).activeSidebarManager;
-      if (!sidebarManager) return;
-
-      // Get HTML element to check for push-mode-enabled class
-      const htmlElement = document.documentElement;
-
-      // Check if push mode is enabled but host is invisible or missing
-      if (htmlElement.classList.contains('push-mode-enabled')) {
-        const shadowHost = sidebarManager.getShadowHost();
-
-        // If shadow host exists but is not visible, force it
-        if (shadowHost) {
-          if (
-            shadowHost.style.display !== 'block' ||
-            window.getComputedStyle(shadowHost).display === 'none' ||
-            shadowHost.style.opacity !== '1' ||
-            parseFloat(window.getComputedStyle(shadowHost).opacity) < 0.9
-          ) {
-            logMessage('[SidebarRecovery] Detected invisible sidebar with push mode enabled, forcing visibility');
-            shadowHost.style.display = 'block';
-            shadowHost.style.opacity = '1';
-            shadowHost.classList.add('initialized');
-
-            // OPTIMIZATION: Don't force a re-render unless absolutely necessary
-            // The sidebar content should automatically update through React state management
-            logMessage(
-              '[SidebarRecovery] Sidebar visibility restored - skipping re-render to avoid performance issues',
-            );
-            // sidebarManager.refreshContent();
-          }
-        } else {
-          // If shadow host doesn't exist but push mode is enabled,
-          // try to re-initialize the sidebar
-          logMessage('[SidebarRecovery] Push mode enabled but shadow host missing, re-initializing sidebar');
-          sidebarManager.initialize().then(() => {
-            sidebarManager.show();
-          });
-        }
-      }
-    } catch (error) {
-      logger.error('[SidebarRecovery] Error:', error);
-    }
-  }, 1000); // Check every second
-
-  // Clean up when navigating away
-  window.addEventListener('unload', () => {
-    clearInterval(recoveryInterval);
-  });
-
-  logMessage('[SidebarRecovery] Sidebar recovery mechanism set up');
-}
+// Sidebar recovery logic has been moved to SidebarPlugin
 
 /**
  * Content Script Entry Point - Session 10 Implementation
@@ -177,7 +122,7 @@ try {
 }
 
 // Add this call right before your existing script loads
-setupSidebarRecovery();
+// setupSidebarRecovery(); // Removed, handled by SidebarPlugin
 
 /**
  * Collects demographic data about the user's environment.

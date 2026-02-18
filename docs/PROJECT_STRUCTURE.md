@@ -20,7 +20,9 @@ mcp-superassistant/
 │           ├── components/ # React components (Sidebar, Dashboard, Macros, etc.)
 │           ├── hooks/      # Custom React hooks (useMcpCommunication, etc.)
 │           ├── lib/        # Core logic (MacroRunner, Stores)
-│           └── stores/     # Zustand state stores
+│           ├── stores/     # Zustand state stores
+│           ├── core/       # Core Initialization & Client (v1.3.0+)
+│           └── plugins/    # Plugin System (v1.3.0+)
 │
 ├── packages/               # Shared internal packages (workspaces)
 │   ├── dev-utils/          # Development utilities
@@ -41,8 +43,8 @@ The project uses pnpm workspaces. These are not git submodules but internal pack
 
 | Package | Path | Version | Description |
 | :--- | :--- | :--- | :--- |
-| `chrome-extension` | `chrome-extension/` | 1.1.0 | The build entry point for the extension. |
-| `content` | `pages/content/` | 1.1.0 | The frontend UI (Sidebar) injected into pages. |
+| `chrome-extension` | `chrome-extension/` | 1.3.0 | The build entry point for the extension. |
+| `content` | `pages/content/` | 1.3.0 | The frontend UI (Sidebar) injected into pages. |
 | `@extension/shared` | `packages/shared/` | workspace:* | Shared utilities and logger. |
 | `@extension/storage` | `packages/storage/` | workspace:* | Type-safe wrappers for `chrome.storage`. |
 | `@extension/env` | `packages/env/` | workspace:* | Environment variable handling. |
@@ -56,7 +58,7 @@ The project uses pnpm workspaces. These are not git submodules but internal pack
 ## Versioning
 
 The single source of truth for the project version is the `VERSION` file in the root directory.
-Currently: `1.1.0`
+Currently: `1.3.0`
 
 When updating the version:
 1.  Update `VERSION`.

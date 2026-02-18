@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.3.0] - 2024-05-22
+
+### Added
+- **Plugin Architecture**: New modular system for features and adapters (`plugin-registry.ts`).
+- **Unified Initialization**: Centralized startup logic (`main-initializer.ts`).
+- **Sidebar Plugin**: Extracted sidebar logic into a dedicated plugin module.
+
 ## [1.2.0] - 2024-05-22
 
 ### Added
