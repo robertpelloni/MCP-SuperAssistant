@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.2.0] - 2024-05-22
+
+### Added
+- **Multi-Server Profiles**: Manage multiple MCP server configurations (e.g., Local, Remote) and switch between them instantly in Settings.
+- **System Info Tab**: Dedicated view for version, build date, and project structure.
+- **Community Registry**: Import Macros directly from URLs.
+
 ## [1.1.0] - 2024-05-22
 
 ### Added
