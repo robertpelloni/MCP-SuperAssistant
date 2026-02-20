@@ -29,5 +29,5 @@
 - [x] **Community Registry**: Import Macros from URL.
 - [x] **Plugin Architecture**: Modular system for adapters and features (v1.3.0).
 - [x] **Unified Initialization**: Centralized startup logic (v1.3.0).
-- [ ] Multi-proxy support (connect to multiple MCP servers simultaneously).
-- [ ] Cloud sync for settings/favorites/macros.
+- [x] **Cloud Sync**: Beta implementation for syncing macros/contexts (v1.4.0).
+- [ ] Multi-proxy support (Concurrent Connections).

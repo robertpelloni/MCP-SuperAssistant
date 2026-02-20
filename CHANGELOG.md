@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.4.0] - 2024-05-22
+
+### Added
+- **Cloud Sync (Beta)**: Sync Macros and Contexts across devices using Chrome Sync.
+- **Sync Status**: Visualization of sync state and errors in Settings.
+
 ## [1.3.0] - 2024-05-22
 
 ### Added

@@ -177,3 +177,16 @@ Located in the input area (click the book icon), the Context Manager allows you 
 *   **Save Context**: Store frequently used prompts, instructions, or data snippets.
 *   **Insert Context**: Quickly inject saved snippets into your current conversation.
 *   **Manage**: Edit or delete snippets as your workflow evolves.
+
+## Cloud Sync (Beta)
+
+### Overview
+Synchronize your Macros, Contexts, and Settings across multiple devices using Chrome Sync.
+
+### Setup
+1.  Go to **Settings** -> **Cloud Sync**.
+2.  Toggle "Enable Sync".
+3.  Click "Push Now" to upload your local data to the cloud.
+4.  On another device, enable sync and click "Pull Now" to download.
+
+**Note**: Storage limits apply (approx. 100KB). Use for critical configurations only.

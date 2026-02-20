@@ -8,6 +8,8 @@ import { Typography, Icon, Button, ToggleWithoutLabel } from '../ui';
 import { ThemeSelector } from './ThemeSelector';
 import ServerProfiles from './ServerProfiles';
 import { AutomationService } from '@src/services/automation.service';
+import { useSyncStore } from '@src/stores/sync.store';
+import { SyncService } from '@src/services/sync.service';
 import { cn } from '@src/lib/utils';
 import { createLogger } from '@extension/shared/lib/logger';
 
@@ -154,6 +156,61 @@ const Settings: React.FC = () => {
       <div className="space-y-4">
         {/* Server Profiles */}
         <ServerProfiles />
+
+        {/* Cloud Sync */}
+        <Card className="border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm overflow-hidden">
+          <CardHeader className="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-800 p-4">
+            <div className="flex items-center gap-2">
+              <div className="p-1.5 bg-sky-100 dark:bg-sky-900/30 rounded text-sky-600 dark:text-sky-400">
+                <Icon name="cloud" size="sm" />
+              </div>
+              <CardTitle className="text-base font-medium">Cloud Sync (Beta)</CardTitle>
+            </div>
+          </CardHeader>
+          <CardContent className="p-5">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <Typography variant="subtitle" className="text-slate-900 dark:text-slate-100">Sync Data</Typography>
+                <Typography variant="caption" className="text-slate-500 dark:text-slate-400">
+                  Sync macros and contexts across devices via Chrome.
+                </Typography>
+              </div>
+              <ToggleWithoutLabel
+                label="Enable Sync"
+                checked={useSyncStore((s) => s.isEnabled)}
+                onChange={(checked) => useSyncStore.getState().setSyncEnabled(checked)}
+              />
+            </div>
+            <div className="flex gap-2">
+               <Button
+                 size="sm"
+                 variant="outline"
+                 disabled={!useSyncStore((s) => s.isEnabled)}
+                 onClick={() => SyncService.getInstance().sync()}
+               >
+                 Push Now
+               </Button>
+               <Button
+                 size="sm"
+                 variant="outline"
+                 disabled={!useSyncStore((s) => s.isEnabled)}
+                 onClick={() => SyncService.getInstance().pull()}
+               >
+                 Pull Now
+               </Button>
+            </div>
+            {useSyncStore((s) => s.lastSyncedAt) && (
+              <Typography variant="caption" className="text-slate-400 mt-2 block">
+                Last synced: {new Date(useSyncStore.getState().lastSyncedAt!).toLocaleString()}
+              </Typography>
+            )}
+            {useSyncStore((s) => s.error) && (
+              <Typography variant="caption" className="text-red-500 mt-2 block">
+                Error: {useSyncStore.getState().error}
+              </Typography>
+            )}
+          </CardContent>
+        </Card>
 
         {/* Appearance Settings */}
         <Card className="border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm overflow-hidden">
