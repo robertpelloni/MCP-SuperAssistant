@@ -190,3 +190,17 @@ Synchronize your Macros, Contexts, and Settings across multiple devices using Ch
 4.  On another device, enable sync and click "Pull Now" to download.
 
 **Note**: Storage limits apply (approx. 100KB). Use for critical configurations only.
+
+## Version 1.5.0 Features
+
+### Default Macros
+New installations come with pre-loaded macros to help you get started:
+*   **Summarize Selection**: Sends selected text to an AI tool for summarization.
+*   **Explain Code**: Analyzes code snippets.
+*   **Fix Grammar**: Corrects text.
+
+### Accessibility
+*   **Text-to-Speech**: Click the speaker icon in the Activity Log to read tool outputs aloud.
+
+### Data Management
+*   **Log Export**: Download your entire session history as a JSON file from the Activity Log.

@@ -84,6 +84,26 @@ const ActivityLog: React.FC = () => {
             <Icon name="x" size="xs" className="mr-1" />
             Clear
           </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => {
+              const data = JSON.stringify(logs, null, 2);
+              const blob = new Blob([data], { type: 'application/json' });
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement('a');
+              a.href = url;
+              a.download = `mcp-logs-${new Date().toISOString()}.json`;
+              document.body.appendChild(a);
+              a.click();
+              document.body.removeChild(a);
+              URL.revokeObjectURL(url);
+            }}
+            disabled={logs.length === 0}
+            className="text-xs text-slate-500 hover:text-primary-600 dark:text-slate-400 dark:hover:text-primary-400 ml-1">
+            <Icon name="download" size="xs" className="mr-1" />
+            Export
+          </Button>
         </div>
 
         {/* Search */}
@@ -194,6 +214,20 @@ const ActivityLog: React.FC = () => {
                       }}
                       className="h-6 text-[10px] text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20">
                       Delete Entry
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={e => {
+                        e.stopPropagation();
+                        if (log.detail) {
+                          const utterance = new SpeechSynthesisUtterance(log.detail);
+                          window.speechSynthesis.speak(utterance);
+                        }
+                      }}
+                      className="h-6 text-[10px] text-primary-500 hover:text-primary-700 hover:bg-primary-50 dark:hover:bg-primary-900/20 ml-2">
+                      <Icon name="volume-2" size="xs" className="mr-1" />
+                      Read
                     </Button>
                   </div>
                 </div>

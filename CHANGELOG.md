@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.5.0] - 2024-05-22
+
+### Added
+- **Default Macro Library**: Starter macros ("Summarize Selection", "Explain Code", "Fix Grammar") pre-loaded for new users.
+- **Text-to-Speech**: Read Aloud button for tool outputs in Activity Log.
+- **Log Export**: Export activity logs to JSON for debugging or sharing.
+
 ## [1.4.0] - 2024-05-22
 
 ### Added

@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
+import { DEFAULT_MACROS } from './default-macros';
 
 export type StepType = 'tool' | 'condition' | 'delay' | 'set_variable';
 export type ActionType = 'continue' | 'stop' | 'goto';
@@ -76,6 +77,17 @@ export const useMacroStore = create<MacroStore>()(
     {
       name: 'mcp-macros',
       storage: createJSONStorage(() => localStorage),
+      onRehydrateStorage: () => (state) => {
+        // Initialize defaults if empty
+        if (state && state.macros.length === 0) {
+          state.macros = DEFAULT_MACROS.map(m => ({
+            ...m,
+            id: crypto.randomUUID(),
+            createdAt: Date.now(),
+            updatedAt: Date.now()
+          }));
+        }
+      }
     }
   )
 );
