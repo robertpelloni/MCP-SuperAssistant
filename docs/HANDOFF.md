@@ -1,28 +1,28 @@
 # Handoff Protocol
 
 **Date**: 2024-05-22
-**Version**: 1.1.0
+**Version**: 1.5.1
 **Previous Agent**: Jules (Google)
 
 ## Status Summary
-We have successfully implemented and polished the "Insanely Great" feature set for v1.1.0. The project is in a robust, feature-complete state for the current roadmap.
+We have successfully implemented the "Insanely Great" vision, including deep architectural refactors (Plugin System, Centralized Init) and high-value user features (Agentic Macros, Cloud Sync, Context Menu). The project is in a robust maintenance phase.
 
-## Key Accomplishments (v1.1.0)
-1.  **Auto-Execute Whitelist**: A safe mode that strictly enforces allowed tools.
-2.  **Dynamic Theming**: A robust engine allowing users to switch accent colors (Indigo, Blue, Green, etc.).
-3.  **Context Integration**: Context Menu ("Save to MCP Context") is wired up to the `ContextManager` UI.
-4.  **Macro Variables**: Macros now support `Set Variable` steps and variable substitution (`{{var}}`).
+## Key Changes in 1.5.1
+1.  **Documentation Overhaul**: Added `MEMORY.md`, `DEPLOY.md`, `TODO.md` and updated `AGENTS.md` to be universal.
+2.  **System Info**: Polish of the System Dashboard to accurately reflect the project structure.
+3.  **Versioning**: Bumped to v1.5.1 to reflect documentation and polish updates.
 
-## Next Steps (Phase 4)
-The next agent should focus on the "Future / Maintenance" phase items in the Roadmap:
-1.  **Cloud Sync**: Investigating methods to sync `macro.store` and `context.store` across devices (Chrome Sync or external).
-2.  **Multi-Proxy Support**: Extending `McpClient` to handle multiple connection URIs simultaneously.
-3.  **Community Registry**: A way to import shared Macros from a URL.
+## Pending / Next Steps (Phase 5)
+1.  **Community Registry**: The backend for sharing Macros via URL needs to be built or integrated (currently just imports JSON from any URL).
+2.  **Multi-Modal Support**: Drag-and-drop images into the input area.
+3.  **Conflict Resolution**: UI for Cloud Sync conflicts.
 
-## Critical Files for Next Agent
--   `docs/DEEP_ANALYSIS.md`: Read this first! It explains *how* everything works.
--   `pages/content/src/components/sidebar/Settings/Settings.tsx`: Where users configure the new features.
--   `pages/content/src/services/automation.service.ts`: The logic engine for whitelisting.
+## Critical Files
+-   `docs/AGENTS.md`: **READ THIS FIRST**. Universal instructions for all models.
+-   `docs/DEEP_ANALYSIS.md`: Technical "Brain Dump".
+-   `VERSION`: Single source of truth.
 
-## Final Note
-The codebase is clean. Dependencies (like `uuid` vs `crypto`) have been standardized. Proceed with confidence.
+## Instructions for Next Agent
+-   Check `docs/TODO.md` for granular tasks.
+-   Continue the pattern of "Deep Planning" -> "Autonomous Execution".
+-   Maintain the high standard of documentation ("Documentation First").

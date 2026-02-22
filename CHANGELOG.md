@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.5.1] - 2024-05-22
+
+### Added
+- **Deep Documentation**: New `MEMORY.md`, `DEPLOY.md`, and `TODO.md` guides.
+- **Universal Instructions**: Consolidated `AGENTS.md` for better AI collaboration.
+- **System Polish**: Enhanced System Info dashboard with detailed project structure visualization.
+
 ## [1.5.0] - 2024-05-22
 
 ### Added

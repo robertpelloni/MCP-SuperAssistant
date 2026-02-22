@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@src/components/ui/car
 
 const SystemInfo: React.FC = () => {
   const buildDate = new Date().toLocaleString();
-  const version = "1.1.0"; // Should match VERSION file
+  const version = "1.5.1"; // Should match VERSION file
 
   return (
     <div className="flex flex-col h-full space-y-4 p-4 overflow-y-auto">
@@ -42,20 +42,24 @@ const SystemInfo: React.FC = () => {
           <CardTitle className="text-sm font-semibold text-slate-700 dark:text-slate-300">Project Structure</CardTitle>
         </CardHeader>
         <CardContent className="p-4">
-          <div className="text-xs font-mono bg-slate-50 dark:bg-slate-950 p-2 rounded border border-slate-100 dark:border-slate-800 overflow-x-auto whitespace-pre">
+          <div className="text-xs font-mono bg-slate-50 dark:bg-slate-950 p-2 rounded border border-slate-100 dark:border-slate-800 overflow-x-auto whitespace-pre leading-relaxed text-slate-700 dark:text-slate-300">
 {`mcp-superassistant/
-├── chrome-extension/       (v1.1.0)
+├── chrome-extension/       (v${version})
 │   ├── background/         (Service Worker)
 │   └── mcpclient/          (Protocol Layer)
+│
 ├── pages/
-│   └── content/            (Sidebar UI - v1.1.0)
+│   └── content/            (Sidebar UI - v${version})
 │       └── src/
 │           ├── components/ (React Components)
 │           ├── stores/     (Zustand Stores)
-│           └── lib/        (Logic & Services)
+│           ├── core/       (Initialization)
+│           └── plugins/    (Modular Features)
+│
 ├── packages/               (Shared Libraries)
 │   ├── shared/             (Utils, Logger)
 │   └── storage/            (Chrome Storage)
+│
 └── docs/                   (Documentation)`}
           </div>
         </CardContent>
