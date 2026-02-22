@@ -204,3 +204,39 @@ New installations come with pre-loaded macros to help you get started:
 
 ### Data Management
 *   **Log Export**: Download your entire session history as a JSON file from the Activity Log.
+
+## Version 1.6.0 Features
+
+### Multi-Modal Support
+You can now drag and drop images directly into the Input Area.
+*   **Thumbnails**: Images appear as thumbnails above the text box.
+*   **Format**: They are sent as Base64-encoded strings, typically appended to the prompt for tool consumption.
+
+### Featured Macros
+Discover community-created workflows:
+1.  Go to the **Macros** tab.
+2.  Click the **Star** icon in the header.
+3.  Browse the list and click **+** to import into your library.
+
+## Version 1.7.0 Features
+
+### Resources
+MCP Resources allow servers to expose data that can be read by the client.
+*   **Resources Tab**: Navigate to the new "Resources" tab in the sidebar to see available resources.
+*   **Read**: Click the "Read" button (book icon) next to a resource to fetch its content.
+*   **Insert**: The content is automatically inserted into the chat input area.
+
+### Prompts
+MCP Prompts are pre-defined templates provided by the server.
+*   **Prompts Tab**: Navigate to the "Prompts" tab to browse available prompts.
+*   **Arguments**: If a prompt requires arguments, input fields will appear when you expand the prompt card.
+*   **Use**: Click "Use Prompt" to fetch the messages and insert them into the chat input area.
+
+### MCP Sampling
+The extension now supports MCP Sampling, allowing servers to request LLM generations from you (the user).
+*   **Request Modal**: When a server sends a sampling request, a modal will appear overlaying the sidebar.
+*   **Context**: You can see the messages/context provided by the server.
+*   **Response**: Type your response in the text area and click "Send Response" to return it to the server. Or click "Reject" to decline.
+
+### Push Content Mode
+*   **Toggle**: You can now toggle "Push Content Mode" directly from the Settings tab (under Appearance).

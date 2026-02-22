@@ -5,6 +5,9 @@ import { useKeyboardShortcuts } from '@src/hooks/useKeyboardShortcuts';
 import { useUIStore } from '@src/stores/ui.store';
 import ServerStatus from './ServerStatus/ServerStatus';
 import AvailableTools from './AvailableTools/AvailableTools';
+import ResourcesList from './Resources/ResourcesList';
+import PromptsList from './Prompts/PromptsList';
+import SamplingModal from './Sampling/SamplingModal';
 import InstructionManager from './Instructions/InstructionManager';
 import InputArea from './InputArea/InputArea';
 import Settings from './Settings/Settings';
@@ -127,13 +130,13 @@ const Sidebar: React.FC<SidebarProps> = ({ initialPreferences }) => {
     };
 
     const colors = colorMap[accentColor] || colorMap['indigo'];
-    const root = sidebarRef.current;
+    const rootEl = sidebarRef.current;
 
-    if (root) {
+    if (rootEl) {
       Object.entries(colors).forEach(([shade, value]) => {
-        root.style.setProperty(`--color-primary-${shade}`, value);
+        rootEl.style.setProperty(`--color-primary-${shade}`, value);
       });
-      root.setAttribute('data-accent', accentColor);
+      rootEl.setAttribute('data-accent', accentColor);
     }
   }, [preferences.accentColor]);
 
@@ -141,7 +144,6 @@ const Sidebar: React.FC<SidebarProps> = ({ initialPreferences }) => {
   const [initializationError, setInitializationError] = useState<string | null>(null);
   const [extensionContextInvalid, setExtensionContextInvalid] = useState<boolean>(false);
   const [isComponentMounted, setIsComponentMounted] = useState<boolean>(false);
-  const [renderKey, setRenderKey] = useState<number>(0); // Force re-render key
   const [isInitializing, setIsInitializing] = useState<boolean>(true); // Track initialization state
 
   // Get communication methods with guaranteed safe fallbacks and error boundaries
@@ -399,7 +401,7 @@ const Sidebar: React.FC<SidebarProps> = ({ initialPreferences }) => {
 
   // Local UI state that doesn't need to be in the store
   const [activeTab, setActiveTab] = useState<
-    'availableTools' | 'instructions' | 'activity' | 'dashboard' | 'macros' | 'settings' | 'help' | 'system'
+    'availableTools' | 'resources' | 'prompts' | 'instructions' | 'activity' | 'dashboard' | 'macros' | 'settings' | 'help' | 'system'
   >('availableTools');
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -408,7 +410,6 @@ const Sidebar: React.FC<SidebarProps> = ({ initialPreferences }) => {
 
   const sidebarRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
-  const searchInputRef = useRef<HTMLInputElement>(null); // Ref for available tools search input
   const isResizingRef = useRef(false);
   const previousWidthRef = useRef(SIDEBAR_DEFAULT_WIDTH);
   const transitionTimerRef = useRef<number | null>(null);
@@ -432,8 +433,10 @@ const Sidebar: React.FC<SidebarProps> = ({ initialPreferences }) => {
       // Ideally we would focus the input inside AvailableTools
     },
     switchTab: direction => {
-      const tabs: ('availableTools' | 'instructions' | 'activity' | 'dashboard' | 'macros' | 'settings' | 'help' | 'system')[] = [
+      const tabs: ('availableTools' | 'resources' | 'prompts' | 'instructions' | 'activity' | 'dashboard' | 'macros' | 'settings' | 'help' | 'system')[] = [
         'availableTools',
+        'resources',
+        'prompts',
         'instructions',
         'activity',
         'dashboard',
@@ -549,31 +552,6 @@ const Sidebar: React.FC<SidebarProps> = ({ initialPreferences }) => {
     };
   }, [theme, applyTheme]);
   // --- End Theme Application Logic ---
-
-  // useEffect(() => {
-  //   // Function to update detected tools
-  //   const updateDetectedTools = () => {
-  //     try {
-  //       const toolDict = getMasterToolDict();
-  //       const mcpTools = Object.values(toolDict) as DetectedTool[];
-
-  //       // Update the detected tools state
-  //       setDetectedTools(mcpTools);
-
-  //       if (mcpTools.length > 0) {
-  //         // logMessage(`[Sidebar] Found ${mcpTools.length} MCP tools`);
-  //       }
-  //     } catch (error) {
-  //       // If getMasterToolDict fails, just log the error
-  //       logger.error("Error updating detected tools:", error);
-  //     }
-  //   };
-
-  //   // Set up interval to check for new tools
-  //   const updateInterval = setInterval(updateDetectedTools, 1000);
-
-  //   // Track URL changes to clear detected tools on navigation
-  //   let lastUrl = window.location.href;
 
   // Apply push mode when settings change - with robust retry mechanism
   useEffect(() => {
@@ -757,12 +735,6 @@ const Sidebar: React.FC<SidebarProps> = ({ initialPreferences }) => {
     logMessage(`[Sidebar] Auto submit ${checked ? 'enabled' : 'disabled'}`);
   };
 
-  const handleClearTools = () => {
-    logMessage('[Sidebar] Clear tools requested - functionality deprecated');
-    // Note: Tool clearing is now handled by the store/MCP client
-    // This is kept for UI compatibility but doesn't clear anything
-  };
-
   const handleRefreshTools = async () => {
     logMessage('[Sidebar] Refreshing tools');
     setIsRefreshing(true);
@@ -824,6 +796,10 @@ const Sidebar: React.FC<SidebarProps> = ({ initialPreferences }) => {
         isTransitioning ? 'sidebar-transitioning' : '',
       )}
       style={{ width: isMinimized ? `${SIDEBAR_MINIMIZED_WIDTH}px` : `${sidebarWidth}px` }}>
+
+      {/* Sampling Modal Overlay */}
+      <SamplingModal />
+
       {/* Resize Handle - only visible when not minimized */}
       {!isMinimized && (
         <ResizeHandle
@@ -997,16 +973,6 @@ const Sidebar: React.FC<SidebarProps> = ({ initialPreferences }) => {
                       onChange={handlePushModeToggle}
                     />
                   </div>
-                  {/* <div className="flex items-center justify-between">
-                    <Typography variant="subtitle" className="text-slate-700 dark:text-slate-300 font-medium">
-                      Auto Submit Tool Results
-                    </Typography>
-                    <ToggleWithoutLabel
-                      label="Auto Submit Tool Results"
-                      checked={autoSubmit}
-                      onChange={handleAutoSubmitToggle}
-                    />
-                  </div> */}
 
                   {/* DEBUG BUTTON - ONLY FOR DEVELOPMENT - REMOVE IN PRODUCTION */}
                   {process.env.NODE_ENV === 'development' && (
@@ -1034,17 +1000,37 @@ const Sidebar: React.FC<SidebarProps> = ({ initialPreferences }) => {
                 <div className="flex">
                   <button
                     className={cn(
-                      'py-2 px-4 font-medium text-sm transition-all duration-200',
+                      'py-2 px-3 font-medium text-xs sm:text-sm transition-all duration-200',
                       activeTab === 'availableTools'
                         ? 'border-b-2 border-primary-600 text-primary-600 dark:border-primary-400 dark:text-primary-400'
                         : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-t-lg',
                     )}
                     onClick={() => setActiveTab('availableTools')}>
-                    Available Tools
+                    Tools
                   </button>
                   <button
                     className={cn(
-                      'py-2 px-4 font-medium text-sm transition-all duration-200',
+                      'py-2 px-3 font-medium text-xs sm:text-sm transition-all duration-200',
+                      activeTab === 'resources'
+                        ? 'border-b-2 border-primary-600 text-primary-600 dark:border-primary-400 dark:text-primary-400'
+                        : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-t-lg',
+                    )}
+                    onClick={() => setActiveTab('resources')}>
+                    Resources
+                  </button>
+                  <button
+                    className={cn(
+                      'py-2 px-3 font-medium text-xs sm:text-sm transition-all duration-200',
+                      activeTab === 'prompts'
+                        ? 'border-b-2 border-primary-600 text-primary-600 dark:border-primary-400 dark:text-primary-400'
+                        : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-t-lg',
+                    )}
+                    onClick={() => setActiveTab('prompts')}>
+                    Prompts
+                  </button>
+                  <button
+                    className={cn(
+                      'py-2 px-3 font-medium text-xs sm:text-sm transition-all duration-200',
                       activeTab === 'instructions'
                         ? 'border-b-2 border-primary-600 text-primary-600 dark:border-primary-400 dark:text-primary-400'
                         : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-t-lg',
@@ -1054,7 +1040,7 @@ const Sidebar: React.FC<SidebarProps> = ({ initialPreferences }) => {
                   </button>
                   <button
                     className={cn(
-                      'py-2 px-4 font-medium text-sm transition-all duration-200',
+                      'py-2 px-3 font-medium text-xs sm:text-sm transition-all duration-200',
                       activeTab === 'activity'
                         ? 'border-b-2 border-primary-600 text-primary-600 dark:border-primary-400 dark:text-primary-400'
                         : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-t-lg',
@@ -1064,7 +1050,7 @@ const Sidebar: React.FC<SidebarProps> = ({ initialPreferences }) => {
                   </button>
                   <button
                     className={cn(
-                      'py-2 px-4 font-medium text-sm transition-all duration-200',
+                      'py-2 px-3 font-medium text-xs sm:text-sm transition-all duration-200',
                       activeTab === 'dashboard'
                         ? 'border-b-2 border-primary-600 text-primary-600 dark:border-primary-400 dark:text-primary-400'
                         : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-t-lg',
@@ -1074,7 +1060,7 @@ const Sidebar: React.FC<SidebarProps> = ({ initialPreferences }) => {
                   </button>
                   <button
                     className={cn(
-                      'py-2 px-4 font-medium text-sm transition-all duration-200',
+                      'py-2 px-3 font-medium text-xs sm:text-sm transition-all duration-200',
                       activeTab === 'macros'
                         ? 'border-b-2 border-primary-600 text-primary-600 dark:border-primary-400 dark:text-primary-400'
                         : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-t-lg',
@@ -1084,7 +1070,7 @@ const Sidebar: React.FC<SidebarProps> = ({ initialPreferences }) => {
                   </button>
                   <button
                     className={cn(
-                      'py-2 px-4 font-medium text-sm transition-all duration-200',
+                      'py-2 px-3 font-medium text-xs sm:text-sm transition-all duration-200',
                       activeTab === 'settings'
                         ? 'border-b-2 border-primary-600 text-primary-600 dark:border-primary-400 dark:text-primary-400'
                         : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-t-lg',
@@ -1094,7 +1080,7 @@ const Sidebar: React.FC<SidebarProps> = ({ initialPreferences }) => {
                   </button>
                   <button
                     className={cn(
-                      'py-2 px-4 font-medium text-sm transition-all duration-200',
+                      'py-2 px-3 font-medium text-xs sm:text-sm transition-all duration-200',
                       activeTab === 'system'
                         ? 'border-b-2 border-primary-600 text-primary-600 dark:border-primary-400 dark:text-primary-400'
                         : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-t-lg',
@@ -1104,7 +1090,7 @@ const Sidebar: React.FC<SidebarProps> = ({ initialPreferences }) => {
                   </button>
                   <button
                     className={cn(
-                      'py-2 px-4 font-medium text-sm transition-all duration-200',
+                      'py-2 px-3 font-medium text-xs sm:text-sm transition-all duration-200',
                       activeTab === 'help'
                         ? 'border-b-2 border-primary-600 text-primary-600 dark:border-primary-400 dark:text-primary-400'
                         : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-t-lg',
@@ -1134,6 +1120,24 @@ const Sidebar: React.FC<SidebarProps> = ({ initialPreferences }) => {
                     />
                   </CardContent>
                 </Card>
+              </div>
+
+              {/* Resources */}
+              <div
+                className={cn(
+                  'h-full overflow-y-auto scrollbar-thin scrollbar-thumb-slate-300 dark:scrollbar-thumb-slate-600 scrollbar-track-transparent',
+                  { hidden: activeTab !== 'resources' },
+                )}>
+                <ResourcesList />
+              </div>
+
+              {/* Prompts */}
+              <div
+                className={cn(
+                  'h-full overflow-y-auto scrollbar-thin scrollbar-thumb-slate-300 dark:scrollbar-thumb-slate-600 scrollbar-track-transparent',
+                  { hidden: activeTab !== 'prompts' },
+                )}>
+                <PromptsList />
               </div>
 
               {/* Instructions */}

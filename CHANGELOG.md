@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.7.0] - 2024-05-22
+
+### Added
+- **Resources Support**: New "Resources" tab to browse and read data exposed by MCP servers.
+- **Prompts Support**: New "Prompts" tab to use server-defined templates with arguments.
+- **MCP Sampling**: Full support for server-initiated sampling requests (LLM generation) via a user-mediated modal.
+- **Push Content Mode UI**: Toggle added to Settings for controlling page layout shift.
+
+## [1.6.0] - 2024-05-22
+
+### Added
+- **Multi-Modal Input**: Drag and drop images directly into the Input Area to attach them to messages.
+- **Featured Macros**: A built-in "Store" to discover and import community macros.
+- **Robustness**: Added automated unit tests for the Macro Runner logic.
+
 ## [1.5.1] - 2024-05-22
 
 ### Added

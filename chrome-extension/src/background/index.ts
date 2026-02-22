@@ -7,11 +7,16 @@ import {
   forceReconnectToMcpServer,
   checkMcpServerConnection,
   callToolWithBackwardsCompatibility,
+  readResourceWithBackwardsCompatibility,
+  getPromptWithBackwardsCompatibility,
   getPrimitivesWithBackwardsCompatibility,
   resetMcpConnectionState,
   resetMcpConnectionStateForRecovery,
   normalizeToolsFromPrimitives as normalizeTools,
+  normalizeResourcesFromPrimitives as normalizeResources,
+  normalizePromptsFromPrimitives as normalizePrompts,
   createMcpClient,
+  getGlobalMcpClientInstance,
   type TransportType,
   type ConnectionRequest,
 } from '../mcpclient/index';
@@ -59,6 +64,9 @@ let connectionType: ConnectionType = DEFAULT_CONNECTION_TYPE;
 let isConnected: boolean = false;
 let connectionCount: number = 0;
 let isInitialized: boolean = false;
+
+// Sampling callback map
+const samplingRequestMap = new Map<string, (result: any) => void>();
 
 /**
  * Initialize server URL from Chrome storage
@@ -262,6 +270,9 @@ async function initializeExtension() {
   // Initialize Remote Config Manager
   await initializeRemoteConfig();
 
+  // Initialize Global Client Listener for Sampling
+  initializeSamplingListener();
+
   logger.debug('Extension initialized successfully');
 
   // After initialization is complete, attempt connection and broadcast initial status immediately
@@ -294,11 +305,7 @@ async function initializeExtension() {
         logger.debug('[Background] Server connected, fetching and broadcasting initial tools...');
         const primitives = await getPrimitivesWithBackwardsCompatibility(serverUrl, false, connectionType);
         logger.debug(`Retrieved ${primitives.length} primitives for initial broadcast`);
-
-        const tools = normalizeTools(primitives);
-        logger.debug(`Broadcasting ${tools.length} normalized initial tools`);
-
-        broadcastToolsUpdateToContentScripts(tools);
+        broadcastPrimitivesUpdateToContentScripts(primitives);
       } catch (error) {
         logger.warn('[Background] Error broadcasting initial tools:', error);
       }
@@ -307,6 +314,46 @@ async function initializeExtension() {
 
   // Run the initial connection attempt immediately
   checkInitialConnectionStatus();
+}
+
+async function initializeSamplingListener() {
+    try {
+        const client = await getGlobalMcpClientInstance();
+        client.on('sampling:request-received', (event) => {
+            const requestId = crypto.randomUUID();
+            logger.debug(`[Background] Received sampling request, assigning ID: ${requestId}`);
+
+            // Store the respond callback
+            samplingRequestMap.set(requestId, event.respond);
+
+            // Broadcast to active tab
+            chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+                const activeTab = tabs[0];
+                if (activeTab?.id) {
+                    chrome.tabs.sendMessage(activeTab.id, {
+                        type: 'mcp:sampling-request',
+                        payload: {
+                            requestId,
+                            request: event.request
+                        },
+                        origin: 'background'
+                    }).catch(err => {
+                        logger.error('[Background] Failed to send sampling request to content script:', err);
+                        // If we can't send, we should probably fail the request
+                        event.respond({ error: { code: -32603, message: "No active tab to handle sampling request" } });
+                        samplingRequestMap.delete(requestId);
+                    });
+                } else {
+                     logger.warn('[Background] No active tab found to handle sampling request');
+                     event.respond({ error: { code: -32603, message: "No active tab found" } });
+                     samplingRequestMap.delete(requestId);
+                }
+            });
+        });
+        logger.debug('[Background] Sampling listener initialized');
+    } catch (error) {
+        logger.error('[Background] Failed to initialize sampling listener:', error);
+    }
 }
 
 /**
@@ -343,11 +390,7 @@ async function tryConnectToServer(uri: string, type: ConnectionType = connection
       logger.debug('[Background] Connection successful, fetching and broadcasting tools...');
       const primitives = await getPrimitivesWithBackwardsCompatibility(uri, true, type);
       logger.debug(`Retrieved ${primitives.length} primitives after connection`);
-
-      const tools = normalizeTools(primitives);
-      logger.debug(`Broadcasting ${tools.length} normalized tools after successful connection`);
-
-      broadcastToolsUpdateToContentScripts(tools);
+      broadcastPrimitivesUpdateToContentScripts(primitives);
     } catch (toolsError) {
       logger.warn('[Background] Error broadcasting tools after connection:', toolsError);
     }
@@ -411,11 +454,7 @@ setInterval(async () => {
         logger.debug('[Background] Periodic check: Connection established, fetching and broadcasting tools...');
         const primitives = await getPrimitivesWithBackwardsCompatibility(getServerUrl(), true, connectionType);
         logger.debug(`Periodic check: Retrieved ${primitives.length} primitives`);
-
-        const tools = normalizeTools(primitives);
-        logger.debug(`Periodic check: Broadcasting ${tools.length} normalized tools`);
-
-        broadcastToolsUpdateToContentScripts(tools);
+        broadcastPrimitivesUpdateToContentScripts(primitives);
       } catch (error) {
         logger.warn('[Background] Error broadcasting tools after status change:', error);
       }
@@ -580,9 +619,6 @@ chrome.runtime.onInstalled.addListener(async details => {
       });
     }, 1000); // Delay to ensure content scripts are ready
   }
-
-  // Re-initialize after install/update (optional, depending on setup)
-  // initializeExtension().catch(err => logger.error("Error re-initializing after install:", err));
 });
 
 // Setup context menu
@@ -650,6 +686,26 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
     // No response needed
     return false;
+  }
+
+  // Handle Sampling Response from Content Script
+  if (message.type === 'mcp:sampling-response') {
+      const { requestId, result, error } = message.payload || {};
+      logger.debug(`[Background] Received sampling response for ${requestId}`);
+
+      const respond = samplingRequestMap.get(requestId);
+      if (respond) {
+          if (error) {
+              respond({ error });
+          } else {
+              respond(result);
+          }
+          samplingRequestMap.delete(requestId);
+      } else {
+          logger.warn(`[Background] No callback found for sampling request ${requestId}`);
+      }
+      sendResponse({ success: true });
+      return false;
   }
 
   /* ------------------------------------------------------------------ */
@@ -727,6 +783,22 @@ async function handleMcpMessage(
         break;
       }
 
+      case 'mcp:read-resource': {
+        const { uri } = payload as any;
+        if (!uri) throw new Error('Resource URI is required');
+        logger.debug(`Reading resource: ${uri}`);
+        result = await readResourceWithBackwardsCompatibility(getServerUrl(), uri);
+        break;
+      }
+
+      case 'mcp:get-prompt': {
+        const { name, args } = payload as any;
+        if (!name) throw new Error('Prompt name is required');
+        logger.debug(`Getting prompt: ${name}`);
+        result = await getPromptWithBackwardsCompatibility(getServerUrl(), name, args);
+        break;
+      }
+
       case 'mcp:get-connection-status': {
         logger.debug('[Background] Getting current connection status');
 
@@ -765,9 +837,25 @@ async function handleMcpMessage(
 
           // Use the helper function to normalize tools with proper schema handling
           const tools = normalizeTools(primitives);
-          logger.debug(`Returning ${tools.length} normalized tools to content script`);
+          const resources = normalizeResources(primitives);
+          const prompts = normalizePrompts(primitives);
+
+          // Return everything in the response for modern clients
+          // Legacy clients will just ignore extra fields if they typed it strongly as array
+          // But wait, the previous return type was `tools` (array).
+          // If I change result to object { tools, resources, prompts }, legacy clients iterating over it will break.
+          // I must return `tools` array for `mcp:get-tools` to maintain backward compat.
+          // BUT, I can send a SEPARATE broadcast for resources/prompts or update the cache.
+
+          // Actually, let's keep `mcp:get-tools` returning just tools for now to be safe,
+          // OR assume the client checks.
+          // The previous code returned `tools` array.
 
           result = tools;
+
+          // We can ALSO broadcast the full update to ensure everyone has latest
+          broadcastPrimitivesUpdateToContentScripts(primitives);
+
         } catch (error) {
           logger.error('[Background] Error getting tools:', error);
           // Return empty array instead of throwing to prevent UI crashes
@@ -811,11 +899,7 @@ async function handleMcpMessage(
               logger.debug('[Background] Fetching tools after successful reconnection...');
               const primitives = await getPrimitivesWithBackwardsCompatibility(getServerUrl(), true, connectionType);
               logger.debug(`Retrieved ${primitives.length} primitives after reconnection`);
-
-              const tools = normalizeTools(primitives);
-              logger.debug(`Broadcasting ${tools.length} normalized tools after reconnection`);
-
-              broadcastToolsUpdateToContentScripts(tools);
+              broadcastPrimitivesUpdateToContentScripts(primitives);
             } catch (toolsError) {
               logger.error('[Background] Error fetching tools after reconnect:', toolsError);
             }
@@ -891,9 +975,8 @@ async function handleMcpMessage(
             if (isConnected) {
               try {
                 const primitives = await getPrimitivesWithBackwardsCompatibility(config.uri, true, newType);
-                const tools = normalizeTools(primitives);
-                broadcastToolsUpdateToContentScripts(tools);
-                logger.debug(`Broadcasted ${tools.length} normalized tools after config update`);
+                broadcastPrimitivesUpdateToContentScripts(primitives);
+                logger.debug(`Broadcasted normalized tools after config update`);
               } catch (toolError) {
                 logger.warn('[Background] Failed to fetch tools after config update:', toolError);
               }
@@ -1024,17 +1107,23 @@ function broadcastConnectionStatusToContentScripts(isConnected: boolean, error?:
 }
 
 /**
- * Broadcast tools update to all content scripts via context bridge
+ * Broadcast primitives update to all content scripts via context bridge
  *
- * @param tools - Array of available MCP tools
+ * @param primitives - Array of all MCP primitives (tools, resources, prompts)
  */
-function broadcastToolsUpdateToContentScripts(tools: any[]) {
-  logger.debug(`Broadcasting tools update to content scripts: ${tools.length} tools`);
+function broadcastPrimitivesUpdateToContentScripts(primitives: any[]) {
+  const tools = normalizeTools(primitives);
+  const resources = normalizeResources(primitives);
+  const prompts = normalizePrompts(primitives);
 
-  const broadcastMessage: BaseMessage & { payload: ToolUpdateBroadcast } = {
-    type: 'mcp:tool-update',
+  logger.debug(`Broadcasting update: ${tools.length} tools, ${resources.length} resources, ${prompts.length} prompts`);
+
+  const broadcastMessage: BaseMessage & { payload: any } = {
+    type: 'mcp:tool-update', // Keeping type for legacy compat, but payload will have extra fields
     payload: {
       tools,
+      resources,
+      prompts
     },
     origin: 'background',
     timestamp: Date.now(),

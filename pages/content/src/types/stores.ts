@@ -29,6 +29,23 @@ export interface Tool {
   input_schema: any; // Keeping 'any' as per original spec, can be refined later
 }
 
+export interface Resource {
+  name: string;
+  uri: string;
+  description?: string;
+  mimeType?: string;
+}
+
+export interface Prompt {
+  name: string;
+  description?: string;
+  arguments?: {
+    name: string;
+    description?: string;
+    required?: boolean;
+  }[];
+}
+
 export interface DetectedTool {
   name: string;
   parameters: Record<string, any>;

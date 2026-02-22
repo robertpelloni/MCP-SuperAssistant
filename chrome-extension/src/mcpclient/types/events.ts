@@ -41,4 +41,22 @@ export interface ToolEvents {
   'tools:list-updated': { tools: any[]; type: TransportType };
 }
 
-export type AllEvents = ClientEvents & RegistryEvents & ConnectionEvents & ToolEvents;
+export interface ResourceEvents {
+  'resources:list-updated': { resources: any[]; type: TransportType };
+  'resource:read-started': { uri: string };
+  'resource:read-completed': { uri: string; result: any };
+  'resource:read-failed': { uri: string; error: Error };
+}
+
+export interface PromptEvents {
+  'prompts:list-updated': { prompts: any[]; type: TransportType };
+  'prompt:get-started': { name: string; args?: any };
+  'prompt:get-completed': { name: string; result: any };
+  'prompt:get-failed': { name: string; error: Error };
+}
+
+export interface SamplingEvents {
+  'sampling:request-received': { request: any; respond: (result: any) => void };
+}
+
+export type AllEvents = ClientEvents & RegistryEvents & ConnectionEvents & ToolEvents & ResourceEvents & PromptEvents & SamplingEvents;

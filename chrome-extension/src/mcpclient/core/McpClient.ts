@@ -1,6 +1,11 @@
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import type { Transport } from '@modelcontextprotocol/sdk/shared/transport.js';
-import { LoggingMessageNotificationSchema } from '@modelcontextprotocol/sdk/types.js';
+import {
+  LoggingMessageNotificationSchema,
+  ReadResourceResultSchema,
+  GetPromptResultSchema,
+  CreateMessageRequestSchema
+} from '@modelcontextprotocol/sdk/types.js';
 
 import { EventEmitter } from './EventEmitter.js';
 import { PluginRegistry } from './PluginRegistry.js';
@@ -185,12 +190,36 @@ export class McpClient extends EventEmitter<AllEvents> {
           name: `mcp-client-${type}`,
           version: '1.0.0',
         },
-        { capabilities: {} },
+        { capabilities: { sampling: {} } }, // Enable sampling capability
       );
 
       // Set up logging notification handler
       this.client.setNotificationHandler(LoggingMessageNotificationSchema, notification => {
         logger.debug(`Server log:`, notification.params.data);
+      });
+
+      // Set up sampling handler
+      this.client.setRequestHandler(CreateMessageRequestSchema, async (request) => {
+        logger.debug('[McpClient] Received sampling request:', request);
+
+        return new Promise((resolve, reject) => {
+          // Emit event for the UI/Background to handle
+          this.emit('sampling:request-received', {
+            request,
+            respond: (result: any) => {
+              if (result.error) {
+                reject(result.error);
+              } else {
+                resolve(result);
+              }
+            }
+          });
+
+          // Add a timeout just in case UI doesn't respond
+          setTimeout(() => {
+             reject(new Error('Sampling request timed out waiting for user interaction'));
+          }, 300000); // 5 minutes
+        });
       });
 
       // Connect client to transport (this will start the transport)
@@ -396,6 +425,54 @@ export class McpClient extends EventEmitter<AllEvents> {
     }
   }
 
+  async readResource(uri: string): Promise<any> {
+    if (!this.isConnectedFlag || !this.client) {
+      throw new Error('Not connected to MCP server');
+    }
+
+    this.emit('resource:read-started', { uri });
+
+    try {
+      const result = await this.client.request(
+        {
+          method: 'resources/read',
+          params: { uri },
+        },
+        ReadResourceResultSchema
+      );
+
+      this.emit('resource:read-completed', { uri, result });
+      return result;
+    } catch (error) {
+      this.emit('resource:read-failed', { uri, error: error as Error });
+      throw error;
+    }
+  }
+
+  async getPrompt(name: string, args?: Record<string, string>): Promise<any> {
+    if (!this.isConnectedFlag || !this.client) {
+      throw new Error('Not connected to MCP server');
+    }
+
+    this.emit('prompt:get-started', { name, args });
+
+    try {
+      const result = await this.client.request(
+        {
+          method: 'prompts/get',
+          params: { name, arguments: args },
+        },
+        GetPromptResultSchema
+      );
+
+      this.emit('prompt:get-completed', { name, result });
+      return result;
+    } catch (error) {
+      this.emit('prompt:get-failed', { name, error: error as Error });
+      throw error;
+    }
+  }
+
   async getPrimitives(forceRefresh: boolean = false): Promise<PrimitivesResponse> {
     if (!this.isConnectedFlag || !this.activePlugin || !this.client) {
       throw new Error('Not connected to any MCP server');
@@ -427,9 +504,19 @@ export class McpClient extends EventEmitter<AllEvents> {
       this.primitivesCache = response;
       this.primitivesCacheTime = Date.now();
 
-      // Emit tools update event
+      // Emit list updated events
       this.emit('tools:list-updated', {
         tools,
+        type: this.activePlugin.metadata.transportType,
+      });
+
+      this.emit('resources:list-updated', {
+        resources,
+        type: this.activePlugin.metadata.transportType,
+      });
+
+      this.emit('prompts:list-updated', {
+        prompts,
         type: this.activePlugin.metadata.transportType,
       });
 

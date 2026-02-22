@@ -4,7 +4,7 @@
  * These types ensure consistency between the context bridge, MCP client, and background script
  */
 
-import type { ServerConfig, ConnectionStatus, Tool } from './stores';
+import type { ServerConfig, ConnectionStatus, Tool, Resource, Prompt } from './stores';
 
 // Base message structure for all communication
 export interface BaseMessage {
@@ -41,6 +41,26 @@ export interface CallToolResponse {
   result: any;
 }
 
+// Resource Reading
+export interface ReadResourceRequest {
+  uri: string;
+}
+
+export interface ReadResourceResponse {
+  contents: any[];
+}
+
+// Prompt Getting
+export interface GetPromptRequest {
+  name: string;
+  args?: Record<string, string>;
+}
+
+export interface GetPromptResponse {
+  description?: string;
+  messages: any[];
+}
+
 // Connection status
 export interface GetConnectionStatusRequest {}
 
@@ -57,6 +77,8 @@ export interface GetToolsRequest {
 
 export interface GetToolsResponse {
   tools: Tool[];
+  // Legacy support implies we might just return tools here,
+  // but future could return full primitives object
 }
 
 // Force reconnect
@@ -94,6 +116,18 @@ export interface HeartbeatResponse {
   receivedTimestamp: number;
 }
 
+// Sampling Response (Content -> Background)
+export interface SamplingResponseRequest {
+    requestId: string;
+    result?: any;
+    error?: any;
+}
+
+export interface SamplingResponseResponse {
+    success: boolean;
+}
+
+
 // Broadcast message types (one-way messages from background to content)
 
 export interface ConnectionStatusChangedBroadcast {
@@ -105,6 +139,8 @@ export interface ConnectionStatusChangedBroadcast {
 
 export interface ToolUpdateBroadcast {
   tools: Tool[];
+  resources?: Resource[];
+  prompts?: Prompt[];
 }
 
 export interface ServerConfigUpdatedBroadcast {
@@ -116,9 +152,16 @@ export interface HeartbeatResponseBroadcast {
   isConnected: boolean;
 }
 
+export interface SamplingRequestBroadcast {
+    requestId: string;
+    request: any;
+}
+
 // Message type union for better type safety
 export type McpMessageType =
   | 'mcp:call-tool'
+  | 'mcp:read-resource'
+  | 'mcp:get-prompt'
   | 'mcp:get-connection-status'
   | 'mcp:get-tools'
   | 'mcp:force-reconnect'
@@ -128,13 +171,23 @@ export type McpMessageType =
   | 'connection:status-changed'
   | 'mcp:tool-update'
   | 'mcp:server-config-updated'
-  | 'mcp:heartbeat-response';
+  | 'mcp:heartbeat-response'
+  | 'mcp:sampling-request'
+  | 'mcp:sampling-response';
 
 // Utility type for request/response mapping
 export interface McpMessageMap {
   'mcp:call-tool': {
     request: CallToolRequest;
     response: CallToolResponse;
+  };
+  'mcp:read-resource': {
+      request: ReadResourceRequest;
+      response: ReadResourceResponse;
+  };
+  'mcp:get-prompt': {
+      request: GetPromptRequest;
+      response: GetPromptResponse;
   };
   'mcp:get-connection-status': {
     request: GetConnectionStatusRequest;
@@ -160,6 +213,10 @@ export interface McpMessageMap {
     request: HeartbeatRequest;
     response: HeartbeatResponse;
   };
+  'mcp:sampling-response': {
+      request: SamplingResponseRequest;
+      response: SamplingResponseResponse;
+  };
 }
 
 // Error categories for better error handling
@@ -184,6 +241,8 @@ export interface McpError {
 export function isValidMessageType(type: string): type is McpMessageType {
   const validTypes: McpMessageType[] = [
     'mcp:call-tool',
+    'mcp:read-resource',
+    'mcp:get-prompt',
     'mcp:get-connection-status',
     'mcp:get-tools',
     'mcp:force-reconnect',
@@ -194,6 +253,8 @@ export function isValidMessageType(type: string): type is McpMessageType {
     'mcp:tool-update',
     'mcp:server-config-updated',
     'mcp:heartbeat-response',
+    'mcp:sampling-request',
+    'mcp:sampling-response'
   ];
 
   return validTypes.includes(type as McpMessageType);

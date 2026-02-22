@@ -101,6 +101,16 @@ function setupGlobalClientEventListeners(client: McpClient): void {
     }
   });
 
+  client.on('sampling:request-received', event => {
+     // Forward sampling requests to background script for handling
+     if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.sendMessage) {
+        // We need to keep a reference to the respond callback
+        // This is tricky because we can't send functions over chrome.runtime.sendMessage
+        // We'll need an ID-based system in the background script, but for now let's just emit the event
+        // The background script uses the same globalClient instance, so it can listen directly!
+     }
+  });
+
   client.on('client:connected', event => {
     logger.debug('[Global Client] Client connected:', event);
   });
@@ -174,6 +184,37 @@ export async function callToolWithBackwardsCompatibility(
   }
 
   return await client.callTool(toolName, args, adapterName);
+}
+
+export async function readResourceWithBackwardsCompatibility(
+  uri: string,
+  resourceUri: string,
+  transportType?: import('./types/plugin.js').TransportType,
+): Promise<any> {
+  const client = await getGlobalClient();
+  const type = transportType || detectTransportType(uri);
+
+  if (!client.isConnected()) {
+    await client.connect({ uri, type });
+  }
+
+  return await client.readResource(resourceUri);
+}
+
+export async function getPromptWithBackwardsCompatibility(
+  uri: string,
+  name: string,
+  args?: Record<string, string>,
+  transportType?: import('./types/plugin.js').TransportType,
+): Promise<any> {
+  const client = await getGlobalClient();
+  const type = transportType || detectTransportType(uri);
+
+  if (!client.isConnected()) {
+    await client.connect({ uri, type });
+  }
+
+  return await client.getPrompt(name, args);
 }
 
 export async function getPrimitivesWithBackwardsCompatibility(
@@ -316,4 +357,21 @@ export function normalizeToolsFromPrimitives(primitives: any[]): any[] {
         ...(tool.arguments && { arguments: tool.arguments }),
       };
     });
+}
+
+export function normalizeResourcesFromPrimitives(primitives: any[]): any[] {
+  return primitives
+    .filter(p => p.type === 'resource')
+    .map(p => p.value);
+}
+
+export function normalizePromptsFromPrimitives(primitives: any[]): any[] {
+  return primitives
+    .filter(p => p.type === 'prompt')
+    .map(p => p.value);
+}
+
+// Access global client for background script usage
+export function getGlobalMcpClientInstance(): Promise<McpClient> {
+    return getGlobalClient();
 }

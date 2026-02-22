@@ -222,8 +222,21 @@ const Settings: React.FC = () => {
                <CardTitle className="text-base font-medium">Appearance</CardTitle>
              </div>
           </CardHeader>
-          <CardContent className="p-5">
+          <CardContent className="p-5 space-y-4">
             <ThemeSelector />
+            <div className="flex items-center justify-between border-t border-slate-100 dark:border-slate-800 pt-4">
+                <div>
+                    <Typography variant="subtitle" className="text-slate-900 dark:text-slate-100">Push Content Mode</Typography>
+                    <Typography variant="caption" className="text-slate-500 dark:text-slate-400">
+                        Shift page content instead of overlaying.
+                    </Typography>
+                </div>
+                <ToggleWithoutLabel
+                    label="Push Content Mode"
+                    checked={preferences.isPushMode}
+                    onChange={(checked) => updatePreferences({ isPushMode: checked })}
+                />
+            </div>
           </CardContent>
         </Card>
 

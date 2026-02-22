@@ -1,0 +1,54 @@
+[
+  {
+    "name": "Analyze Sentiment",
+    "description": "Analyzes the sentiment of the selected text.",
+    "steps": [
+      {
+        "id": "step-1",
+        "type": "tool",
+        "toolName": "sentiment_analyzer",
+        "args": {
+          "text": "{{selection}}"
+        }
+      }
+    ]
+  },
+  {
+    "name": "Translate to Spanish",
+    "description": "Translates the selected text to Spanish.",
+    "steps": [
+      {
+        "id": "step-1",
+        "type": "tool",
+        "toolName": "translator",
+        "args": {
+          "text": "{{selection}}",
+          "target_lang": "es"
+        }
+      }
+    ]
+  },
+  {
+    "name": "Summarize & Email",
+    "description": "Summarizes text and prepares an email draft.",
+    "steps": [
+      {
+        "id": "step-1",
+        "type": "tool",
+        "toolName": "summarizer",
+        "args": {
+          "text": "{{selection}}"
+        }
+      },
+      {
+        "id": "step-2",
+        "type": "tool",
+        "toolName": "email_drafter",
+        "args": {
+          "subject": "Summary",
+          "body": "{{lastResult}}"
+        }
+      }
+    ]
+  }
+]

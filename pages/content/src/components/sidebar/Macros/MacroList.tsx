@@ -19,6 +19,8 @@ const MacroList: React.FC<MacroListProps> = ({ onExecute }) => {
   const [runningMacroId, setRunningMacroId] = useState<string | null>(null);
   const [importUrl, setImportUrl] = useState('');
   const [showImportUrlInput, setShowImportUrlInput] = useState(false);
+  const [showFeatured, setShowFeatured] = useState(false);
+  const [featuredMacros, setFeaturedMacros] = useState<any[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleDelete = (id: string, e: React.MouseEvent) => {
@@ -49,6 +51,30 @@ const MacroList: React.FC<MacroListProps> = ({ onExecute }) => {
 
   const handleImportUrlClick = () => {
     setShowImportUrlInput(!showImportUrlInput);
+  };
+
+  const handleLoadFeatured = async () => {
+    setShowFeatured(!showFeatured);
+    if (!showFeatured && featuredMacros.length === 0) {
+      try {
+        const response = await fetch(chrome.runtime.getURL('featured-macros.json'));
+        if (response.ok) {
+          const data = await response.json();
+          setFeaturedMacros(data);
+        }
+      } catch (e) {
+        console.error('Failed to load featured macros', e);
+      }
+    }
+  };
+
+  const handleImportFeatured = (macroData: any) => {
+    addMacro({
+      name: macroData.name,
+      description: macroData.description,
+      steps: macroData.steps,
+    });
+    addToast({ title: 'Imported', message: `Added "${macroData.name}"`, type: 'success' });
   };
 
   const handleImportFromUrl = async () => {
@@ -202,6 +228,9 @@ const MacroList: React.FC<MacroListProps> = ({ onExecute }) => {
             className="hidden"
           />
           <div className="flex gap-1">
+            <Button onClick={handleLoadFeatured} size="sm" variant="ghost" className="h-8 w-8 p-0" title="Featured Macros">
+              <Icon name="star" size="xs" className={showFeatured ? "fill-current text-yellow-500" : ""} />
+            </Button>
             <Button onClick={handleImportUrlClick} size="sm" variant="ghost" className="h-8 w-8 p-0" title="Import from URL">
               <Icon name="globe" size="xs" />
             </Button>
@@ -230,6 +259,27 @@ const MacroList: React.FC<MacroListProps> = ({ onExecute }) => {
           <Button size="sm" onClick={handleImportFromUrl} disabled={!importUrl}>
             Go
           </Button>
+        </div>
+      )}
+
+      {showFeatured && (
+        <div className="mb-4 bg-yellow-50 dark:bg-yellow-900/10 p-3 rounded-lg border border-yellow-100 dark:border-yellow-900/30 animate-in fade-in">
+          <Typography variant="subtitle" className="text-yellow-800 dark:text-yellow-200 mb-2 font-bold flex items-center gap-1">
+            <Icon name="star" size="xs" className="fill-current" /> Featured Community Macros
+          </Typography>
+          <div className="space-y-2">
+            {featuredMacros.map((macro, i) => (
+              <div key={i} className="flex justify-between items-center bg-white dark:bg-slate-900 p-2 rounded border border-yellow-100 dark:border-yellow-900/20">
+                <div className="min-w-0">
+                  <div className="font-medium text-xs text-slate-800 dark:text-slate-200">{macro.name}</div>
+                  <div className="text-[10px] text-slate-500 truncate">{macro.description}</div>
+                </div>
+                <Button size="xs" variant="ghost" onClick={() => handleImportFeatured(macro)}>
+                  <Icon name="plus" size="xs" />
+                </Button>
+              </div>
+            ))}
+          </div>
         </div>
       )}
 

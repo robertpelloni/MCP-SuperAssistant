@@ -1,5 +1,5 @@
 import type React from 'react';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { cn } from '@src/lib/utils';
 import { Icon, Button } from '../ui';
 import { useToastStore } from '@src/stores/toast.store';
@@ -12,12 +12,20 @@ interface InputAreaProps {
 
 import { eventBus } from '@src/events/event-bus';
 
+interface Attachment {
+  name: string;
+  type: string;
+  data: string; // Base64
+}
+
 const InputArea: React.FC<InputAreaProps> = ({ onSubmit, onToggleMinimize }) => {
   const [inputText, setInputText] = useState('');
   const [selectedText, setSelectedText] = useState('');
   const [isListening, setIsListening] = useState(false);
   const [showContextManager, setShowContextManager] = useState(false);
   const [contextManagerInitialContent, setContextManagerInitialContent] = useState<string>('');
+  const [attachments, setAttachments] = useState<Attachment[]>([]);
+  const [isDragging, setIsDragging] = useState(false);
   const { addToast } = useToastStore.getState();
 
   // Listen for selection changes on the page
@@ -39,16 +47,60 @@ const InputArea: React.FC<InputAreaProps> = ({ onSubmit, onToggleMinimize }) => 
         setShowContextManager(true);
     });
 
+    // Listen for mcp text insertion (from Resources, Prompts, etc)
+    const handleInsertText = (e: CustomEvent) => {
+        if (e.detail && e.detail.text) {
+            setInputText(prev => {
+                const prefix = prev ? prev + '\n\n' : '';
+                return prefix + e.detail.text;
+            });
+            // Optional: flash focus or something?
+        }
+    };
+
+    window.addEventListener('mcp:insert-text', handleInsertText as EventListener);
+
     return () => {
         document.removeEventListener('selectionchange', handleSelectionChange);
+        window.removeEventListener('mcp:insert-text', handleInsertText as EventListener);
         unsubscribeContextSave();
     };
   }, []);
 
   const handleSubmit = () => {
-    if (!inputText.trim()) return;
-    onSubmit(inputText);
+    if (!inputText.trim() && attachments.length === 0) return;
+
+    // If attachments exist, append them to the text in a structured way that tools might recognize,
+    // or just assume the 'onSubmit' handler (which goes to useMcpCommunication) can handle robust args.
+    // For now, let's append a text representation or assume the Adapter handles it.
+    // Actually, Sidebar.tsx calls `adapter.insertTextIntoInput(text)`.
+    // Most LLM web interfaces don't support pasting Base64 images directly into the text area purely via string.
+    // HOWEVER, we can provide a textual hint for MCP tools: "[Image: filename.png]"
+    // and maybe store the image data in a temporary "Context" or variable for macros to use?
+    // Let's format it as XML-like tags which we can parse later if needed, or just append to prompt.
+
+    let finalText = inputText;
+    if (attachments.length > 0) {
+      const attachmentText = attachments.map(a =>
+        `\n[Attachment: ${a.name} (${a.type}) - ${a.data.substring(0, 30)}...]`
+      ).join('');
+      finalText += attachmentText;
+
+      // In a real robust implementation, we would pass 'attachments' as a separate argument to 'onSubmit'
+      // and let the Adapter try to attach it (if supported) or the McpClient execute a tool with it.
+      // But for "InputArea" which talks to the chat box...
+
+      addToast({
+        title: 'Attachments Sent',
+        message: `Sent ${attachments.length} images with message.`,
+        type: 'info',
+        duration: 2000,
+      });
+    }
+
+    onSubmit(finalText);
     setInputText('');
+    setAttachments([]);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -137,8 +189,66 @@ const InputArea: React.FC<InputAreaProps> = ({ onSubmit, onToggleMinimize }) => 
     }
   };
 
+  const handleDrop = async (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+
+    const files = Array.from(e.dataTransfer.files).filter(f => f.type.startsWith('image/'));
+    if (files.length === 0) return;
+
+    const newAttachments: Attachment[] = [];
+    for (const file of files) {
+      try {
+        const base64 = await new Promise<string>((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result as string);
+          reader.onerror = reject;
+          reader.readAsDataURL(file);
+        });
+        newAttachments.push({
+          name: file.name,
+          type: file.type,
+          data: base64
+        });
+      } catch (err) {
+        console.error('Failed to read file', err);
+      }
+    }
+
+    if (newAttachments.length > 0) {
+      setAttachments(prev => [...prev, ...newAttachments]);
+      addToast({
+        title: 'Images Added',
+        message: `Added ${newAttachments.length} images.`,
+        type: 'success',
+        duration: 2000,
+      });
+    }
+  };
+
+  const removeAttachment = (index: number) => {
+    setAttachments(prev => prev.filter((_, i) => i !== index));
+  };
+
   return (
-    <div className="p-3 relative">
+    <div
+      className={cn(
+        "p-3 relative transition-colors",
+        isDragging && "bg-primary-50/50 dark:bg-primary-900/20"
+      )}
+      onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
+      onDragLeave={() => setIsDragging(false)}
+      onDrop={handleDrop}
+    >
+      {isDragging && (
+        <div className="absolute inset-0 z-20 flex items-center justify-center bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm rounded-lg border-2 border-dashed border-primary-500">
+          <div className="flex flex-col items-center animate-bounce">
+            <Icon name="upload" size="lg" className="text-primary-600 mb-2" />
+            <span className="text-sm font-medium text-primary-700 dark:text-primary-300">Drop images here</span>
+          </div>
+        </div>
+      )}
+
       {/* Context Manager Overlay */}
       {showContextManager && (
         <div className="absolute bottom-full left-0 right-0 h-[400px] mb-2 z-50 shadow-2xl rounded-t-lg overflow-hidden border border-slate-200 dark:border-slate-700">
@@ -172,13 +282,30 @@ const InputArea: React.FC<InputAreaProps> = ({ onSubmit, onToggleMinimize }) => 
         </div>
       )}
 
+      {/* Attachments Preview */}
+      {attachments.length > 0 && (
+        <div className="flex gap-2 mb-2 overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-slate-300 dark:scrollbar-thumb-slate-600">
+          {attachments.map((file, i) => (
+            <div key={i} className="relative group flex-shrink-0 w-16 h-16 rounded overflow-hidden border border-slate-200 dark:border-slate-700">
+              <img src={file.data} alt={file.name} className="w-full h-full object-cover" />
+              <button
+                onClick={() => removeAttachment(i)}
+                className="absolute top-0.5 right-0.5 bg-black/50 text-white rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
+              >
+                <Icon name="x" size="xs" />
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+
       <div className="relative">
         <textarea
           value={inputText}
           onChange={e => setInputText(e.target.value)}
           onKeyDown={handleKeyDown}
-          placeholder="Ask AI or use a tool..."
-          className="w-full min-h-[80px] max-h-[200px] p-3 pr-10 text-sm border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none scrollbar-thin scrollbar-thumb-slate-300 dark:scrollbar-thumb-slate-600"
+          placeholder="Ask AI or use a tool... (Drag images here)"
+          className="w-full min-h-[80px] max-h-[200px] p-3 pr-10 text-sm border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-primary-500 resize-none scrollbar-thin scrollbar-thumb-slate-300 dark:scrollbar-thumb-slate-600"
         />
         <div className="absolute bottom-2 right-2 flex gap-1">
           {/* Context Manager Button */}
@@ -211,9 +338,9 @@ const InputArea: React.FC<InputAreaProps> = ({ onSubmit, onToggleMinimize }) => 
 
           <Button
             size="sm"
-            className="h-8 w-8 p-0 rounded-full bg-blue-600 hover:bg-blue-700 text-white shadow-sm"
+            className="h-8 w-8 p-0 rounded-full bg-primary-600 hover:bg-primary-700 text-white shadow-sm"
             onClick={handleSubmit}
-            disabled={!inputText.trim()}>
+            disabled={!inputText.trim() && attachments.length === 0}>
             <Icon name="arrow-up-right" size="sm" />
           </Button>
         </div>

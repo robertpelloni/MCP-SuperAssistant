@@ -1,6 +1,9 @@
 import { contextBridge } from './context-bridge';
 import { useConnectionStore } from '../stores/connection.store';
 import { useToolStore } from '../stores/tool.store';
+import { useResourceStore } from '../stores/resource.store';
+import { usePromptStore } from '../stores/prompt.store';
+import { useSamplingStore } from '../stores/sampling.store';
 import { eventBus } from '../events/event-bus';
 import type { ServerConfig, ConnectionStatus } from '../types/stores';
 import { logMessage } from '../utils/helpers';
@@ -203,14 +206,43 @@ class McpClient {
     // Listen for tool-list updates (broadcast by background when primitives change)
     contextBridge.onMessage('mcp:tool-update', message => {
       try {
-        const tools = Array.isArray(message.payload) ? message.payload : [];
-        logMessage(`[McpClient] Received tool update: ${tools.length} tools`);
-        this.handleToolUpdate(tools);
+        const payload = message.payload || {};
+
+        // Handle backward compatibility where payload might be array of tools or object with primitives
+        let tools: any[] = [];
+        let resources: any[] = [];
+        let prompts: any[] = [];
+
+        if (Array.isArray(payload)) {
+            // Legacy format: payload IS the tools array (unlikely given new structure, but safe)
+            tools = payload;
+        } else {
+            // New format or tools array inside object
+            tools = Array.isArray(payload.tools) ? payload.tools : (Array.isArray(payload) ? payload : []);
+            resources = Array.isArray(payload.resources) ? payload.resources : [];
+            prompts = Array.isArray(payload.prompts) ? payload.prompts : [];
+        }
+
+        logMessage(`[McpClient] Received update: ${tools.length} tools, ${resources.length} resources, ${prompts.length} prompts`);
+        this.handleToolUpdate(tools, resources, prompts);
       } catch (error) {
         logMessage(
           `[McpClient] Error processing tool update: ${error instanceof Error ? error.message : String(error)}`,
         );
       }
+    });
+
+    // Listen for sampling requests
+    contextBridge.onMessage('mcp:sampling-request', message => {
+        try {
+            const { requestId, request } = message.payload || {};
+            logMessage(`[McpClient] Received sampling request: ${requestId}`);
+            if (requestId && request) {
+                useSamplingStore.getState().handleRequest(requestId, request);
+            }
+        } catch (error) {
+            logMessage(`[McpClient] Error processing sampling request: ${error}`);
+        }
     });
 
     // Listen for server config updates
@@ -308,8 +340,8 @@ class McpClient {
   /**
    * Handle tool updates from background script
    */
-  private handleToolUpdate(tools: any[]): void {
-    logMessage(`[McpClient] Received tool update with ${tools.length} tools`);
+  private handleToolUpdate(tools: any[], resources: any[] = [], prompts: any[] = []): void {
+    logMessage(`[McpClient] Processing updates: ${tools.length} tools, ${resources.length} resources, ${prompts.length} prompts`);
 
     // Normalize tool data to ensure consistent schema
     const normalizedTools = tools.map(tool => ({
@@ -321,6 +353,9 @@ class McpClient {
     }));
 
     useToolStore.getState().setAvailableTools(normalizedTools);
+    useResourceStore.getState().setAvailableResources(resources);
+    usePromptStore.getState().setAvailablePrompts(prompts);
+
     eventBus.emit('tool:list-updated', { tools: normalizedTools });
   }
 
@@ -465,6 +500,29 @@ class McpClient {
 
       throw error;
     }
+  }
+
+  async readResource(uri: string): Promise<any> {
+      if (!this.isInitialized) throw new Error('McpClient not initialized');
+      logMessage(`[McpClient] Reading resource: ${uri}`);
+      return await contextBridge.sendMessage('background', 'mcp:read-resource', { uri });
+  }
+
+  async getPrompt(name: string, args?: Record<string, string>): Promise<any> {
+      if (!this.isInitialized) throw new Error('McpClient not initialized');
+      logMessage(`[McpClient] Getting prompt: ${name}`);
+      return await contextBridge.sendMessage('background', 'mcp:get-prompt', { name, args });
+  }
+
+  async sendSamplingResponse(requestId: string, result?: any, error?: any): Promise<void> {
+      if (!this.isInitialized) throw new Error('McpClient not initialized');
+      logMessage(`[McpClient] Sending sampling response: ${requestId}`);
+      await contextBridge.sendMessage(
+          'background',
+          'mcp:sampling-response',
+          { requestId, result, error },
+          { timeout: 10000 }
+      );
   }
 
   /**
