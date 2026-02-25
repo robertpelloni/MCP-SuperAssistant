@@ -240,3 +240,14 @@ The extension now supports MCP Sampling, allowing servers to request LLM generat
 
 ### Push Content Mode
 *   **Toggle**: You can now toggle "Push Content Mode" directly from the Settings tab (under Appearance).
+
+## Version 1.8.0 Features
+
+### Context Pinning
+Keep your most important context snippets at the top of the list.
+*   **Pin/Unpin**: Click the pin icon on any context card in the Context Manager.
+*   **Sorting**: Pinned items always appear first.
+
+### Developer Tools
+*   **Reload Extension**: A new "Reload Extension" button in the System Info panel (Settings -> Info icon) allows developers to quickly reload the extension without navigating to `chrome://extensions`.
+*   **Console Cleanup**: Significant improvements to console logging reduce noise and improve performance.

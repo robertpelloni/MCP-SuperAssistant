@@ -136,6 +136,10 @@ export class MacroRunner {
              // Exact match substitution (preserves type)
              const varName = val.slice(2, -2);
              if (varName === 'lastResult') obj[key] = lastResult;
+             else if (varName.startsWith('env.')) {
+                 const path = varName.replace('env.', '');
+                 obj[key] = path.split('.').reduce((o: any, k: string) => (o || {})[k], env);
+             }
              else if (env[varName] !== undefined) obj[key] = env[varName];
              else if (varName.startsWith('lastResult.')) {
                  const path = varName.replace('lastResult.', '');
@@ -145,6 +149,11 @@ export class MacroRunner {
              // String interpolation
              obj[key] = val.replace(/\{\{([\w\d\.]+)\}\}/g, (_: string, varName: string) => {
                  if (varName === 'lastResult') return JSON.stringify(lastResult);
+                 if (varName.startsWith('env.')) {
+                     const path = varName.replace('env.', '');
+                     const res = path.split('.').reduce((o: any, k: string) => (o || {})[k], env);
+                     return res !== undefined ? String(res) : '';
+                 }
                  if (env[varName] !== undefined) return String(env[varName]);
                  if (varName.startsWith('lastResult.')) {
                      const path = varName.replace('lastResult.', '');
