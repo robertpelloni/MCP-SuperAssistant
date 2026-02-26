@@ -15,6 +15,7 @@ import MacroList from './Macros/MacroList';
 import SystemInfo from './System/SystemInfo';
 import CommandPalette from './CommandPalette/CommandPalette';
 import Onboarding from './Onboarding/Onboarding';
+import PromptTemplates from './PromptTemplates/PromptTemplates';
 import { useMcpCommunication } from '@src/hooks/useMcpCommunication';
 import { logMessage } from '@src/utils/helpers';
 import { eventBus } from '@src/events/event-bus';
@@ -397,7 +398,7 @@ const Sidebar: React.FC<SidebarProps> = ({ initialPreferences }) => {
 
   // Local UI state that doesn't need to be in the store
   const [activeTab, setActiveTab] = useState<
-    'availableTools' | 'instructions' | 'activity' | 'dashboard' | 'macros' | 'settings' | 'help' | 'system'
+    'availableTools' | 'instructions' | 'activity' | 'dashboard' | 'macros' | 'prompts' | 'settings' | 'help' | 'system'
   >('availableTools');
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -430,12 +431,13 @@ const Sidebar: React.FC<SidebarProps> = ({ initialPreferences }) => {
       // Ideally we would focus the input inside AvailableTools
     },
     switchTab: direction => {
-      const tabs: ('availableTools' | 'instructions' | 'activity' | 'dashboard' | 'macros' | 'settings' | 'help' | 'system')[] = [
+      const tabs: ('availableTools' | 'instructions' | 'activity' | 'dashboard' | 'macros' | 'prompts' | 'settings' | 'help' | 'system')[] = [
         'availableTools',
         'instructions',
         'activity',
         'dashboard',
         'macros',
+        'prompts',
         'settings',
         'help',
         'system',
@@ -1083,6 +1085,16 @@ const Sidebar: React.FC<SidebarProps> = ({ initialPreferences }) => {
                   <button
                     className={cn(
                       'py-2 px-4 font-medium text-sm transition-all duration-200',
+                      activeTab === 'prompts'
+                        ? 'border-b-2 border-primary-600 text-primary-600 dark:border-primary-400 dark:text-primary-400'
+                        : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-t-lg',
+                    )}
+                    onClick={() => setActiveTab('prompts')}>
+                    Prompts
+                  </button>
+                  <button
+                    className={cn(
+                      'py-2 px-4 font-medium text-sm transition-all duration-200',
                       activeTab === 'settings'
                         ? 'border-b-2 border-primary-600 text-primary-600 dark:border-primary-400 dark:text-primary-400'
                         : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-t-lg',
@@ -1172,6 +1184,15 @@ const Sidebar: React.FC<SidebarProps> = ({ initialPreferences }) => {
                   { hidden: activeTab !== 'macros' },
                 )}>
                 <MacroList onExecute={sendMessage} />
+              </div>
+
+              {/* Prompt Templates */}
+              <div
+                className={cn(
+                  'h-full overflow-y-auto scrollbar-thin scrollbar-thumb-slate-300 dark:scrollbar-thumb-slate-600 scrollbar-track-transparent',
+                  { hidden: activeTab !== 'prompts' },
+                )}>
+                <PromptTemplates />
               </div>
 
               {/* Settings */}

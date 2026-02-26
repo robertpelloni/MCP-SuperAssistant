@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.7.2] - 2026-02-26
+
+### Added
+- **Prompt Templates**: New sidebar tab for saving and reusing common AI prompts with search, copy-to-clipboard, and full CRUD. (`prompt.store.ts`, `PromptTemplates.tsx`)
+- **7 new sidebar icons**: `arrow-left`, `download`, `save`, `plus`, `git-branch`, `clock`, `database` added to `Icon.tsx`.
+- **Documentation**: Created `TODO.md`, `MEMORY.md`, `DEPLOY.md`. Rewrote `AGENTS.md` with universal LLM instructions. Updated `IDEAS.md`.
+
+### Fixed
+- **Hardcoded version in app.store.ts**: Changed `'0.1.0'` event emission to read from `chrome.runtime.getManifest()`.
+- **Unsafe `require()` in ui.store.ts**: Replaced dynamic `require('./config.store')` with static import.
+- **Type safety**: Eliminated 5× `as any` casts in ui.store.ts notification handling.
+- **Missing `UserPreferences` fields**: Added `accentColor` and `autoExecuteWhitelist` to the TypeScript interface.
+- **Logger naming**: Changed logger name from `'initializePluginRegistry'` to `'AppStore'`.
+
 ## [0.7.1] - 2026-02-12
 
 ### Added

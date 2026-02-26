@@ -43,7 +43,7 @@
 - [ ] Test suite: Unit tests (Vitest), e2e tests (Playwright)
 - [ ] Tool chaining: Compose multi-step tool pipelines visually
 - [ ] Resource browser: Browse MCP server resources
-- [ ] Prompt templates: Save and reuse common prompts
+- [x] Prompt templates: Save and reuse common prompts
 - [ ] Plugin marketplace: Community adapters and extensions
 - [ ] Notification center: Aggregated error/success history
 - [ ] Accessibility audit: WCAG 2.1 AA compliance
