@@ -7,13 +7,13 @@
 - [ ] **Plugin Registry is a placeholder**: `app.store.ts:10` — `initializePluginRegistry` is a no-op stub. Either implement the plugin system or remove the placeholder to avoid confusion.
 - [ ] **Feature Flags UI**: `config.store.ts` has a full `FeatureFlag` system with rollout percentages, targeting (versions, regions, user segments), and remote notifications — but **none of it is exposed in the Settings UI**. Wire it up or document it as internal-only.
 - [ ] **Remote Notifications not surfaced**: `config.store.ts` has `RemoteNotification` with actions, targeting, and campaign support. The store logic exists but there is no UI component to display or manage these notifications.
-- [ ] **Dead reconnection code in mcpHandler.ts**: ~200 lines of commented-out reconnection logic (exponential backoff, max attempts, context validation). Either restore and integrate this with the current `connection.store.ts` retry system, or remove it to reduce confusion.
+- [x] ~~**Dead reconnection code in mcpHandler.ts**~~: Replaced 1096 lines of dead code with 17-line deprecation notice in v0.7.2.
 - [ ] **Macro store not in stores/ directory**: The macro store lives in `lib/macro.store.ts` instead of `stores/macro.store.ts`. Consider relocating for consistency with the 10 other stores.
 - [ ] **Context store not in stores/ directory**: Same issue — `lib/context.store.ts` should be moved to `stores/` for discoverability.
 
 ## Medium Priority
 
-- [ ] **Prompt Templates**: Create a new sidebar tab for saving and reusing common prompts (Phase 4 roadmap item). See implementation plan.
+- [x] ~~**Prompt Templates**~~: Implemented in v0.7.2 (prompt.store.ts + PromptTemplates.tsx + Sidebar integration).
 - [ ] **Resource Browser**: Implement a tab to browse MCP server resources (Phase 4 roadmap item).
 - [ ] **MANUAL.md refresh**: The user manual (`docs/MANUAL.md`) likely needs updating to cover Macros, Context Manager, Command Palette, and new sidebar features added since v0.6.0.
 - [ ] **Accessibility audit**: Run `axe-core` against the sidebar Shadow DOM and fix violations to achieve WCAG 2.1 AA compliance.
@@ -30,6 +30,6 @@
 
 ## Code Hygiene
 
-- [ ] **Remove 500+ commented lines from mcpHandler.ts**: The file is cluttered with old code. Archive it in a git branch and clean the main codebase.
+- [x] ~~**Remove 500+ commented lines from mcpHandler.ts**~~: Removed 1096-line `mcpHandler.ts` and 933-line `backgroundCommunication.ts`. Both replaced with deprecation notices. Original code in git history.
 - [ ] **Consolidate duplicate theme sync logic**: `ui.store.ts:340-360` subscribes to `app.store` for theme sync. The comment says "Ensure this logic is robust or handled by a single source of truth for theme." — resolve this ambiguity.
 - [ ] **`helpers.ts:91` temporary visual indicator**: A "temporary visual indicator to help identify Shadow DOM boundaries" is still in production code. Remove or guard behind a dev flag.
