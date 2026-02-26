@@ -16,7 +16,7 @@ This file tracks granular tasks, bugs, and polish items that are too small for t
 
 ## UX Improvements
 - [x] **Context Manager**: Add ability to "Pin" contexts to the top of the list.
-- [ ] **Macro Builder**: Add "Test Step" button to run a single step during creation.
+- [x] **Macro Builder**: Add "Test Step" button to run a single step during creation.
 - [x] **System Info**: Add a dynamic "Reload Extension" button for developers.
 
 ## Future Features (Phase 5)

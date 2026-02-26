@@ -206,7 +206,7 @@ const MacroList: React.FC<MacroListProps> = ({ onExecute }) => {
   };
 
   if (isCreating || editingMacro) {
-    return <MacroBuilder existingMacro={editingMacro} onClose={handleCloseBuilder} />;
+    return <MacroBuilder existingMacro={editingMacro} onClose={handleCloseBuilder} onExecute={onExecute} />;
   }
 
   return (

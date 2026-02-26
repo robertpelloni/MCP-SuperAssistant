@@ -42,6 +42,11 @@ export const MemoryTab: React.FC = () => {
   const [noteContent, setNoteContent] = useState('');
   const [memoryQuery, setMemoryQuery] = useState('');
   const [isSearching, setIsSearching] = useState(false);
+
+  // AnythingLLM Chat State
+  const [chatInput, setChatInput] = useState('');
+  const [chatHistory, setChatHistory] = useState<{role: 'user' | 'assistant', content: string}[]>([]);
+  const [isChatting, setIsChatting] = useState(false);
   const { toast } = useToast();
 
   const handleCapturePage = () => {
@@ -143,6 +148,31 @@ export const MemoryTab: React.FC = () => {
     } catch (error) {
       toast({ title: 'AnythingLLM Upload Failed', description: String(error), variant: 'destructive' });
     }
+  };
+
+  const handleAnythingLLMChat = async () => {
+      if (!chatInput.trim()) return;
+
+      const userMsg = chatInput;
+      setChatHistory(prev => [...prev, { role: 'user', content: userMsg }]);
+      setChatInput('');
+      setIsChatting(true);
+
+      try {
+          const adapter = new AnythingLLMAdapter({
+              baseUrl: anythingLlmBaseUrl,
+              apiKey: anythingLlmApiKey,
+              workspaceSlug: 'default'
+          });
+
+          const response = await adapter.chat(userMsg);
+          setChatHistory(prev => [...prev, { role: 'assistant', content: response }]);
+      } catch (error) {
+          toast({ title: 'Chat Failed', description: String(error), variant: 'destructive' });
+          setChatHistory(prev => [...prev, { role: 'assistant', content: 'Error: Failed to get response.' }]);
+      } finally {
+          setIsChatting(false);
+      }
   };
 
   const handleSearchMemory = async () => {
@@ -326,6 +356,35 @@ export const MemoryTab: React.FC = () => {
                 <Button onClick={handleSaveToAnythingLLM} className="w-full" variant="default">
                   <ExternalLinkIcon className="mr-2 h-4 w-4" /> Send to AnythingLLM
                 </Button>
+
+                 <div className="border-t pt-4 mt-4">
+                    <Label className="mb-2 block">Chat with Workspace</Label>
+                    <div className="h-48 border rounded p-2 overflow-y-auto mb-2 bg-slate-50 dark:bg-slate-900 text-xs">
+                        {chatHistory.length === 0 ? (
+                            <div className="text-slate-400 text-center mt-10">Ask a question about your documents...</div>
+                        ) : (
+                            chatHistory.map((msg, i) => (
+                                <div key={i} className={`mb-2 ${msg.role === 'user' ? 'text-right' : 'text-left'}`}>
+                                    <span className={`inline-block p-2 rounded-lg ${msg.role === 'user' ? 'bg-primary-100 text-primary-900' : 'bg-slate-200 dark:bg-slate-700'}`}>
+                                        {msg.content}
+                                    </span>
+                                </div>
+                            ))
+                        )}
+                    </div>
+                    <div className="flex space-x-2">
+                        <Input
+                            value={chatInput}
+                            onChange={(e) => setChatInput(e.target.value)}
+                            placeholder="Ask AnythingLLM..."
+                            className="h-8 text-xs"
+                            onKeyDown={(e) => e.key === 'Enter' && handleAnythingLLMChat()}
+                        />
+                        <Button size="sm" onClick={handleAnythingLLMChat} disabled={isChatting}>
+                            {isChatting ? <span className="animate-spin">...</span> : "Send"}
+                        </Button>
+                    </div>
+                 </div>
               </TabsContent>
             </Tabs>
 

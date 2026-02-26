@@ -24,10 +24,17 @@
 - [x] **Context Menu Integration**: Right-click to save text to context.
 - [x] **Keyboard Shortcuts**: Global hotkeys (`Cmd+K`).
 
-## Phase 4: Maintenance & Architecture (🚧 In Progress)
+## Phase 4: Maintenance & Architecture (✅ Completed)
 - [x] **System Status Dashboard**: View build info and project structure.
 - [x] **Community Registry**: Import Macros from URL.
 - [x] **Plugin Architecture**: Modular system for adapters and features (v1.3.0).
 - [x] **Unified Initialization**: Centralized startup logic (v1.3.0).
 - [x] **Cloud Sync**: Beta implementation for syncing macros/contexts (v1.4.0).
 - [ ] Multi-proxy support (Concurrent Connections).
+
+## Phase 5: Universal Memory & Intelligence (🚧 In Progress)
+- [x] **Web Clipper**: Capture pages as clean Markdown (v1.9.0).
+- [x] **Vector Memory**: Connect to generic MCP memory servers (v1.9.0).
+- [x] **AnythingLLM**: Integration for RAG (v1.9.0).
+- [ ] **Chat with Memory**: RAG-based chat interface in sidebar.
+- [ ] **Dependency Dashboard**: Visualize submodule status.

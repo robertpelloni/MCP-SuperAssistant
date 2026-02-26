@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.9.0] - 2024-05-22
+
+### Added
+- **Universal Memory**: Web Clipper (Markdown), Vector Memory Adapter, and AnythingLLM Integration.
+- **Memory Tab**: Dedicated sidebar tab for capturing, searching, and managing memory.
+- **Improved Macro Builder**: "Test Step" button and free-form JSON editing.
+
+## [1.8.0] - 2024-05-22
+
+### Added
+- **Context Pinning**: Pin important context snippets to the top of the list.
+- **Developer Tools**: "Reload Extension" button in System Info.
+- **Console Cleanup**: Replaced debug logs with structured `logger` in production.
+
 ## [1.7.0] - 2024-05-22
 
 ### Added

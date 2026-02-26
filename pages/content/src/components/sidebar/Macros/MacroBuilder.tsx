@@ -7,21 +7,52 @@ import { useToastStore } from '@src/stores/toast.store';
 interface MacroBuilderProps {
   existingMacro?: Macro | null;
   onClose: () => void;
+  onExecute: (toolName: string, args: any) => Promise<any>;
 }
 
-const MacroBuilder: React.FC<MacroBuilderProps> = ({ existingMacro, onClose }) => {
+const MacroBuilder: React.FC<MacroBuilderProps> = ({ existingMacro, onClose, onExecute }) => {
   const { addMacro, updateMacro } = useMacroStore();
   const { addToast } = useToastStore();
   const [name, setName] = useState(existingMacro?.name || '');
   const [description, setDescription] = useState(existingMacro?.description || '');
   const [steps, setSteps] = useState<MacroStep[]>(existingMacro?.steps || []);
   const [availableTools, setAvailableTools] = useState<any[]>([]);
+  const [testingStepId, setTestingStepId] = useState<string | null>(null);
+
+  // Local state for raw text inputs to allow free typing of JSON
+  const [rawArgs, setRawArgs] = useState<Record<string, string>>({});
 
   useEffect(() => {
     // Get available tools from global scope as a quick access method since Sidebar exposes it
     const tools = (window as any).availableTools || [];
     setAvailableTools(tools);
+
+    // Initialize raw args for existing steps
+    const initialRawArgs: Record<string, string> = {};
+    (existingMacro?.steps || []).forEach(step => {
+        if (step.type === 'tool') {
+            initialRawArgs[step.id] = JSON.stringify(step.args, null, 2);
+        }
+    });
+    setRawArgs(initialRawArgs);
   }, []);
+
+  const handleTestStep = async (step: MacroStep) => {
+    if (step.type !== 'tool') return;
+
+    setTestingStepId(step.id);
+    addToast({ title: 'Testing Step', message: `Executing ${step.toolName}...`, type: 'info', duration: 2000 });
+
+    try {
+        const result = await onExecute(step.toolName, step.args);
+        console.log('Test Result:', result);
+        addToast({ title: 'Success', message: 'Tool executed successfully', type: 'success', duration: 3000 });
+    } catch (error) {
+        addToast({ title: 'Failed', message: String(error), type: 'error', duration: 5000 });
+    } finally {
+        setTestingStepId(null);
+    }
+  };
 
   const handleSave = () => {
     if (!name.trim()) return alert('Macro name is required');
@@ -68,8 +99,9 @@ const MacroBuilder: React.FC<MacroBuilderProps> = ({ existingMacro, onClose }) =
   };
 
   const addStep = (type: StepType) => {
+    const id = crypto.randomUUID();
     const newStep: MacroStep = {
-      id: crypto.randomUUID(),
+      id,
       type,
       // Defaults
       toolName: type === 'tool' && availableTools.length > 0 ? availableTools[0].name : '',
@@ -79,7 +111,11 @@ const MacroBuilder: React.FC<MacroBuilderProps> = ({ existingMacro, onClose }) =
       trueAction: 'continue',
       falseAction: 'stop',
     };
+
     setSteps([...steps, newStep]);
+    if (type === 'tool') {
+        setRawArgs(prev => ({ ...prev, [id]: '{}' }));
+    }
   };
 
   const updateStep = (id: string, updates: Partial<MacroStep>) => {
@@ -192,6 +228,21 @@ const MacroBuilder: React.FC<MacroBuilderProps> = ({ existingMacro, onClose }) =
                     {step.type === 'tool' && <span className="text-sm font-medium">{step.toolName}</span>}
                   </div>
                   <div className="flex items-center gap-1">
+                    {step.type === 'tool' && (
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            className={cn(
+                                "h-6 w-6 text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20",
+                                testingStepId === step.id ? "animate-spin" : ""
+                            )}
+                            onClick={() => handleTestStep(step)}
+                            title="Test this step"
+                            disabled={!!testingStepId}
+                        >
+                            <Icon name={testingStepId === step.id ? "loader" : "play"} size="xs" />
+                        </Button>
+                    )}
                     <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => moveStep(index, 'up')} disabled={index === 0}>
                       <Icon name="chevron-up" size="xs" />
                     </Button>
@@ -224,15 +275,15 @@ const MacroBuilder: React.FC<MacroBuilderProps> = ({ existingMacro, onClose }) =
                       <div>
                         <label className="text-xs font-medium text-slate-500 mb-1 block">Arguments (JSON)</label>
                         <Textarea
-                          value={JSON.stringify(step.args, null, 2)}
+                          value={rawArgs[step.id] ?? JSON.stringify(step.args, null, 2)}
                           onChange={(e) => {
+                            const newValue = e.target.value;
+                            setRawArgs(prev => ({ ...prev, [step.id]: newValue }));
                             try {
-                              const args = JSON.parse(e.target.value);
+                              const args = JSON.parse(newValue);
                               updateStep(step.id, { args });
                             } catch (e) {
-                              // Allow invalid JSON while typing, maybe store as string in separate state?
-                              // For simplicity, we just won't update state if invalid, which is bad UX.
-                              // Better: Use a string buffer or simple text input for now.
+                              // Invalid JSON, just update raw text
                             }
                           }}
                           placeholder="{ \"arg\": \"value\" }"

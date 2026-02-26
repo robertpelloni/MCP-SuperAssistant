@@ -1,48 +1,55 @@
-# Universal Agent Instructions
+# Universal Agent Instructions (For Claude, Gemini, GPT, Copilot, et al.)
 
-This document serves as the MASTER instruction file for all AI agents (Claude, Gemini, GPT, Codex, etc.) working on the `mcp-superassistant` repository.
+**Project**: MCP SuperAssistant (Chrome Extension)
+**Current Version**: v1.9.0
+**Status**: Active Maintenance & Feature Development
 
-## Core Directives (ALL MODELS)
+## Core Directives
 
-1.  **Deep Planning**: Before making changes, engage in "Deep Planning Mode". Ask clarifying questions until you have absolute certainty of the user's goals. Use `set_plan` to formalize the strategy.
-2.  **Autonomous Execution**: Once the plan is approved, execute it autonomously. Do not ask for confirmation between steps unless a critical blocker arises or the scope changes significantly.
-3.  **Comprehensive Implementation**: Implement features fully. Ensure UI representation is detailed (tooltips, labels, descriptions) and documentation is updated (`MANUAL.md`, `ROADMAP.md`).
-4.  **No Regressions**: When merging or refactoring, ensure existing functionality is preserved. Use intelligent merging logic.
-5.  **Documentation First**: Update documentation *as you go*, not just at the end. Keep `CHANGELOG.md` and `VERSION` in sync.
+1.  **Deep Analysis First**: Before making any changes, re-analyze the project in extreme detail. Read all documentation (`MANUAL.md`, `ROADMAP.md`, `TODO.md`, `VISION.md`, `CHANGELOG.md`). Understand the *intent* behind every feature.
+2.  **Autonomous Execution**: Proceed with execution autonomously once a plan is set. Do not ask for confirmation unless absolutely necessary.
+3.  **Comprehensive Documentation**:
+    - **Update Documentation**: Always update `MANUAL.md`, `TODO.md`, and `CHANGELOG.md` when adding features or fixing bugs.
+    - **Code Comments**: Comment code in depth—explain *why* something is done, potential side effects, and alternatives considered.
+    - **Vision Alignment**: Ensure all changes align with `VISION.md`.
+4.  **Strict Versioning**:
+    - **Single Source of Truth**: The `VERSION` file contains the current version string (e.g., `1.9.0`).
+    - **Synchronization**: Ensure `package.json` (root & packages), `manifest.ts`, and `CHANGELOG.md` are always synchronized with `VERSION`.
+    - **Commit Messages**: Reference the version bump in commit messages (e.g., `chore: bump version to v1.9.1`).
+5.  **Git Hygiene**:
+    - **Pull/Merge Often**: Regularly pull from `main` and merge upstream changes.
+    - **Intelligent Merging**: Solve conflicts carefully to preserve *all* features. Never regress.
+    - **Submodules**: Update submodules recursively and commit their pointers.
+6.  **"Insanely Great" Quality**:
+    - **UI/UX**: Every feature must have a comprehensive UI representation (labels, tooltips, descriptions). No "hidden" features.
+    - **Robustness**: Handle errors gracefully. Use `toast` notifications for feedback.
+    - **Testing**: Run relevant tests (`vitest`) before submitting.
 
-## Project Context
+## Project Structure
 
-*   **Name**: MCP SuperAssistant
-*   **Goal**: Bridge the Model Context Protocol (MCP) with web-based AI platforms (ChatGPT, Claude, etc.) via a Chrome Extension.
-*   **Tech Stack**: React 19, TypeScript, Zustand, Vite, Turbo, pnpm.
-*   **Key Features**: Sidebar UI, Tool Discovery, Agentic Mode (Macros), Context Management, Dashboard, Cloud Sync.
+-   **`pages/content`**: The main extension logic (React + Zustand).
+    -   `src/components/sidebar`: All UI components (Tabs, Sidebar, etc.).
+    -   `src/services/memory`: Universal Memory system (Adapters, Parsers).
+    -   `src/stores`: State management (Zustand).
+    -   `src/core`: Core logic (`McpClient`).
+-   **`chrome-extension`**: Manifest and background scripts.
+-   **`packages`**: Shared utilities and configuration.
+-   **`docs`**: Documentation center.
 
-## Model-Specific Instructions
+## Feature Implementation Guidelines
 
-### Claude / Anthropic
-*   **Strength**: UI/UX Polish, Documentation, Complex Logic.
-*   **Task**: Focus on the "Insanely Great" experience. Ensure animations are smooth (Tailwind transitions), tooltips are helpful, and documentation (`MANUAL.md`) is user-friendly.
-*   **Check**: Verify `MacroRunner` logic for edge cases in conditional branching.
+-   **Universal Memory**: The project now includes a "Memory" system. When adding new memory backends, implement the `MemoryAdapter` interface.
+-   **Web Clipper**: Use `ContentParser` for robust extraction.
+-   **MCP Integration**: All external tools (except specific hardcoded ones) should interact via the `McpClient`.
 
-### Gemini / Google
-*   **Strength**: Performance, Large Refactors, Modern Standards.
-*   **Task**: Focus on optimizations (`VirtualList` if needed), React 19 features, and ensuring the `McpClient` singleton is robust.
-*   **Check**: Verify Context Menu integration efficiency and event propagation.
+## Handoff Protocol
 
-### GPT / OpenAI / Codex
-*   **Strength**: Architectural Consistency, Type Safety, Code Generation.
-*   **Task**: Enforce strict TypeScript types. Ensure `Zustand` stores are correctly typed and persist middleware is configured properly.
-*   **Check**: Verify `AutomationService` security logic (whitelist enforcement).
+When finishing a session:
+1.  Run `lint` and tests.
+2.  Update `TODO.md` with completed items.
+3.  Update `CHANGELOG.md` with a summary of changes.
+4.  Commit and push to the remote repository.
+5.  Leave a detailed note in `HANDOFF.md` for the next agent/model.
 
-## Coding Standards
-
-1.  **State**: Use `useStores.ts` hooks. Wrap selectors in `useShallow`.
-2.  **Styles**: Use `primary-*` Tailwind classes. Do NOT hardcode colors.
-3.  **Services**: Use Singletons (`McpClient`, `AutomationService`).
-4.  **Security**: No `eval()`. Use `crypto.randomUUID()`.
-
-## Versioning Protocol
-1.  Update `VERSION` file.
-2.  Update `package.json` (root & chrome-extension).
-3.  Update `CHANGELOG.md`.
-4.  Commit: `Bump version to <version>`.
+---
+*Proceed with confidence. Build extraordinary software.*

@@ -1,39 +1,47 @@
-# Vision: MCP SuperAssistant
+# Project Vision: The MCP SuperAssistant
 
-**"The OS for your AI Chat"**
-
-## The Ultimate Goal
-To create the definitive bridge between the local computing environment and the cloud-based AI revolution. MCP SuperAssistant transforms static AI chat interfaces into dynamic, agentic command centers capable of interacting with your files, databases, and local tools securely and seamlessly.
+**MCP SuperAssistant** is not just a browser extension; it is the **Universal Bridge** between your browser, your local tools, and the world of AI. It empowers you to interact with the web and your computer in ways never before possible, leveraging the **Model Context Protocol (MCP)** to break down silos.
 
 ## Core Philosophy
-1.  **Agentic by Design**: We are moving beyond simple "chat". The Assistant executes multi-step workflows (Macros), makes decisions based on outputs (Conditional Logic), and automates repetitive tasks.
-2.  **Privacy First**: Data stays local. The Model Context Protocol (MCP) ensures that only necessary information is shared with the AI, and only when explicitly allowed.
-3.  **Universal Compatibility**: Works with ChatGPT, Claude, Perplexity, DeepSeek, and more. One extension, infinite possibilities.
-4.  **Insanely Great UX**: Power tools shouldn't look like command lines. We strive for a polished, intuitive, and beautiful interface that delights the user.
 
-## Strategic Pillars
+1.  **Universal Access**: Your AI should have access to *everything* you do (if you allow it), not just what you paste into a chat box. The extension bridges the gap between the browser DOM and local files/tools.
+2.  **Privacy First**: Data stays local. You choose what to share. The extension acts as a secure proxy.
+3.  **Agentic Automation**: Move beyond simple "chat". Create complex workflows (Macros) that can browse the web, extract data, and perform actions autonomously.
+4.  **Universal Memory**: Your AI should remember *you*. It should recall past context, preferences, and project details across sessions and platforms.
 
-### 1. The Bridge (Core)
-The connection between the browser and the local MCP Proxy must be rock-solid.
-*   **Protocols**: SSE (Default), WebSocket, Streamable HTTP.
-*   **Resilience**: Auto-reconnection, exponential backoff, health monitoring.
+## Key Pillars
 
-### 2. The Brain (Logic)
-The "Agentic Mode" allows users to define logic:
-*   **Macros**: Sequence of tools.
-*   **Variables**: Pass data between steps (`{{result}}`).
-*   **Logic**: `If`, `Loop`, `Wait`.
+### 1. The Bridge (MCP Client)
+The extension acts as a robust MCP Client, connecting to any local or remote MCP server. It exposes these tools to the web-based AI (ChatGPT, Claude, etc.) seamlessly.
+*   **Dynamic Tool Discovery**: Automatically detects available tools.
+*   **Secure Execution**: User approval for tool execution.
+*   **Sampling Support**: Allows servers to request LLM completions from the user (human-in-the-loop).
 
-### 3. The Memory (Context)
-The Context Manager allows the AI to "remember":
-*   **Snippets**: Project details, style guides.
-*   **Cloud Sync**: Contexts follow the user across devices.
+### 2. The Brain (Universal Memory)
+A sophisticated memory system that aggregates knowledge from your browsing.
+*   **Web Clipper**: Instantly capture high-fidelity Markdown from any page.
+*   **Vector Memory**: Store semantic embeddings of your clips in local or remote vector databases (OpenMemory, SuperMemory, Core).
+*   **Context Awareness**: Retrieve relevant memories automatically based on your current task.
+*   **Integration**: Seamlessly push content to external knowledge bases like Obsidian and AnythingLLM.
 
-### 4. The Safety (Trust)
-*   **Whitelist**: Strict control over what runs automatically.
-*   **Transparency**: Detailed Activity Logs and Dashboard analytics.
+### 3. The Hands (Automation & Macros)
+Empower users to automate repetitive tasks.
+*   **Macro Builder**: A visual, no-code interface to chain tools together.
+*   **Agentic Logic**: Conditionals (`if/else`), loops, and variables allow for complex decision-making.
+*   **DOM Interaction**: Read and manipulate the webpage content programmatically.
 
-## Success Metrics
-*   User can automate a 5-step workflow with a single click.
-*   Zero configuration required for standard MCP servers.
-*   "It just works" reliability (99.9% connection uptime).
+### 4. The Interface (Sidebar Companion)
+A sleek, non-intrusive sidebar that enhances your browsing experience without getting in the way.
+*   **Push Content Mode**: Intelligently resizes the webpage so the sidebar never covers content.
+*   **Context Manager**: Pin important snippets for quick access.
+*   **Developer Tools**: Built-in console logging, system info, and reloading capabilities.
+
+## Future Roadmap (The "Insanely Great" Horizon)
+
+*   **Browser Intelligence OS**: Transform the extension into a full "OS layer" for the browser, intercepting navigation and pre-fetching context.
+*   **Local LLM Integration**: Run small SLMs directly in the browser (WebGPU) for zero-latency tasks.
+*   **Voice Control**: Full "Jarvis-style" interaction.
+*   **Community Registry**: Share and discover powerful automation macros.
+
+---
+*We are building the future of browser-based AI interaction. Don't stop until it's perfect.*
