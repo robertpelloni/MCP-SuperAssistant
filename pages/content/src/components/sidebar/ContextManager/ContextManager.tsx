@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import type React from 'react';
+import { useState } from 'react';
 import { useContextStore, type ContextItem } from '@src/lib/context.store';
 import { Button, Icon, Typography, Textarea, Input } from '../ui';
 import { useToastStore } from '@src/stores/toast.store';
@@ -91,10 +92,12 @@ const ContextManager: React.FC<ContextManagerProps> = ({ onInsert, onClose, init
         {isCreating ? (
           <div className="space-y-3 animate-in fade-in zoom-in-95 duration-200">
             <div>
-              <label className="text-xs font-medium text-slate-700 dark:text-slate-300 mb-1 block">Name (Optional)</label>
+              <label className="text-xs font-medium text-slate-700 dark:text-slate-300 mb-1 block">
+                Name (Optional)
+              </label>
               <Input
                 value={editName}
-                onChange={(e) => setEditName(e.target.value)}
+                onChange={e => setEditName(e.target.value)}
                 placeholder="e.g., Project Overview"
                 className="w-full"
                 autoFocus
@@ -104,7 +107,7 @@ const ContextManager: React.FC<ContextManagerProps> = ({ onInsert, onClose, init
               <label className="text-xs font-medium text-slate-700 dark:text-slate-300 mb-1 block">Content</label>
               <Textarea
                 value={editContent}
-                onChange={(e) => setEditContent(e.target.value)}
+                onChange={e => setEditContent(e.target.value)}
                 placeholder="Paste your context here..."
                 className="w-full h-40 font-mono text-xs"
               />
@@ -120,7 +123,10 @@ const ContextManager: React.FC<ContextManagerProps> = ({ onInsert, onClose, init
           </div>
         ) : (
           <>
-            <Button onClick={handleCreate} size="sm" className="w-full mb-2 flex items-center justify-center gap-1 border-dashed border-2 border-slate-200 dark:border-slate-700 bg-transparent text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 h-12">
+            <Button
+              onClick={handleCreate}
+              size="sm"
+              className="w-full mb-2 flex items-center justify-center gap-1 border-dashed border-2 border-slate-200 dark:border-slate-700 bg-transparent text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 h-12">
               <Icon name="plus" size="sm" />
               Add New Context
             </Button>
@@ -128,35 +134,41 @@ const ContextManager: React.FC<ContextManagerProps> = ({ onInsert, onClose, init
             {contexts.length === 0 ? (
               <div className="text-center py-8 text-slate-400 dark:text-slate-500">
                 <Icon name="inbox" size="lg" className="mx-auto mb-2 opacity-50" />
-                <Typography variant="body" className="text-sm">No saved contexts</Typography>
+                <Typography variant="body" className="text-sm">
+                  No saved contexts
+                </Typography>
               </div>
             ) : (
               <div className="space-y-2">
-                {contexts.map((ctx) => (
-                  <Card key={ctx.id} className="group border hover:border-primary-300 dark:hover:border-primary-700 transition-colors">
+                {contexts.map(ctx => (
+                  <Card
+                    key={ctx.id}
+                    className="group border hover:border-primary-300 dark:hover:border-primary-700 transition-colors">
                     <div className="p-3">
                       <div className="flex justify-between items-start mb-2">
-                        <Typography variant="subtitle" className="font-medium text-slate-800 dark:text-slate-200 truncate pr-2">
+                        <Typography
+                          variant="subtitle"
+                          className="font-medium text-slate-800 dark:text-slate-200 truncate pr-2">
                           {ctx.name}
                         </Typography>
                         <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                           <button
                             onClick={() => handleEdit(ctx)}
                             className="p-1 hover:bg-slate-100 dark:hover:bg-slate-700 rounded text-slate-400 hover:text-blue-600"
-                            title="Edit"
-                          >
+                            title="Edit">
                             <Icon name="edit" size="xs" />
                           </button>
                           <button
-                            onClick={(e) => handleDelete(ctx.id, e)}
+                            onClick={e => handleDelete(ctx.id, e)}
                             className="p-1 hover:bg-slate-100 dark:hover:bg-slate-700 rounded text-slate-400 hover:text-red-600"
-                            title="Delete"
-                          >
+                            title="Delete">
                             <Icon name="trash" size="xs" />
                           </button>
                         </div>
                       </div>
-                      <Typography variant="body" className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2 font-mono bg-slate-50 dark:bg-slate-800/50 p-1.5 rounded border border-slate-100 dark:border-slate-800">
+                      <Typography
+                        variant="body"
+                        className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2 font-mono bg-slate-50 dark:bg-slate-800/50 p-1.5 rounded border border-slate-100 dark:border-slate-800">
                         {ctx.content}
                       </Typography>
                       <div className="mt-2 flex justify-end">
@@ -167,8 +179,7 @@ const ContextManager: React.FC<ContextManagerProps> = ({ onInsert, onClose, init
                           onClick={() => {
                             onInsert(ctx.content);
                             onClose();
-                          }}
-                        >
+                          }}>
                           <Icon name="plus" size="xs" className="mr-1" />
                           Insert
                         </Button>

@@ -35,25 +35,25 @@ export const useMcpCommunication = () => {
       const currentStatus = await mcpClient.getCurrentConnectionStatus();
 
       if (currentStatus.status === 'connected') {
-         setStatus('connected');
-         setIsConnected(true);
-         retryCountRef.current = 0;
+        setStatus('connected');
+        setIsConnected(true);
+        retryCountRef.current = 0;
 
-         const tools = await mcpClient.getAvailableTools();
-         setTools(tools);
+        const tools = await mcpClient.getAvailableTools();
+        setTools(tools);
       } else {
-         // Force reconnect if not connected
-         setStatus('connecting');
-         const success = await mcpClient.forceReconnect();
-         if (success) {
-            setStatus('connected');
-            setIsConnected(true);
-            retryCountRef.current = 0;
-            const tools = await mcpClient.getAvailableTools();
-            setTools(tools);
-         } else {
-            throw new Error('Connection failed');
-         }
+        // Force reconnect if not connected
+        setStatus('connecting');
+        const success = await mcpClient.forceReconnect();
+        if (success) {
+          setStatus('connected');
+          setIsConnected(true);
+          retryCountRef.current = 0;
+          const tools = await mcpClient.getAvailableTools();
+          setTools(tools);
+        } else {
+          throw new Error('Connection failed');
+        }
       }
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error);
@@ -180,7 +180,7 @@ export const useMcpCommunication = () => {
     // We only trigger connect if config is available.
     // mcpClient might already be initialized by global singleton, but we sync state here.
     if (config.uri) {
-        connect();
+      connect();
     }
 
     return () => {

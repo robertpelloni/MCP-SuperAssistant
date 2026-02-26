@@ -9,7 +9,7 @@ export const DEFAULT_MACROS: Omit<Macro, 'id' | 'createdAt' | 'updatedAt'>[] = [
         id: 'step-1',
         type: 'set_variable',
         variableName: 'input',
-        variableValue: '{{selection}}'
+        variableValue: '{{selection}}',
       },
       {
         id: 'step-2',
@@ -17,10 +17,10 @@ export const DEFAULT_MACROS: Omit<Macro, 'id' | 'createdAt' | 'updatedAt'>[] = [
         toolName: 'summarizer', // Placeholder, assumes a summarizer tool exists
         args: {
           text: '{{env.input}}',
-          length: 'short'
-        }
-      }
-    ]
+          length: 'short',
+        },
+      },
+    ],
   },
   {
     name: 'Explain Code',
@@ -31,10 +31,10 @@ export const DEFAULT_MACROS: Omit<Macro, 'id' | 'createdAt' | 'updatedAt'>[] = [
         type: 'tool',
         toolName: 'code_explainer', // Placeholder
         args: {
-          code: '{{selection}}'
-        }
-      }
-    ]
+          code: '{{selection}}',
+        },
+      },
+    ],
   },
   {
     name: 'Fix Grammar',
@@ -45,9 +45,9 @@ export const DEFAULT_MACROS: Omit<Macro, 'id' | 'createdAt' | 'updatedAt'>[] = [
         type: 'tool',
         toolName: 'grammar_fixer', // Placeholder
         args: {
-          text: '{{selection}}'
-        }
-      }
-    ]
-  }
+          text: '{{selection}}',
+        },
+      },
+    ],
+  },
 ];

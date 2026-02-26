@@ -42,28 +42,28 @@ const InputArea: React.FC<InputAreaProps> = ({ onSubmit, onToggleMinimize }) => 
     document.addEventListener('selectionchange', handleSelectionChange);
 
     // Listen for context save events from sidebar/background
-    const unsubscribeContextSave = eventBus.on('context:save', (data) => {
-        setContextManagerInitialContent(data.content);
-        setShowContextManager(true);
+    const unsubscribeContextSave = eventBus.on('context:save', data => {
+      setContextManagerInitialContent(data.content);
+      setShowContextManager(true);
     });
 
     // Listen for mcp text insertion (from Resources, Prompts, etc)
     const handleInsertText = (e: CustomEvent) => {
-        if (e.detail && e.detail.text) {
-            setInputText(prev => {
-                const prefix = prev ? prev + '\n\n' : '';
-                return prefix + e.detail.text;
-            });
-            // Optional: flash focus or something?
-        }
+      if (e.detail && e.detail.text) {
+        setInputText(prev => {
+          const prefix = prev ? prev + '\n\n' : '';
+          return prefix + e.detail.text;
+        });
+        // Optional: flash focus or something?
+      }
     };
 
     window.addEventListener('mcp:insert-text', handleInsertText as EventListener);
 
     return () => {
-        document.removeEventListener('selectionchange', handleSelectionChange);
-        window.removeEventListener('mcp:insert-text', handleInsertText as EventListener);
-        unsubscribeContextSave();
+      document.removeEventListener('selectionchange', handleSelectionChange);
+      window.removeEventListener('mcp:insert-text', handleInsertText as EventListener);
+      unsubscribeContextSave();
     };
   }, []);
 
@@ -81,9 +81,9 @@ const InputArea: React.FC<InputAreaProps> = ({ onSubmit, onToggleMinimize }) => 
 
     let finalText = inputText;
     if (attachments.length > 0) {
-      const attachmentText = attachments.map(a =>
-        `\n[Attachment: ${a.name} (${a.type}) - ${a.data.substring(0, 30)}...]`
-      ).join('');
+      const attachmentText = attachments
+        .map(a => `\n[Attachment: ${a.name} (${a.type}) - ${a.data.substring(0, 30)}...]`)
+        .join('');
       finalText += attachmentText;
 
       // In a real robust implementation, we would pass 'attachments' as a separate argument to 'onSubmit'
@@ -208,7 +208,7 @@ const InputArea: React.FC<InputAreaProps> = ({ onSubmit, onToggleMinimize }) => 
         newAttachments.push({
           name: file.name,
           type: file.type,
-          data: base64
+          data: base64,
         });
       } catch (err) {
         console.error('Failed to read file', err);
@@ -232,14 +232,13 @@ const InputArea: React.FC<InputAreaProps> = ({ onSubmit, onToggleMinimize }) => 
 
   return (
     <div
-      className={cn(
-        "p-3 relative transition-colors",
-        isDragging && "bg-primary-50/50 dark:bg-primary-900/20"
-      )}
-      onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
+      className={cn('p-3 relative transition-colors', isDragging && 'bg-primary-50/50 dark:bg-primary-900/20')}
+      onDragOver={e => {
+        e.preventDefault();
+        setIsDragging(true);
+      }}
       onDragLeave={() => setIsDragging(false)}
-      onDrop={handleDrop}
-    >
+      onDrop={handleDrop}>
       {isDragging && (
         <div className="absolute inset-0 z-20 flex items-center justify-center bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm rounded-lg border-2 border-dashed border-primary-500">
           <div className="flex flex-col items-center animate-bounce">
@@ -252,14 +251,14 @@ const InputArea: React.FC<InputAreaProps> = ({ onSubmit, onToggleMinimize }) => 
       {/* Context Manager Overlay */}
       {showContextManager && (
         <div className="absolute bottom-full left-0 right-0 h-[400px] mb-2 z-50 shadow-2xl rounded-t-lg overflow-hidden border border-slate-200 dark:border-slate-700">
-           <ContextManager
-             onInsert={handleInsertContext}
-             onClose={() => {
-                 setShowContextManager(false);
-                 setContextManagerInitialContent('');
-             }}
-             initialContent={contextManagerInitialContent}
-           />
+          <ContextManager
+            onInsert={handleInsertContext}
+            onClose={() => {
+              setShowContextManager(false);
+              setContextManagerInitialContent('');
+            }}
+            initialContent={contextManagerInitialContent}
+          />
         </div>
       )}
 
@@ -286,12 +285,13 @@ const InputArea: React.FC<InputAreaProps> = ({ onSubmit, onToggleMinimize }) => 
       {attachments.length > 0 && (
         <div className="flex gap-2 mb-2 overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-slate-300 dark:scrollbar-thumb-slate-600">
           {attachments.map((file, i) => (
-            <div key={i} className="relative group flex-shrink-0 w-16 h-16 rounded overflow-hidden border border-slate-200 dark:border-slate-700">
+            <div
+              key={i}
+              className="relative group flex-shrink-0 w-16 h-16 rounded overflow-hidden border border-slate-200 dark:border-slate-700">
               <img src={file.data} alt={file.name} className="w-full h-full object-cover" />
               <button
                 onClick={() => removeAttachment(i)}
-                className="absolute top-0.5 right-0.5 bg-black/50 text-white rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
-              >
+                className="absolute top-0.5 right-0.5 bg-black/50 text-white rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
                 <Icon name="x" size="xs" />
               </button>
             </div>
@@ -313,12 +313,11 @@ const InputArea: React.FC<InputAreaProps> = ({ onSubmit, onToggleMinimize }) => 
             size="sm"
             variant="ghost"
             className={cn(
-              "h-8 w-8 p-0 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300",
-              showContextManager ? "bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300" : ""
+              'h-8 w-8 p-0 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300',
+              showContextManager ? 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300' : '',
             )}
             onClick={() => setShowContextManager(!showContextManager)}
-            title="Manage Saved Context"
-          >
+            title="Manage Saved Context">
             <Icon name="book" size="sm" />
           </Button>
 
@@ -327,13 +326,14 @@ const InputArea: React.FC<InputAreaProps> = ({ onSubmit, onToggleMinimize }) => 
             size="sm"
             variant="ghost"
             className={cn(
-              "h-8 w-8 p-0 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors",
-              isListening ? "text-red-500 animate-pulse bg-red-50 dark:bg-red-900/20" : "text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300"
+              'h-8 w-8 p-0 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors',
+              isListening
+                ? 'text-red-500 animate-pulse bg-red-50 dark:bg-red-900/20'
+                : 'text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300',
             )}
             onClick={toggleListening}
-            title="Voice Input"
-          >
-            <Icon name={isListening ? "mic-off" : "mic"} size="sm" />
+            title="Voice Input">
+            <Icon name={isListening ? 'mic-off' : 'mic'} size="sm" />
           </Button>
 
           <Button

@@ -46,7 +46,7 @@ export const SidebarPlugin: FeaturePlugin = {
 
   async cleanup() {
     logger.debug('Sidebar plugin cleanup');
-  }
+  },
 };
 
 pluginRegistry.register(SidebarPlugin);

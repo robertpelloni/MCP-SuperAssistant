@@ -118,15 +118,14 @@ export interface HeartbeatResponse {
 
 // Sampling Response (Content -> Background)
 export interface SamplingResponseRequest {
-    requestId: string;
-    result?: any;
-    error?: any;
+  requestId: string;
+  result?: any;
+  error?: any;
 }
 
 export interface SamplingResponseResponse {
-    success: boolean;
+  success: boolean;
 }
-
 
 // Broadcast message types (one-way messages from background to content)
 
@@ -153,8 +152,8 @@ export interface HeartbeatResponseBroadcast {
 }
 
 export interface SamplingRequestBroadcast {
-    requestId: string;
-    request: any;
+  requestId: string;
+  request: any;
 }
 
 // Message type union for better type safety
@@ -182,12 +181,12 @@ export interface McpMessageMap {
     response: CallToolResponse;
   };
   'mcp:read-resource': {
-      request: ReadResourceRequest;
-      response: ReadResourceResponse;
+    request: ReadResourceRequest;
+    response: ReadResourceResponse;
   };
   'mcp:get-prompt': {
-      request: GetPromptRequest;
-      response: GetPromptResponse;
+    request: GetPromptRequest;
+    response: GetPromptResponse;
   };
   'mcp:get-connection-status': {
     request: GetConnectionStatusRequest;
@@ -214,8 +213,8 @@ export interface McpMessageMap {
     response: HeartbeatResponse;
   };
   'mcp:sampling-response': {
-      request: SamplingResponseRequest;
-      response: SamplingResponseResponse;
+    request: SamplingResponseRequest;
+    response: SamplingResponseResponse;
   };
 }
 
@@ -254,7 +253,7 @@ export function isValidMessageType(type: string): type is McpMessageType {
     'mcp:server-config-updated',
     'mcp:heartbeat-response',
     'mcp:sampling-request',
-    'mcp:sampling-response'
+    'mcp:sampling-response',
   ];
 
   return validTypes.includes(type as McpMessageType);

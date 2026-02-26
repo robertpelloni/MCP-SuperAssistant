@@ -14,6 +14,7 @@ import Settings from './Settings/Settings';
 import Help from './Help/Help';
 import ActivityLog from './Activity/ActivityLog';
 import Dashboard from './Dashboard/Dashboard';
+import { MemoryTab } from './Memory/MemoryTab';
 import MacroList from './Macros/MacroList';
 import SystemInfo from './System/SystemInfo';
 import CommandPalette from './CommandPalette/CommandPalette';
@@ -98,34 +99,76 @@ const Sidebar: React.FC<SidebarProps> = ({ initialPreferences }) => {
     // Map of tailwind colors to hex values (simplified approximation for CSS vars)
     const colorMap: Record<string, Record<number, string>> = {
       indigo: {
-        50: '#eef2ff', 100: '#e0e7ff', 200: '#c7d2fe', 300: '#a5b4fc',
-        400: '#818cf8', 500: '#6366f1', 600: '#4f46e5', 700: '#4338ca',
-        800: '#3730a3', 900: '#312e81'
+        50: '#eef2ff',
+        100: '#e0e7ff',
+        200: '#c7d2fe',
+        300: '#a5b4fc',
+        400: '#818cf8',
+        500: '#6366f1',
+        600: '#4f46e5',
+        700: '#4338ca',
+        800: '#3730a3',
+        900: '#312e81',
       },
       blue: {
-        50: '#eff6ff', 100: '#dbeafe', 200: '#bfdbfe', 300: '#93c5fd',
-        400: '#60a5fa', 500: '#3b82f6', 600: '#2563eb', 700: '#1d4ed8',
-        800: '#1e40af', 900: '#1e3a8a'
+        50: '#eff6ff',
+        100: '#dbeafe',
+        200: '#bfdbfe',
+        300: '#93c5fd',
+        400: '#60a5fa',
+        500: '#3b82f6',
+        600: '#2563eb',
+        700: '#1d4ed8',
+        800: '#1e40af',
+        900: '#1e3a8a',
       },
       green: {
-        50: '#f0fdf4', 100: '#dcfce7', 200: '#bbf7d0', 300: '#86efac',
-        400: '#4ade80', 500: '#22c55e', 600: '#16a34a', 700: '#15803d',
-        800: '#166534', 900: '#14532d'
+        50: '#f0fdf4',
+        100: '#dcfce7',
+        200: '#bbf7d0',
+        300: '#86efac',
+        400: '#4ade80',
+        500: '#22c55e',
+        600: '#16a34a',
+        700: '#15803d',
+        800: '#166534',
+        900: '#14532d',
       },
       purple: {
-        50: '#faf5ff', 100: '#f3e8ff', 200: '#e9d5ff', 300: '#d8b4fe',
-        400: '#c084fc', 500: '#a855f7', 600: '#9333ea', 700: '#7e22ce',
-        800: '#6b21a8', 900: '#581c87'
+        50: '#faf5ff',
+        100: '#f3e8ff',
+        200: '#e9d5ff',
+        300: '#d8b4fe',
+        400: '#c084fc',
+        500: '#a855f7',
+        600: '#9333ea',
+        700: '#7e22ce',
+        800: '#6b21a8',
+        900: '#581c87',
       },
       red: {
-        50: '#fef2f2', 100: '#fee2e2', 200: '#fecaca', 300: '#fca5a5',
-        400: '#f87171', 500: '#ef4444', 600: '#dc2626', 700: '#b91c1c',
-        800: '#991b1b', 900: '#7f1d1d'
+        50: '#fef2f2',
+        100: '#fee2e2',
+        200: '#fecaca',
+        300: '#fca5a5',
+        400: '#f87171',
+        500: '#ef4444',
+        600: '#dc2626',
+        700: '#b91c1c',
+        800: '#991b1b',
+        900: '#7f1d1d',
       },
       orange: {
-        50: '#fff7ed', 100: '#ffedd5', 200: '#fed7aa', 300: '#fdba74',
-        400: '#fb923c', 500: '#f97316', 600: '#ea580c', 700: '#c2410c',
-        800: '#9a3412', 900: '#7c2d12'
+        50: '#fff7ed',
+        100: '#ffedd5',
+        200: '#fed7aa',
+        300: '#fdba74',
+        400: '#fb923c',
+        500: '#f97316',
+        600: '#ea580c',
+        700: '#c2410c',
+        800: '#9a3412',
+        900: '#7c2d12',
       },
     };
 
@@ -401,7 +444,17 @@ const Sidebar: React.FC<SidebarProps> = ({ initialPreferences }) => {
 
   // Local UI state that doesn't need to be in the store
   const [activeTab, setActiveTab] = useState<
-    'availableTools' | 'resources' | 'prompts' | 'instructions' | 'activity' | 'dashboard' | 'macros' | 'settings' | 'help' | 'system'
+    | 'availableTools'
+    | 'resources'
+    | 'prompts'
+    | 'instructions'
+    | 'activity'
+    | 'dashboard'
+    | 'macros'
+    | 'memory'
+    | 'settings'
+    | 'help'
+    | 'system'
   >('availableTools');
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -433,7 +486,19 @@ const Sidebar: React.FC<SidebarProps> = ({ initialPreferences }) => {
       // Ideally we would focus the input inside AvailableTools
     },
     switchTab: direction => {
-      const tabs: ('availableTools' | 'resources' | 'prompts' | 'instructions' | 'activity' | 'dashboard' | 'macros' | 'settings' | 'help' | 'system')[] = [
+      const tabs: (
+        | 'availableTools'
+        | 'resources'
+        | 'prompts'
+        | 'instructions'
+        | 'activity'
+        | 'dashboard'
+        | 'macros'
+        | 'memory'
+        | 'settings'
+        | 'help'
+        | 'system'
+      )[] = [
         'availableTools',
         'resources',
         'prompts',
@@ -441,6 +506,7 @@ const Sidebar: React.FC<SidebarProps> = ({ initialPreferences }) => {
         'activity',
         'dashboard',
         'macros',
+        'memory',
         'settings',
         'help',
         'system',
@@ -796,7 +862,6 @@ const Sidebar: React.FC<SidebarProps> = ({ initialPreferences }) => {
         isTransitioning ? 'sidebar-transitioning' : '',
       )}
       style={{ width: isMinimized ? `${SIDEBAR_MINIMIZED_WIDTH}px` : `${sidebarWidth}px` }}>
-
       {/* Sampling Modal Overlay */}
       <SamplingModal />
 
@@ -1071,6 +1136,16 @@ const Sidebar: React.FC<SidebarProps> = ({ initialPreferences }) => {
                   <button
                     className={cn(
                       'py-2 px-3 font-medium text-xs sm:text-sm transition-all duration-200',
+                      activeTab === 'memory'
+                        ? 'border-b-2 border-primary-600 text-primary-600 dark:border-primary-400 dark:text-primary-400'
+                        : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-t-lg',
+                    )}
+                    onClick={() => setActiveTab('memory')}>
+                    Memory
+                  </button>
+                  <button
+                    className={cn(
+                      'py-2 px-3 font-medium text-xs sm:text-sm transition-all duration-200',
                       activeTab === 'settings'
                         ? 'border-b-2 border-primary-600 text-primary-600 dark:border-primary-400 dark:text-primary-400'
                         : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-t-lg',
@@ -1178,6 +1253,15 @@ const Sidebar: React.FC<SidebarProps> = ({ initialPreferences }) => {
                   { hidden: activeTab !== 'macros' },
                 )}>
                 <MacroList onExecute={sendMessage} />
+              </div>
+
+              {/* Memory */}
+              <div
+                className={cn(
+                  'h-full overflow-y-auto scrollbar-thin scrollbar-thumb-slate-300 dark:scrollbar-thumb-slate-600 scrollbar-track-transparent',
+                  { hidden: activeTab !== 'memory' },
+                )}>
+                <MemoryTab />
               </div>
 
               {/* Settings */}

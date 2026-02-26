@@ -1,4 +1,5 @@
-import React, { useState, useRef } from 'react';
+import type React from 'react';
+import { useState, useRef } from 'react';
 import { useMacroStore, type Macro } from '@src/lib/macro.store';
 import { Icon, Typography, Button } from '../ui';
 import { Card } from '@src/components/ui/card';
@@ -127,7 +128,7 @@ const MacroList: React.FC<MacroListProps> = ({ onExecute }) => {
     if (!file) return;
 
     const reader = new FileReader();
-    reader.onload = (event) => {
+    reader.onload = event => {
       try {
         const content = event.target?.result as string;
         const macroData = JSON.parse(content);
@@ -205,12 +206,7 @@ const MacroList: React.FC<MacroListProps> = ({ onExecute }) => {
   };
 
   if (isCreating || editingMacro) {
-    return (
-      <MacroBuilder
-        existingMacro={editingMacro}
-        onClose={handleCloseBuilder}
-      />
-    );
+    return <MacroBuilder existingMacro={editingMacro} onClose={handleCloseBuilder} />;
   }
 
   return (
@@ -220,21 +216,30 @@ const MacroList: React.FC<MacroListProps> = ({ onExecute }) => {
           Macros
         </Typography>
         <div className="flex items-center gap-2">
-          <input
-            type="file"
-            ref={fileInputRef}
-            onChange={handleFileChange}
-            accept=".json"
-            className="hidden"
-          />
+          <input type="file" ref={fileInputRef} onChange={handleFileChange} accept=".json" className="hidden" />
           <div className="flex gap-1">
-            <Button onClick={handleLoadFeatured} size="sm" variant="ghost" className="h-8 w-8 p-0" title="Featured Macros">
-              <Icon name="star" size="xs" className={showFeatured ? "fill-current text-yellow-500" : ""} />
+            <Button
+              onClick={handleLoadFeatured}
+              size="sm"
+              variant="ghost"
+              className="h-8 w-8 p-0"
+              title="Featured Macros">
+              <Icon name="star" size="xs" className={showFeatured ? 'fill-current text-yellow-500' : ''} />
             </Button>
-            <Button onClick={handleImportUrlClick} size="sm" variant="ghost" className="h-8 w-8 p-0" title="Import from URL">
+            <Button
+              onClick={handleImportUrlClick}
+              size="sm"
+              variant="ghost"
+              className="h-8 w-8 p-0"
+              title="Import from URL">
               <Icon name="globe" size="xs" />
             </Button>
-            <Button onClick={handleImportClick} size="sm" variant="outline" className="flex items-center gap-1 hidden sm:flex" title="Import from JSON">
+            <Button
+              onClick={handleImportClick}
+              size="sm"
+              variant="outline"
+              className="flex items-center gap-1 hidden sm:flex"
+              title="Import from JSON">
               <Icon name="upload" size="xs" className="mr-1" />
               Import
             </Button>
@@ -251,10 +256,10 @@ const MacroList: React.FC<MacroListProps> = ({ onExecute }) => {
           <input
             type="text"
             value={importUrl}
-            onChange={(e) => setImportUrl(e.target.value)}
+            onChange={e => setImportUrl(e.target.value)}
             placeholder="https://example.com/macro.json"
             className="flex-1 px-3 py-1.5 text-xs border rounded bg-white dark:bg-slate-800 border-slate-300 dark:border-slate-600 focus:ring-1 focus:ring-primary-500"
-            onKeyDown={(e) => e.key === 'Enter' && handleImportFromUrl()}
+            onKeyDown={e => e.key === 'Enter' && handleImportFromUrl()}
           />
           <Button size="sm" onClick={handleImportFromUrl} disabled={!importUrl}>
             Go
@@ -264,12 +269,16 @@ const MacroList: React.FC<MacroListProps> = ({ onExecute }) => {
 
       {showFeatured && (
         <div className="mb-4 bg-yellow-50 dark:bg-yellow-900/10 p-3 rounded-lg border border-yellow-100 dark:border-yellow-900/30 animate-in fade-in">
-          <Typography variant="subtitle" className="text-yellow-800 dark:text-yellow-200 mb-2 font-bold flex items-center gap-1">
+          <Typography
+            variant="subtitle"
+            className="text-yellow-800 dark:text-yellow-200 mb-2 font-bold flex items-center gap-1">
             <Icon name="star" size="xs" className="fill-current" /> Featured Community Macros
           </Typography>
           <div className="space-y-2">
             {featuredMacros.map((macro, i) => (
-              <div key={i} className="flex justify-between items-center bg-white dark:bg-slate-900 p-2 rounded border border-yellow-100 dark:border-yellow-900/20">
+              <div
+                key={i}
+                className="flex justify-between items-center bg-white dark:bg-slate-900 p-2 rounded border border-yellow-100 dark:border-yellow-900/20">
                 <div className="min-w-0">
                   <div className="font-medium text-xs text-slate-800 dark:text-slate-200">{macro.name}</div>
                   <div className="text-[10px] text-slate-500 truncate">{macro.description}</div>
@@ -291,43 +300,51 @@ const MacroList: React.FC<MacroListProps> = ({ onExecute }) => {
               No macros created yet
             </Typography>
             <div className="flex gap-2 mt-3">
-               <Button variant="outline" size="sm" onClick={handleImportClick}>
+              <Button variant="outline" size="sm" onClick={handleImportClick}>
                 Import Macro
               </Button>
-              <Button variant="ghost" size="sm" onClick={handleCreate} className="text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleCreate}
+                className="text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300">
                 Create Macro
               </Button>
             </div>
           </div>
         ) : (
-          macros.map((macro) => (
+          macros.map(macro => (
             <Card
               key={macro.id}
               className={cn(
-                "border overflow-hidden transition-all duration-200 hover:shadow-md cursor-pointer group",
-                runningMacroId === macro.id ? "ring-2 ring-primary-500 border-transparent" : ""
+                'border overflow-hidden transition-all duration-200 hover:shadow-md cursor-pointer group',
+                runningMacroId === macro.id ? 'ring-2 ring-primary-500 border-transparent' : '',
               )}
-              onClick={() => handleEdit(macro)}
-            >
+              onClick={() => handleEdit(macro)}>
               <div className="p-3 bg-white dark:bg-slate-900 flex items-start justify-between">
                 <div className="flex items-start gap-3 overflow-hidden w-full">
                   <div
                     className={cn(
-                      "p-2 rounded-full flex-shrink-0 transition-colors z-10",
+                      'p-2 rounded-full flex-shrink-0 transition-colors z-10',
                       runningMacroId === macro.id
-                        ? "bg-primary-100 text-primary-700 animate-pulse"
-                        : "bg-primary-50 dark:bg-primary-900/20 text-primary-600 dark:text-primary-400 hover:bg-primary-100 dark:hover:bg-primary-900/40"
+                        ? 'bg-primary-100 text-primary-700 animate-pulse'
+                        : 'bg-primary-50 dark:bg-primary-900/20 text-primary-600 dark:text-primary-400 hover:bg-primary-100 dark:hover:bg-primary-900/40',
                     )}
-                    onClick={(e) => handleRun(macro, e)}
-                    title="Run Macro"
-                  >
-                    <Icon name={runningMacroId === macro.id ? "loader" : "play"} size="sm" className={runningMacroId === macro.id ? "animate-spin" : ""} />
+                    onClick={e => handleRun(macro, e)}
+                    title="Run Macro">
+                    <Icon
+                      name={runningMacroId === macro.id ? 'loader' : 'play'}
+                      size="sm"
+                      className={runningMacroId === macro.id ? 'animate-spin' : ''}
+                    />
                   </div>
                   <div className="min-w-0 flex-1">
                     <Typography variant="subtitle" className="font-medium text-slate-800 dark:text-slate-200 truncate">
                       {macro.name}
                     </Typography>
-                    <Typography variant="body" className="text-xs text-slate-500 dark:text-slate-400 line-clamp-1 mt-0.5">
+                    <Typography
+                      variant="body"
+                      className="text-xs text-slate-500 dark:text-slate-400 line-clamp-1 mt-0.5">
                       {macro.description || 'No description'}
                     </Typography>
                     <div className="mt-2 flex items-center gap-2">
@@ -341,15 +358,14 @@ const MacroList: React.FC<MacroListProps> = ({ onExecute }) => {
                   </div>
 
                   <div className="flex flex-col gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                     <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-7 w-7 text-slate-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded"
-                        onClick={(e) => handleDelete(macro.id, e)}
-                        title="Delete Macro"
-                      >
-                        <Icon name="trash" size="xs" />
-                      </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7 text-slate-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded"
+                      onClick={e => handleDelete(macro.id, e)}
+                      title="Delete Macro">
+                      <Icon name="trash" size="xs" />
+                    </Button>
                   </div>
                 </div>
               </div>

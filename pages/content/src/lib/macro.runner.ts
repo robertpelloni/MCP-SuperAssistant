@@ -1,4 +1,5 @@
-import { Macro, MacroStep } from './macro.store';
+import type { Macro } from './macro.store';
+import { MacroStep } from './macro.store';
 import { logMessage } from '@src/utils/helpers';
 
 export class MacroRunner {
@@ -7,7 +8,7 @@ export class MacroRunner {
 
   constructor(
     sendMessage: (toolName: string, args: any) => Promise<any>,
-    onLog: (message: string, type: 'info' | 'error' | 'success') => void
+    onLog: (message: string, type: 'info' | 'error' | 'success') => void,
   ) {
     this.sendMessage = sendMessage;
     this.onLog = onLog;
@@ -44,13 +45,11 @@ export class MacroRunner {
 
           this.onLog(`Tool finished: ${step.toolName}`, 'success');
           currentStepIndex++;
-
         } else if (step.type === 'delay') {
           const delay = step.delayMs || 1000;
           this.onLog(`Waiting ${delay}ms...`, 'info');
           await new Promise(r => setTimeout(r, delay));
           currentStepIndex++;
-
         } else if (step.type === 'set_variable') {
           const name = step.variableName;
           const valueExpr = step.variableValue || '';
@@ -62,17 +61,17 @@ export class MacroRunner {
 
             // Basic resolution of variables in the value expression
             if (valueExpr === 'lastResult') {
-                value = lastResult;
+              value = lastResult;
             } else if (valueExpr.startsWith('lastResult.')) {
-                const path = valueExpr.replace('lastResult.', '');
-                value = path.split('.').reduce((o, k) => (o || {})[k], lastResult);
+              const path = valueExpr.replace('lastResult.', '');
+              value = path.split('.').reduce((o, k) => (o || {})[k], lastResult);
             } else if (valueExpr.startsWith('env.')) {
-                const path = valueExpr.replace('env.', '');
-                value = path.split('.').reduce((o, k) => (o || {})[k], env);
+              const path = valueExpr.replace('env.', '');
+              value = path.split('.').reduce((o, k) => (o || {})[k], env);
             } else if (valueExpr === 'allResults') {
-                value = results;
+              value = results;
             } else if (!isNaN(Number(valueExpr))) {
-                value = Number(valueExpr);
+              value = Number(valueExpr);
             }
             // else treat as string literal
 
@@ -80,7 +79,6 @@ export class MacroRunner {
             this.onLog(`Variable set: ${name} = ${JSON.stringify(value)}`, 'info');
           }
           currentStepIndex++;
-
         } else if (step.type === 'condition') {
           const condition = step.expression || 'false';
           let conditionResult = false;
@@ -111,7 +109,7 @@ export class MacroRunner {
             currentStepIndex++;
           }
         } else {
-            currentStepIndex++;
+          currentStepIndex++;
         }
       } catch (error) {
         this.onLog(`Step failed: ${error}`, 'error');
@@ -125,7 +123,7 @@ export class MacroRunner {
 
   private processArgs(args: any, lastResult: any, allResults: any[], env: any): any {
     if (!args) return {};
-    let processed = JSON.parse(JSON.stringify(args));
+    const processed = JSON.parse(JSON.stringify(args));
 
     const walk = (obj: any) => {
       for (const key in obj) {
@@ -133,35 +131,34 @@ export class MacroRunner {
           const val = obj[key];
           // Check for variable substitution: {{variableName}}
           if (val.match(/^\{\{[\w\d\.]+\}\}$/)) {
-             // Exact match substitution (preserves type)
-             const varName = val.slice(2, -2);
-             if (varName === 'lastResult') obj[key] = lastResult;
-             else if (varName.startsWith('env.')) {
-                 const path = varName.replace('env.', '');
-                 obj[key] = path.split('.').reduce((o: any, k: string) => (o || {})[k], env);
-             }
-             else if (env[varName] !== undefined) obj[key] = env[varName];
-             else if (varName.startsWith('lastResult.')) {
-                 const path = varName.replace('lastResult.', '');
-                 obj[key] = path.split('.').reduce((o: any, k: string) => (o || {})[k], lastResult);
-             }
+            // Exact match substitution (preserves type)
+            const varName = val.slice(2, -2);
+            if (varName === 'lastResult') obj[key] = lastResult;
+            else if (varName.startsWith('env.')) {
+              const path = varName.replace('env.', '');
+              obj[key] = path.split('.').reduce((o: any, k: string) => (o || {})[k], env);
+            } else if (env[varName] !== undefined) obj[key] = env[varName];
+            else if (varName.startsWith('lastResult.')) {
+              const path = varName.replace('lastResult.', '');
+              obj[key] = path.split('.').reduce((o: any, k: string) => (o || {})[k], lastResult);
+            }
           } else if (val.includes('{{')) {
-             // String interpolation
-             obj[key] = val.replace(/\{\{([\w\d\.]+)\}\}/g, (_: string, varName: string) => {
-                 if (varName === 'lastResult') return JSON.stringify(lastResult);
-                 if (varName.startsWith('env.')) {
-                     const path = varName.replace('env.', '');
-                     const res = path.split('.').reduce((o: any, k: string) => (o || {})[k], env);
-                     return res !== undefined ? String(res) : '';
-                 }
-                 if (env[varName] !== undefined) return String(env[varName]);
-                 if (varName.startsWith('lastResult.')) {
-                     const path = varName.replace('lastResult.', '');
-                     const res = path.split('.').reduce((o: any, k: string) => (o || {})[k], lastResult);
-                     return res !== undefined ? String(res) : '';
-                 }
-                 return '';
-             });
+            // String interpolation
+            obj[key] = val.replace(/\{\{([\w\d\.]+)\}\}/g, (_: string, varName: string) => {
+              if (varName === 'lastResult') return JSON.stringify(lastResult);
+              if (varName.startsWith('env.')) {
+                const path = varName.replace('env.', '');
+                const res = path.split('.').reduce((o: any, k: string) => (o || {})[k], env);
+                return res !== undefined ? String(res) : '';
+              }
+              if (env[varName] !== undefined) return String(env[varName]);
+              if (varName.startsWith('lastResult.')) {
+                const path = varName.replace('lastResult.', '');
+                const res = path.split('.').reduce((o: any, k: string) => (o || {})[k], lastResult);
+                return res !== undefined ? String(res) : '';
+              }
+              return '';
+            });
           }
         } else if (typeof obj[key] === 'object' && obj[key] !== null) {
           walk(obj[key]);
@@ -211,14 +208,22 @@ export class MacroRunner {
     }
 
     switch (op) {
-      case '==': return leftVal == rightVal;
-      case '===': return leftVal === rightVal;
-      case '!=': return leftVal != rightVal;
-      case '!==': return leftVal !== rightVal;
-      case '>': return leftVal > rightVal;
-      case '<': return leftVal < rightVal;
-      case '>=': return leftVal >= rightVal;
-      case '<=': return leftVal <= rightVal;
+      case '==':
+        return leftVal == rightVal;
+      case '===':
+        return leftVal === rightVal;
+      case '!=':
+        return leftVal != rightVal;
+      case '!==':
+        return leftVal !== rightVal;
+      case '>':
+        return leftVal > rightVal;
+      case '<':
+        return leftVal < rightVal;
+      case '>=':
+        return leftVal >= rightVal;
+      case '<=':
+        return leftVal <= rightVal;
     }
 
     return false;

@@ -170,41 +170,41 @@ const Settings: React.FC = () => {
           <CardContent className="p-5">
             <div className="flex items-center justify-between mb-4">
               <div>
-                <Typography variant="subtitle" className="text-slate-900 dark:text-slate-100">Sync Data</Typography>
+                <Typography variant="subtitle" className="text-slate-900 dark:text-slate-100">
+                  Sync Data
+                </Typography>
                 <Typography variant="caption" className="text-slate-500 dark:text-slate-400">
                   Sync macros and contexts across devices via Chrome.
                 </Typography>
               </div>
               <ToggleWithoutLabel
                 label="Enable Sync"
-                checked={useSyncStore((s) => s.isEnabled)}
-                onChange={(checked) => useSyncStore.getState().setSyncEnabled(checked)}
+                checked={useSyncStore(s => s.isEnabled)}
+                onChange={checked => useSyncStore.getState().setSyncEnabled(checked)}
               />
             </div>
             <div className="flex gap-2">
-               <Button
-                 size="sm"
-                 variant="outline"
-                 disabled={!useSyncStore((s) => s.isEnabled)}
-                 onClick={() => SyncService.getInstance().sync()}
-               >
-                 Push Now
-               </Button>
-               <Button
-                 size="sm"
-                 variant="outline"
-                 disabled={!useSyncStore((s) => s.isEnabled)}
-                 onClick={() => SyncService.getInstance().pull()}
-               >
-                 Pull Now
-               </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                disabled={!useSyncStore(s => s.isEnabled)}
+                onClick={() => SyncService.getInstance().sync()}>
+                Push Now
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                disabled={!useSyncStore(s => s.isEnabled)}
+                onClick={() => SyncService.getInstance().pull()}>
+                Pull Now
+              </Button>
             </div>
-            {useSyncStore((s) => s.lastSyncedAt) && (
+            {useSyncStore(s => s.lastSyncedAt) && (
               <Typography variant="caption" className="text-slate-400 mt-2 block">
                 Last synced: {new Date(useSyncStore.getState().lastSyncedAt!).toLocaleString()}
               </Typography>
             )}
-            {useSyncStore((s) => s.error) && (
+            {useSyncStore(s => s.error) && (
               <Typography variant="caption" className="text-red-500 mt-2 block">
                 Error: {useSyncStore.getState().error}
               </Typography>
@@ -215,27 +215,29 @@ const Settings: React.FC = () => {
         {/* Appearance Settings */}
         <Card className="border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm overflow-hidden">
           <CardHeader className="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-800 p-4">
-             <div className="flex items-center gap-2">
-               <div className="p-1.5 bg-fuchsia-100 dark:bg-fuchsia-900/30 rounded text-fuchsia-600 dark:text-fuchsia-400">
-                 <Icon name="sun" size="sm" />
-               </div>
-               <CardTitle className="text-base font-medium">Appearance</CardTitle>
-             </div>
+            <div className="flex items-center gap-2">
+              <div className="p-1.5 bg-fuchsia-100 dark:bg-fuchsia-900/30 rounded text-fuchsia-600 dark:text-fuchsia-400">
+                <Icon name="sun" size="sm" />
+              </div>
+              <CardTitle className="text-base font-medium">Appearance</CardTitle>
+            </div>
           </CardHeader>
           <CardContent className="p-5 space-y-4">
             <ThemeSelector />
             <div className="flex items-center justify-between border-t border-slate-100 dark:border-slate-800 pt-4">
-                <div>
-                    <Typography variant="subtitle" className="text-slate-900 dark:text-slate-100">Push Content Mode</Typography>
-                    <Typography variant="caption" className="text-slate-500 dark:text-slate-400">
-                        Shift page content instead of overlaying.
-                    </Typography>
-                </div>
-                <ToggleWithoutLabel
-                    label="Push Content Mode"
-                    checked={preferences.isPushMode}
-                    onChange={(checked) => updatePreferences({ isPushMode: checked })}
-                />
+              <div>
+                <Typography variant="subtitle" className="text-slate-900 dark:text-slate-100">
+                  Push Content Mode
+                </Typography>
+                <Typography variant="caption" className="text-slate-500 dark:text-slate-400">
+                  Shift page content instead of overlaying.
+                </Typography>
+              </div>
+              <ToggleWithoutLabel
+                label="Push Content Mode"
+                checked={preferences.isPushMode}
+                onChange={checked => updatePreferences({ isPushMode: checked })}
+              />
             </div>
           </CardContent>
         </Card>
@@ -417,14 +419,13 @@ const Settings: React.FC = () => {
                 variant="outline"
                 className="border-slate-300 dark:border-slate-600"
                 onClick={() => {
-                    const val = trustedToolsInput.trim();
-                    if (val && !(preferences.autoExecuteWhitelist || []).includes(val)) {
-                      const newTools = [...(preferences.autoExecuteWhitelist || []), val];
-                      updatePreferences({ autoExecuteWhitelist: newTools });
-                      setTrustedToolsInput('');
-                    }
-                }}
-              >
+                  const val = trustedToolsInput.trim();
+                  if (val && !(preferences.autoExecuteWhitelist || []).includes(val)) {
+                    const newTools = [...(preferences.autoExecuteWhitelist || []), val];
+                    updatePreferences({ autoExecuteWhitelist: newTools });
+                    setTrustedToolsInput('');
+                  }
+                }}>
                 Add
               </Button>
             </div>

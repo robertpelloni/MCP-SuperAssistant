@@ -1,8 +1,13 @@
 # Granular TODO List
 
-**Status**: Active Maintenance (v1.5.0)
+**Status**: Active Maintenance (v1.9.0)
 
 This file tracks granular tasks, bugs, and polish items that are too small for the high-level ROADMAP.
+
+## Memory & Integration (v1.9.0)
+- [x] **Web Clipper**: Implement Obsidian-like clipper (Readability + Markdown).
+- [x] **Vector Memory**: Implement generic MCP client for memory storage/search.
+- [x] **AnythingLLM**: Implement direct integration for uploading content.
 
 ## Immediate Polish
 - [x] **Console Cleanup**: Remove debug `console.log` statements in production builds (verify `logger` config).

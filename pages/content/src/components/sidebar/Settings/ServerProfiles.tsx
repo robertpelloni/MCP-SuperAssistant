@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import type React from 'react';
+import { useState } from 'react';
 import { useProfileStore, type ConnectionProfile } from '@src/stores/profile.store';
 import { useConnectionStore } from '@src/stores/connection.store';
 import { Card, CardContent, CardHeader, CardTitle } from '@src/components/ui/card';
@@ -76,30 +77,43 @@ const ServerProfiles: React.FC = () => {
       <Card className="border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm">
         <CardHeader className="pb-2 border-b border-slate-100 dark:border-slate-800 flex flex-row justify-between items-center">
           <CardTitle className="text-sm font-semibold">{editingId ? 'Edit Profile' : 'New Profile'}</CardTitle>
-          <Button variant="ghost" size="sm" onClick={() => setIsCreating(false)}>Cancel</Button>
+          <Button variant="ghost" size="sm" onClick={() => setIsCreating(false)}>
+            Cancel
+          </Button>
         </CardHeader>
         <CardContent className="p-4 space-y-3">
           <div>
             <label className="text-xs font-medium mb-1 block">Name</label>
-            <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="My Local Server" className="w-full" />
+            <Input
+              value={name}
+              onChange={e => setName(e.target.value)}
+              placeholder="My Local Server"
+              className="w-full"
+            />
           </div>
           <div>
             <label className="text-xs font-medium mb-1 block">URI</label>
-            <Input value={uri} onChange={(e) => setUri(e.target.value)} placeholder="http://localhost:3006/sse" className="w-full" />
+            <Input
+              value={uri}
+              onChange={e => setUri(e.target.value)}
+              placeholder="http://localhost:3006/sse"
+              className="w-full"
+            />
           </div>
           <div>
             <label className="text-xs font-medium mb-1 block">Type</label>
             <select
               value={type}
-              onChange={(e) => setType(e.target.value as any)}
-              className="w-full text-sm border border-slate-300 dark:border-slate-600 rounded bg-white dark:bg-slate-900 p-2 text-slate-900 dark:text-slate-100"
-            >
+              onChange={e => setType(e.target.value as any)}
+              className="w-full text-sm border border-slate-300 dark:border-slate-600 rounded bg-white dark:bg-slate-900 p-2 text-slate-900 dark:text-slate-100">
               <option value="sse">SSE</option>
               <option value="websocket">WebSocket</option>
             </select>
           </div>
           <div className="pt-2 flex justify-end">
-            <Button size="sm" onClick={handleSave} className="bg-primary-600 text-white">Save Profile</Button>
+            <Button size="sm" onClick={handleSave} className="bg-primary-600 text-white">
+              Save Profile
+            </Button>
           </div>
         </CardContent>
       </Card>
@@ -125,10 +139,10 @@ const ServerProfiles: React.FC = () => {
             <div
               key={profile.id}
               className={cn(
-                "p-3 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors",
-                activeProfileId === profile.id && "bg-primary-50/50 dark:bg-primary-900/10 border-l-4 border-primary-500"
-              )}
-            >
+                'p-3 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors',
+                activeProfileId === profile.id &&
+                  'bg-primary-50/50 dark:bg-primary-900/10 border-l-4 border-primary-500',
+              )}>
               <div className="min-w-0 flex-1 cursor-pointer" onClick={() => handleActivate(profile)}>
                 <div className="flex items-center gap-2">
                   <Typography variant="subtitle" className="font-medium text-slate-900 dark:text-slate-100">
@@ -141,16 +155,26 @@ const ServerProfiles: React.FC = () => {
                   )}
                 </div>
                 <div className="text-xs text-slate-500 dark:text-slate-400 truncate flex items-center gap-2 mt-0.5">
-                  <span className="uppercase text-[10px] bg-slate-100 dark:bg-slate-800 px-1 rounded">{profile.connectionType}</span>
+                  <span className="uppercase text-[10px] bg-slate-100 dark:bg-slate-800 px-1 rounded">
+                    {profile.connectionType}
+                  </span>
                   {profile.uri}
                 </div>
               </div>
               <div className="flex items-center gap-1">
-                <Button variant="ghost" size="icon" className="h-7 w-7 text-slate-400 hover:text-primary-600" onClick={() => handleEdit(profile)}>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-7 w-7 text-slate-400 hover:text-primary-600"
+                  onClick={() => handleEdit(profile)}>
                   <Icon name="edit" size="xs" />
                 </Button>
                 {activeProfileId !== profile.id && (
-                  <Button variant="ghost" size="icon" className="h-7 w-7 text-slate-400 hover:text-red-600" onClick={(e) => handleDelete(profile.id, e)}>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7 text-slate-400 hover:text-red-600"
+                    onClick={e => handleDelete(profile.id, e)}>
                     <Icon name="trash" size="xs" />
                   </Button>
                 )}

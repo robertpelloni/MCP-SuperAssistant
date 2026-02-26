@@ -63,7 +63,6 @@ export async function applicationInit(): Promise<void> {
     // 4. Mark application as initialized
     appStore.initialize();
     logger.info('Application initialization complete');
-
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
     logger.error('Application initialization failed:', errorMessage);

@@ -317,43 +317,45 @@ async function initializeExtension() {
 }
 
 async function initializeSamplingListener() {
-    try {
-        const client = await getGlobalMcpClientInstance();
-        client.on('sampling:request-received', (event) => {
-            const requestId = crypto.randomUUID();
-            logger.debug(`[Background] Received sampling request, assigning ID: ${requestId}`);
+  try {
+    const client = await getGlobalMcpClientInstance();
+    client.on('sampling:request-received', event => {
+      const requestId = crypto.randomUUID();
+      logger.debug(`[Background] Received sampling request, assigning ID: ${requestId}`);
 
-            // Store the respond callback
-            samplingRequestMap.set(requestId, event.respond);
+      // Store the respond callback
+      samplingRequestMap.set(requestId, event.respond);
 
-            // Broadcast to active tab
-            chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-                const activeTab = tabs[0];
-                if (activeTab?.id) {
-                    chrome.tabs.sendMessage(activeTab.id, {
-                        type: 'mcp:sampling-request',
-                        payload: {
-                            requestId,
-                            request: event.request
-                        },
-                        origin: 'background'
-                    }).catch(err => {
-                        logger.error('[Background] Failed to send sampling request to content script:', err);
-                        // If we can't send, we should probably fail the request
-                        event.respond({ error: { code: -32603, message: "No active tab to handle sampling request" } });
-                        samplingRequestMap.delete(requestId);
-                    });
-                } else {
-                     logger.warn('[Background] No active tab found to handle sampling request');
-                     event.respond({ error: { code: -32603, message: "No active tab found" } });
-                     samplingRequestMap.delete(requestId);
-                }
+      // Broadcast to active tab
+      chrome.tabs.query({ active: true, currentWindow: true }, tabs => {
+        const activeTab = tabs[0];
+        if (activeTab?.id) {
+          chrome.tabs
+            .sendMessage(activeTab.id, {
+              type: 'mcp:sampling-request',
+              payload: {
+                requestId,
+                request: event.request,
+              },
+              origin: 'background',
+            })
+            .catch(err => {
+              logger.error('[Background] Failed to send sampling request to content script:', err);
+              // If we can't send, we should probably fail the request
+              event.respond({ error: { code: -32603, message: 'No active tab to handle sampling request' } });
+              samplingRequestMap.delete(requestId);
             });
-        });
-        logger.debug('[Background] Sampling listener initialized');
-    } catch (error) {
-        logger.error('[Background] Failed to initialize sampling listener:', error);
-    }
+        } else {
+          logger.warn('[Background] No active tab found to handle sampling request');
+          event.respond({ error: { code: -32603, message: 'No active tab found' } });
+          samplingRequestMap.delete(requestId);
+        }
+      });
+    });
+    logger.debug('[Background] Sampling listener initialized');
+  } catch (error) {
+    logger.error('[Background] Failed to initialize sampling listener:', error);
+  }
 }
 
 /**
@@ -690,22 +692,22 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
   // Handle Sampling Response from Content Script
   if (message.type === 'mcp:sampling-response') {
-      const { requestId, result, error } = message.payload || {};
-      logger.debug(`[Background] Received sampling response for ${requestId}`);
+    const { requestId, result, error } = message.payload || {};
+    logger.debug(`[Background] Received sampling response for ${requestId}`);
 
-      const respond = samplingRequestMap.get(requestId);
-      if (respond) {
-          if (error) {
-              respond({ error });
-          } else {
-              respond(result);
-          }
-          samplingRequestMap.delete(requestId);
+    const respond = samplingRequestMap.get(requestId);
+    if (respond) {
+      if (error) {
+        respond({ error });
       } else {
-          logger.warn(`[Background] No callback found for sampling request ${requestId}`);
+        respond(result);
       }
-      sendResponse({ success: true });
-      return false;
+      samplingRequestMap.delete(requestId);
+    } else {
+      logger.warn(`[Background] No callback found for sampling request ${requestId}`);
+    }
+    sendResponse({ success: true });
+    return false;
   }
 
   /* ------------------------------------------------------------------ */
@@ -855,7 +857,6 @@ async function handleMcpMessage(
 
           // We can ALSO broadcast the full update to ensure everyone has latest
           broadcastPrimitivesUpdateToContentScripts(primitives);
-
         } catch (error) {
           logger.error('[Background] Error getting tools:', error);
           // Return empty array instead of throwing to prevent UI crashes
@@ -1123,7 +1124,7 @@ function broadcastPrimitivesUpdateToContentScripts(primitives: any[]) {
     payload: {
       tools,
       resources,
-      prompts
+      prompts,
     },
     origin: 'background',
     timestamp: Date.now(),

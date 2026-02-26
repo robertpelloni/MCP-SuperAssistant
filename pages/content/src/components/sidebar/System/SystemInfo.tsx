@@ -1,10 +1,10 @@
-import React from 'react';
+import type React from 'react';
 import { Typography, Icon } from '../ui';
 import { Card, CardContent, CardHeader, CardTitle } from '@src/components/ui/card';
 
 const SystemInfo: React.FC = () => {
   const buildDate = new Date().toLocaleString();
-  const version = "1.5.1"; // Should match VERSION file
+  const version = '1.5.1'; // Should match VERSION file
 
   return (
     <div className="flex flex-col h-full space-y-4 p-4 overflow-y-auto">
@@ -43,7 +43,7 @@ const SystemInfo: React.FC = () => {
         </CardHeader>
         <CardContent className="p-4">
           <div className="text-xs font-mono bg-slate-50 dark:bg-slate-950 p-2 rounded border border-slate-100 dark:border-slate-800 overflow-x-auto whitespace-pre leading-relaxed text-slate-700 dark:text-slate-300">
-{`mcp-superassistant/
+            {`mcp-superassistant/
 ├── chrome-extension/       (v${version})
 │   ├── background/         (Service Worker)
 │   └── mcpclient/          (Protocol Layer)
@@ -69,7 +69,8 @@ const SystemInfo: React.FC = () => {
         <div className="flex items-start gap-2">
           <Icon name="info" size="sm" className="text-blue-500 mt-0.5" />
           <Typography variant="body" className="text-xs text-blue-700 dark:text-blue-300">
-            This dashboard reflects the current build configuration. To update submodules, please use the project build scripts.
+            This dashboard reflects the current build configuration. To update submodules, please use the project build
+            scripts.
           </Typography>
         </div>
       </div>

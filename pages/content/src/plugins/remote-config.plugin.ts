@@ -16,7 +16,7 @@ export const RemoteConfigPlugin: FeaturePlugin = {
 
   async cleanup() {
     logger.debug('Remote Config plugin cleanup');
-  }
+  },
 };
 
 pluginRegistry.register(RemoteConfigPlugin);

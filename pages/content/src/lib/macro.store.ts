@@ -50,44 +50,45 @@ export const useMacroStore = create<MacroStore>()(
     (set, get) => ({
       macros: [],
 
-      addMacro: (macroData) => set((state) => ({
-        macros: [
-          ...state.macros,
-          {
-            ...macroData,
-            id: crypto.randomUUID(),
-            createdAt: Date.now(),
-            updatedAt: Date.now(),
-          },
-        ],
-      })),
+      addMacro: macroData =>
+        set(state => ({
+          macros: [
+            ...state.macros,
+            {
+              ...macroData,
+              id: crypto.randomUUID(),
+              createdAt: Date.now(),
+              updatedAt: Date.now(),
+            },
+          ],
+        })),
 
-      updateMacro: (id, updates) => set((state) => ({
-        macros: state.macros.map((m) =>
-          m.id === id ? { ...m, ...updates, updatedAt: Date.now() } : m
-        ),
-      })),
+      updateMacro: (id, updates) =>
+        set(state => ({
+          macros: state.macros.map(m => (m.id === id ? { ...m, ...updates, updatedAt: Date.now() } : m)),
+        })),
 
-      deleteMacro: (id) => set((state) => ({
-        macros: state.macros.filter((m) => m.id !== id),
-      })),
+      deleteMacro: id =>
+        set(state => ({
+          macros: state.macros.filter(m => m.id !== id),
+        })),
 
-      getMacro: (id) => get().macros.find((m) => m.id === id),
+      getMacro: id => get().macros.find(m => m.id === id),
     }),
     {
       name: 'mcp-macros',
       storage: createJSONStorage(() => localStorage),
-      onRehydrateStorage: () => (state) => {
+      onRehydrateStorage: () => state => {
         // Initialize defaults if empty
         if (state && state.macros.length === 0) {
           state.macros = DEFAULT_MACROS.map(m => ({
             ...m,
             id: crypto.randomUUID(),
             createdAt: Date.now(),
-            updatedAt: Date.now()
+            updatedAt: Date.now(),
           }));
         }
-      }
-    }
-  )
+      },
+    },
+  ),
 );

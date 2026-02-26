@@ -59,4 +59,10 @@ export interface SamplingEvents {
   'sampling:request-received': { request: any; respond: (result: any) => void };
 }
 
-export type AllEvents = ClientEvents & RegistryEvents & ConnectionEvents & ToolEvents & ResourceEvents & PromptEvents & SamplingEvents;
+export type AllEvents = ClientEvents &
+  RegistryEvents &
+  ConnectionEvents &
+  ToolEvents &
+  ResourceEvents &
+  PromptEvents &
+  SamplingEvents;

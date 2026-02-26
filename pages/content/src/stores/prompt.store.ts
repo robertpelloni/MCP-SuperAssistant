@@ -7,12 +7,12 @@ import { mcpClient } from '../core/mcp-client';
 const logger = createLogger('usePromptStore');
 
 export interface PromptGet {
-    name: string;
-    args: any;
-    status: 'pending' | 'success' | 'error';
-    result?: any;
-    error?: string;
-    timestamp: number;
+  name: string;
+  args: any;
+  status: 'pending' | 'success' | 'error';
+  result?: any;
+  error?: string;
+  timestamp: number;
 }
 
 export interface PromptState {
@@ -41,14 +41,14 @@ export const usePromptStore = create<PromptState>()(
         logger.debug(`[PromptStore] Getting prompt: ${name}`, args);
 
         try {
-            const result = await mcpClient.getPrompt(name, args);
-            set({ isGetting: false });
-            logger.debug(`[PromptStore] Get prompt success: ${name}`);
-            return result;
+          const result = await mcpClient.getPrompt(name, args);
+          set({ isGetting: false });
+          logger.debug(`[PromptStore] Get prompt success: ${name}`);
+          return result;
         } catch (error) {
-            set({ isGetting: false });
-            logger.error(`[PromptStore] Get prompt failed: ${name}`, error);
-            throw error;
+          set({ isGetting: false });
+          logger.error(`[PromptStore] Get prompt failed: ${name}`, error);
+          throw error;
         }
       },
     }),

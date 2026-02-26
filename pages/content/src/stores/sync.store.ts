@@ -17,21 +17,21 @@ export interface SyncState {
   setConflicts: (conflicts: string[]) => void;
 }
 
-export const useSyncStore = create<SyncState>((set) => ({
+export const useSyncStore = create<SyncState>(set => ({
   isEnabled: false,
   lastSyncedAt: null,
   status: 'idle',
   error: null,
   conflicts: [],
 
-  setSyncEnabled: (enabled) => {
+  setSyncEnabled: enabled => {
     set({ isEnabled: enabled });
     // Ideally persist this to local storage too
     localStorage.setItem('mcp_sync_enabled', String(enabled));
   },
 
-  setSyncStatus: (status) => set({ status }),
-  setLastSyncedAt: (timestamp) => set({ lastSyncedAt: timestamp }),
-  setError: (error) => set({ error }),
-  setConflicts: (conflicts) => set({ conflicts }),
+  setSyncStatus: status => set({ status }),
+  setLastSyncedAt: timestamp => set({ lastSyncedAt: timestamp }),
+  setError: error => set({ error }),
+  setConflicts: conflicts => set({ conflicts }),
 }));

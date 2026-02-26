@@ -23,42 +23,43 @@ export const useContextStore = create<ContextStore>()(
     (set, get) => ({
       contexts: [],
 
-      addContext: (content: string, name?: string) => set((state) => {
-        const id = crypto.randomUUID();
-        // Generate a name if not provided (first 20 chars)
-        const finalName = name || (content.length > 30 ? content.substring(0, 30) + '...' : content);
+      addContext: (content: string, name?: string) =>
+        set(state => {
+          const id = crypto.randomUUID();
+          // Generate a name if not provided (first 20 chars)
+          const finalName = name || (content.length > 30 ? content.substring(0, 30) + '...' : content);
 
-        return {
-          contexts: [
-            {
-              id,
-              name: finalName,
-              content,
-              createdAt: Date.now(),
-              updatedAt: Date.now(),
-            },
-            ...state.contexts,
-          ],
-        };
-      }),
+          return {
+            contexts: [
+              {
+                id,
+                name: finalName,
+                content,
+                createdAt: Date.now(),
+                updatedAt: Date.now(),
+              },
+              ...state.contexts,
+            ],
+          };
+        }),
 
-      updateContext: (id, updates) => set((state) => ({
-        contexts: state.contexts.map((c) =>
-          c.id === id ? { ...c, ...updates, updatedAt: Date.now() } : c
-        ),
-      })),
+      updateContext: (id, updates) =>
+        set(state => ({
+          contexts: state.contexts.map(c => (c.id === id ? { ...c, ...updates, updatedAt: Date.now() } : c)),
+        })),
 
-      deleteContext: (id) => set((state) => ({
-        contexts: state.contexts.filter((c) => c.id !== id),
-      })),
+      deleteContext: id =>
+        set(state => ({
+          contexts: state.contexts.filter(c => c.id !== id),
+        })),
 
-      getContext: (id) => get().contexts.find((c) => c.id === id),
+      getContext: id => get().contexts.find(c => c.id === id),
 
       clearContexts: () => set({ contexts: [] }),
     }),
     {
       name: 'mcp-context',
       storage: createJSONStorage(() => localStorage),
-    }
-  )
+    },
+  ),
 );

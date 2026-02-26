@@ -251,3 +251,26 @@ Keep your most important context snippets at the top of the list.
 ### Developer Tools
 *   **Reload Extension**: A new "Reload Extension" button in the System Info panel (Settings -> Info icon) allows developers to quickly reload the extension without navigating to `chrome://extensions`.
 *   **Console Cleanup**: Significant improvements to console logging reduce noise and improve performance.
+
+## Version 1.9.0 Features: Universal Memory & Web Clipper
+
+### Web Clipper
+Integrated features from Obsidian Web Clipper and ByteRover.
+*   **Memory Tab**: A new tab in the sidebar for capturing content.
+*   **Clip Page**: Capture the current page content as clean Markdown (using Reader mode).
+*   **Clip Selection**: Capture selected text as Markdown.
+*   **Actions**:
+    *   **Copy**: Copy Markdown to clipboard.
+    *   **Download**: Save as a `.md` file.
+    *   **Save to Obsidian**: One-click save to your local Obsidian vault (requires vault name).
+
+### Vector & Long-Term Memory
+Connects to MCP Memory Servers (like OpenMemory, SuperMemory, Core).
+*   **Memory Server**: Configure any MCP tool for saving and searching memory (e.g., `save_memory`, `search_memory`).
+*   **Search**: Search your long-term memory directly from the Memory Tab.
+*   **Save**: Send clipped content to your Vector DB with metadata.
+
+### AnythingLLM Integration
+Connects directly to your AnythingLLM instance.
+*   **Configuration**: Set your AnythingLLM Base URL and API Key in the "AnythingLLM" tab.
+*   **Send Content**: Upload clipped web pages or selections directly to your AnythingLLM workspace for RAG.

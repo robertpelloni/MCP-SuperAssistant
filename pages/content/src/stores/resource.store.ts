@@ -7,11 +7,11 @@ import { mcpClient } from '../core/mcp-client';
 const logger = createLogger('useResourceStore');
 
 export interface ResourceRead {
-    uri: string;
-    status: 'pending' | 'success' | 'error';
-    result?: any;
-    error?: string;
-    timestamp: number;
+  uri: string;
+  status: 'pending' | 'success' | 'error';
+  result?: any;
+  error?: string;
+  timestamp: number;
 }
 
 export interface ResourceState {
@@ -40,14 +40,14 @@ export const useResourceStore = create<ResourceState>()(
         logger.debug(`[ResourceStore] Reading resource: ${uri}`);
 
         try {
-            const result = await mcpClient.readResource(uri);
-            set({ isReading: false });
-            logger.debug(`[ResourceStore] Read resource success: ${uri}`);
-            return result;
+          const result = await mcpClient.readResource(uri);
+          set({ isReading: false });
+          logger.debug(`[ResourceStore] Read resource success: ${uri}`);
+          return result;
         } catch (error) {
-            set({ isReading: false });
-            logger.error(`[ResourceStore] Read resource failed: ${uri}`, error);
-            throw error;
+          set({ isReading: false });
+          logger.error(`[ResourceStore] Read resource failed: ${uri}`, error);
+          throw error;
         }
       },
     }),

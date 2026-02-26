@@ -18,7 +18,7 @@ export interface AppState {
   updateSettings: (settings: Partial<AppState['globalSettings']>) => void;
 }
 
-export const useAppStore = create<AppState>((set) => ({
+export const useAppStore = create<AppState>(set => ({
   isInitialized: false,
   initializationError: null,
   globalSettings: {
@@ -31,7 +31,7 @@ export const useAppStore = create<AppState>((set) => ({
     logger.debug('AppStore initialized');
   },
 
-  setInitializationError: (error) => {
+  setInitializationError: error => {
     set({ initializationError: error });
     logger.error('AppStore initialization error:', error);
   },
@@ -41,8 +41,8 @@ export const useAppStore = create<AppState>((set) => ({
     logger.debug('AppStore state reset');
   },
 
-  updateSettings: (settings) => {
-    set((state) => ({
+  updateSettings: settings => {
+    set(state => ({
       globalSettings: { ...state.globalSettings, ...settings },
     }));
   },

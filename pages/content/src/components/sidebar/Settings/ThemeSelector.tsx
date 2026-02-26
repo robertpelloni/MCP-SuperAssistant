@@ -1,4 +1,4 @@
-import React from 'react';
+import type React from 'react';
 import { useUserPreferences } from '@src/hooks';
 import { cn } from '@src/lib/utils';
 import { Icon } from '../ui';
@@ -39,18 +39,19 @@ export const ThemeSelector: React.FC = () => {
     <div className="space-y-3">
       <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Accent Color</label>
       <div className="grid grid-cols-6 gap-2">
-        {ACCENT_COLORS.map((color) => (
+        {ACCENT_COLORS.map(color => (
           <button
             key={color.id}
             onClick={() => handleSelect(color.id)}
             className={cn(
-              "w-8 h-8 rounded-full flex items-center justify-center transition-all hover:scale-110 focus:outline-none focus:ring-2 focus:ring-offset-2 dark:focus:ring-offset-slate-900",
+              'w-8 h-8 rounded-full flex items-center justify-center transition-all hover:scale-110 focus:outline-none focus:ring-2 focus:ring-offset-2 dark:focus:ring-offset-slate-900',
               color.class,
-              currentAccent === color.id ? "ring-2 ring-offset-2 ring-slate-400 dark:ring-offset-slate-900 scale-110" : ""
+              currentAccent === color.id
+                ? 'ring-2 ring-offset-2 ring-slate-400 dark:ring-offset-slate-900 scale-110'
+                : '',
             )}
             title={color.name}
-            aria-label={`Select ${color.name} accent`}
-          >
+            aria-label={`Select ${color.name} accent`}>
             {currentAccent === color.id && <Icon name="check" size="xs" className="text-white" />}
           </button>
         ))}

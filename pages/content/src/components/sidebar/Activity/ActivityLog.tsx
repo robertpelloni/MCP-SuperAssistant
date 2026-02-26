@@ -23,10 +23,11 @@ const ActivityLog: React.FC = () => {
     // Apply search query
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase();
-      result = result.filter(log =>
-        log.title.toLowerCase().includes(query) ||
-        (log.detail && log.detail.toLowerCase().includes(query)) ||
-        (log.metadata && JSON.stringify(log.metadata).toLowerCase().includes(query))
+      result = result.filter(
+        log =>
+          log.title.toLowerCase().includes(query) ||
+          (log.detail && log.detail.toLowerCase().includes(query)) ||
+          (log.metadata && JSON.stringify(log.metadata).toLowerCase().includes(query)),
       );
     }
 
@@ -112,7 +113,7 @@ const ActivityLog: React.FC = () => {
             type="text"
             placeholder="Search logs..."
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            onChange={e => setSearchQuery(e.target.value)}
             className="w-full px-3 py-2 pl-9 text-xs border border-slate-300 dark:border-slate-600 rounded bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
           <div className="absolute left-2.5 top-2.5">
@@ -121,8 +122,7 @@ const ActivityLog: React.FC = () => {
           {searchQuery && (
             <button
               onClick={() => setSearchQuery('')}
-              className="absolute right-2.5 top-2.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
-            >
+              className="absolute right-2.5 top-2.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300">
               <Icon name="x" size="xs" />
             </button>
           )}

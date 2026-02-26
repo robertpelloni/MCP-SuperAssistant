@@ -20,7 +20,7 @@ describe('MacroRunner', () => {
       description: '',
       steps: [{ id: 's1', type: 'tool', toolName: 'test_tool', args: { foo: 'bar' } }],
       createdAt: 0,
-      updatedAt: 0
+      updatedAt: 0,
     };
 
     sendMessageMock.mockResolvedValue({ status: 'ok' });
@@ -38,10 +38,10 @@ describe('MacroRunner', () => {
       description: '',
       steps: [
         { id: 's1', type: 'set_variable', variableName: 'myVar', variableValue: 'hello' },
-        { id: 's2', type: 'tool', toolName: 'echo', args: { msg: '{{env.myVar}}' } }
+        { id: 's2', type: 'tool', toolName: 'echo', args: { msg: '{{env.myVar}}' } },
       ],
       createdAt: 0,
-      updatedAt: 0
+      updatedAt: 0,
     };
 
     sendMessageMock.mockResolvedValue({});
@@ -63,12 +63,12 @@ describe('MacroRunner', () => {
           type: 'condition',
           expression: 'env.x > 5',
           trueAction: 'continue',
-          falseAction: 'stop'
+          falseAction: 'stop',
         },
-        { id: 's3', type: 'tool', toolName: 'success_tool', args: {} }
+        { id: 's3', type: 'tool', toolName: 'success_tool', args: {} },
       ],
       createdAt: 0,
-      updatedAt: 0
+      updatedAt: 0,
     };
 
     sendMessageMock.mockResolvedValue({});

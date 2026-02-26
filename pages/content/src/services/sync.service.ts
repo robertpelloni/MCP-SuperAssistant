@@ -35,7 +35,7 @@ export class SyncService {
       const payload = {
         macros,
         contexts,
-        timestamp: Date.now()
+        timestamp: Date.now(),
       };
 
       // 2. Serialize & Compress (Mock for now, chrome.storage.sync has limits)
@@ -51,12 +51,11 @@ export class SyncService {
       }
 
       // 3. Save to Chrome Sync
-      await chrome.storage.sync.set({ 'mcp_cloud_data': payload });
+      await chrome.storage.sync.set({ mcp_cloud_data: payload });
 
       store.setLastSyncedAt(Date.now());
       store.setSyncStatus('success');
       logger.info('Cloud Sync completed successfully');
-
     } catch (error) {
       const msg = error instanceof Error ? error.message : String(error);
       logger.error('Cloud Sync failed:', msg);

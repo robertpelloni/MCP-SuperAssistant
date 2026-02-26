@@ -24,7 +24,7 @@ const PromptsList: React.FC = () => {
     return availablePrompts.filter(
       p =>
         p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (p.description && p.description.toLowerCase().includes(searchTerm.toLowerCase()))
+        (p.description && p.description.toLowerCase().includes(searchTerm.toLowerCase())),
     );
   }, [availablePrompts, searchTerm]);
 
@@ -40,17 +40,21 @@ const PromptsList: React.FC = () => {
       // Format messages for insertion
       // Result has { description, messages: [{role, content: {type: 'text', text: '...'}}] }
       const messages = result.messages || [];
-      const content = messages.map((m: any) => {
+      const content = messages
+        .map((m: any) => {
           const role = m.role.toUpperCase();
           const text = m.content.type === 'text' ? m.content.text : JSON.stringify(m.content);
           return `${role}: ${text}`;
-      }).join('\n\n');
+        })
+        .join('\n\n');
 
       const formattedContent = `Prompt: ${promptName}\n\n${content}`;
 
-      window.dispatchEvent(new CustomEvent('mcp:insert-text', {
-          detail: { text: formattedContent }
-      }));
+      window.dispatchEvent(
+        new CustomEvent('mcp:insert-text', {
+          detail: { text: formattedContent },
+        }),
+      );
 
       useToastStore.getState().addToast({
         title: 'Prompt Used',
@@ -118,71 +122,71 @@ const PromptsList: React.FC = () => {
               </div>
             ) : (
               filteredPrompts.map(prompt => {
-                  const hasArgs = prompt.arguments && prompt.arguments.length > 0;
-                  const isProcessing = activePromptName === prompt.name;
+                const hasArgs = prompt.arguments && prompt.arguments.length > 0;
+                const isProcessing = activePromptName === prompt.name;
 
-                  return (
-                    <div
-                      key={prompt.name}
-                      className="p-3 border border-slate-200 dark:border-slate-700 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
-                      <div className="flex justify-between items-start mb-2">
-                        <div>
-                            <Typography variant="subtitle" className="font-semibold text-slate-800 dark:text-slate-200">
-                            {prompt.name}
-                            </Typography>
-                        </div>
-                        {!hasArgs && (
-                            <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => handleUsePrompt(prompt.name)}
-                                disabled={isProcessing}
-                                className="ml-2"
-                            >
-                                {isProcessing ? (
-                                    <Icon name="refresh" size="xs" className="animate-spin" />
-                                ) : (
-                                    <Icon name="terminal" size="xs" />
-                                )}
-                                <span className="ml-1">Use</span>
-                            </Button>
-                        )}
-                      </div>
-                      {prompt.description && (
-                        <Typography variant="body" className="text-slate-600 dark:text-slate-300 text-sm mb-2">
-                          {prompt.description}
+                return (
+                  <div
+                    key={prompt.name}
+                    className="p-3 border border-slate-200 dark:border-slate-700 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+                    <div className="flex justify-between items-start mb-2">
+                      <div>
+                        <Typography variant="subtitle" className="font-semibold text-slate-800 dark:text-slate-200">
+                          {prompt.name}
                         </Typography>
-                      )}
-
-                      {hasArgs && (
-                          <div className="mt-2 bg-slate-50 dark:bg-slate-800 p-2 rounded border border-slate-100 dark:border-slate-700">
-                              <Typography variant="caption" className="font-semibold mb-1 block">Arguments</Typography>
-                              {prompt.arguments?.map(arg => (
-                                  <div key={arg.name} className="mb-2 last:mb-0">
-                                      <label className="block text-xs text-slate-500 dark:text-slate-400 mb-0.5">
-                                          {arg.name} {arg.required && <span className="text-red-500">*</span>}
-                                      </label>
-                                      <input
-                                          type="text"
-                                          placeholder={arg.description}
-                                          className="w-full px-2 py-1 text-xs border rounded dark:bg-slate-900 dark:border-slate-600"
-                                          value={promptArgs[arg.name] || ''}
-                                          onChange={e => handleArgChange(arg.name, e.target.value)}
-                                      />
-                                  </div>
-                              ))}
-                              <Button
-                                size="sm"
-                                className="w-full mt-2"
-                                onClick={() => handleUsePrompt(prompt.name, promptArgs)}
-                                disabled={isProcessing}
-                              >
-                                {isProcessing ? <Icon name="refresh" size="xs" className="animate-spin" /> : 'Use Prompt'}
-                              </Button>
-                          </div>
+                      </div>
+                      {!hasArgs && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleUsePrompt(prompt.name)}
+                          disabled={isProcessing}
+                          className="ml-2">
+                          {isProcessing ? (
+                            <Icon name="refresh" size="xs" className="animate-spin" />
+                          ) : (
+                            <Icon name="terminal" size="xs" />
+                          )}
+                          <span className="ml-1">Use</span>
+                        </Button>
                       )}
                     </div>
-                  );
+                    {prompt.description && (
+                      <Typography variant="body" className="text-slate-600 dark:text-slate-300 text-sm mb-2">
+                        {prompt.description}
+                      </Typography>
+                    )}
+
+                    {hasArgs && (
+                      <div className="mt-2 bg-slate-50 dark:bg-slate-800 p-2 rounded border border-slate-100 dark:border-slate-700">
+                        <Typography variant="caption" className="font-semibold mb-1 block">
+                          Arguments
+                        </Typography>
+                        {prompt.arguments?.map(arg => (
+                          <div key={arg.name} className="mb-2 last:mb-0">
+                            <label className="block text-xs text-slate-500 dark:text-slate-400 mb-0.5">
+                              {arg.name} {arg.required && <span className="text-red-500">*</span>}
+                            </label>
+                            <input
+                              type="text"
+                              placeholder={arg.description}
+                              className="w-full px-2 py-1 text-xs border rounded dark:bg-slate-900 dark:border-slate-600"
+                              value={promptArgs[arg.name] || ''}
+                              onChange={e => handleArgChange(arg.name, e.target.value)}
+                            />
+                          </div>
+                        ))}
+                        <Button
+                          size="sm"
+                          className="w-full mt-2"
+                          onClick={() => handleUsePrompt(prompt.name, promptArgs)}
+                          disabled={isProcessing}>
+                          {isProcessing ? <Icon name="refresh" size="xs" className="animate-spin" /> : 'Use Prompt'}
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                );
               })
             )}
           </div>

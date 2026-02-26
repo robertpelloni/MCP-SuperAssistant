@@ -39,7 +39,9 @@ const Dashboard: React.FC<DashboardProps> = ({ onExecute }) => {
       const date = new Date();
       date.setDate(date.getDate() - (6 - i));
       const dateStr = date.toLocaleDateString();
-      const count = logs.filter(l => new Date(l.timestamp).toLocaleDateString() === dateStr && l.type === 'tool_execution').length;
+      const count = logs.filter(
+        l => new Date(l.timestamp).toLocaleDateString() === dateStr && l.type === 'tool_execution',
+      ).length;
       return { date: dateStr, count, day: date.toLocaleDateString([], { weekday: 'short' }) };
     });
 
@@ -52,7 +54,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onExecute }) => {
       mostUsedTool: mostUsed ? mostUsed[0] : 'None',
       mostUsedCount: mostUsed ? mostUsed[1] : 0,
       dailyActivity,
-      maxActivity
+      maxActivity,
     };
   }, [logs]);
 
@@ -152,25 +154,26 @@ const Dashboard: React.FC<DashboardProps> = ({ onExecute }) => {
       {/* Activity Chart */}
       <Card className="border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm overflow-hidden">
         <CardHeader className="pb-2 border-b border-slate-100 dark:border-slate-800">
-          <CardTitle className="text-sm font-semibold text-slate-700 dark:text-slate-300">Activity (Last 7 Days)</CardTitle>
+          <CardTitle className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+            Activity (Last 7 Days)
+          </CardTitle>
         </CardHeader>
         <CardContent className="p-4">
           <div className="flex items-end justify-between h-32 gap-2">
             {stats.dailyActivity.map((day, index) => (
               <div key={index} className="flex flex-col items-center flex-1 group relative">
-                 {/* Tooltip */}
-                 <div className="absolute bottom-full mb-1 opacity-0 group-hover:opacity-100 bg-slate-800 text-white text-[10px] px-1.5 py-0.5 rounded transition-opacity whitespace-nowrap z-10">
-                    {day.count} executions
-                 </div>
+                {/* Tooltip */}
+                <div className="absolute bottom-full mb-1 opacity-0 group-hover:opacity-100 bg-slate-800 text-white text-[10px] px-1.5 py-0.5 rounded transition-opacity whitespace-nowrap z-10">
+                  {day.count} executions
+                </div>
                 <div
                   className="w-full bg-primary-100 dark:bg-primary-900/30 rounded-t hover:bg-primary-200 dark:hover:bg-primary-800/50 transition-colors relative"
-                  style={{ height: `${(day.count / stats.maxActivity) * 100}%` }}
-                >
-                   {/* Bar fill for actual count */}
-                   <div
-                      className="absolute bottom-0 left-0 right-0 bg-primary-500 dark:bg-primary-500 rounded-t opacity-80"
-                      style={{ height: day.count > 0 ? '4px' : '0' }}
-                   />
+                  style={{ height: `${(day.count / stats.maxActivity) * 100}%` }}>
+                  {/* Bar fill for actual count */}
+                  <div
+                    className="absolute bottom-0 left-0 right-0 bg-primary-500 dark:bg-primary-500 rounded-t opacity-80"
+                    style={{ height: day.count > 0 ? '4px' : '0' }}
+                  />
                 </div>
                 <span className="text-[10px] text-slate-400 mt-1">{day.day}</span>
               </div>
@@ -183,27 +186,35 @@ const Dashboard: React.FC<DashboardProps> = ({ onExecute }) => {
       <Card className="border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm">
         <CardHeader className="pb-2 border-b border-slate-100 dark:border-slate-800 flex flex-row items-center justify-between">
           <CardTitle className="text-sm font-semibold text-slate-700 dark:text-slate-300">Quick Macros</CardTitle>
-          <Button variant="ghost" size="xs" className="h-5 text-[10px]" onClick={() => {
+          <Button
+            variant="ghost"
+            size="xs"
+            className="h-5 text-[10px]"
+            onClick={() => {
               // Navigate to Macros tab - simplistic approach via custom event or global state if available
               // But since we don't have direct access to setTab here easily without context...
               // We rely on user clicking tab manually for full list.
-          }}>
-             View All
+            }}>
+            View All
           </Button>
         </CardHeader>
         <CardContent className="p-2">
           {recentMacros.length === 0 ? (
-             <div className="text-center py-4 text-xs text-slate-400">No macros available.</div>
+            <div className="text-center py-4 text-xs text-slate-400">No macros available.</div>
           ) : (
             <div className="space-y-2">
               {recentMacros.map(macro => (
-                <div key={macro.id} className="flex items-center justify-between p-2 rounded hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors border border-transparent hover:border-slate-100 dark:hover:border-slate-700">
+                <div
+                  key={macro.id}
+                  className="flex items-center justify-between p-2 rounded hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors border border-transparent hover:border-slate-100 dark:hover:border-slate-700">
                   <div className="flex items-center gap-2 overflow-hidden">
                     <div className="p-1.5 bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400 rounded-full">
                       <Icon name="zap" size="xs" />
                     </div>
                     <div className="min-w-0">
-                      <Typography variant="subtitle" className="font-medium text-xs text-slate-800 dark:text-slate-200 truncate">
+                      <Typography
+                        variant="subtitle"
+                        className="font-medium text-xs text-slate-800 dark:text-slate-200 truncate">
                         {macro.name}
                       </Typography>
                     </div>
@@ -212,13 +223,12 @@ const Dashboard: React.FC<DashboardProps> = ({ onExecute }) => {
                     size="xs"
                     variant="ghost"
                     className={cn(
-                        "h-6 w-6 p-0 rounded-full hover:bg-green-50 dark:hover:bg-green-900/20 text-slate-400 hover:text-green-600 dark:hover:text-green-400",
-                        runningMacroId === macro.id ? "animate-spin text-green-600" : ""
+                      'h-6 w-6 p-0 rounded-full hover:bg-green-50 dark:hover:bg-green-900/20 text-slate-400 hover:text-green-600 dark:hover:text-green-400',
+                      runningMacroId === macro.id ? 'animate-spin text-green-600' : '',
                     )}
                     onClick={() => handleRunMacro(macro)}
-                    disabled={!!runningMacroId}
-                  >
-                    <Icon name={runningMacroId === macro.id ? "loader" : "play"} size="xs" />
+                    disabled={!!runningMacroId}>
+                    <Icon name={runningMacroId === macro.id ? 'loader' : 'play'} size="xs" />
                   </Button>
                 </div>
               ))}

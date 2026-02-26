@@ -24,7 +24,7 @@ export class AutomationService {
     // In Settings.tsx, we see `autoExecuteDelay` being managed.
     // Assuming if delay is valid, it's ON.
     if (prefs.autoExecuteDelay === undefined || prefs.autoExecuteDelay === null) {
-        return false;
+      return false;
     }
 
     const whitelist = prefs.autoExecuteWhitelist || [];

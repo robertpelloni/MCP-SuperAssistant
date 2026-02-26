@@ -4,7 +4,7 @@ import {
   LoggingMessageNotificationSchema,
   ReadResourceResultSchema,
   GetPromptResultSchema,
-  CreateMessageRequestSchema
+  CreateMessageRequestSchema,
 } from '@modelcontextprotocol/sdk/types.js';
 
 import { EventEmitter } from './EventEmitter.js';
@@ -199,7 +199,7 @@ export class McpClient extends EventEmitter<AllEvents> {
       });
 
       // Set up sampling handler
-      this.client.setRequestHandler(CreateMessageRequestSchema, async (request) => {
+      this.client.setRequestHandler(CreateMessageRequestSchema, async request => {
         logger.debug('[McpClient] Received sampling request:', request);
 
         return new Promise((resolve, reject) => {
@@ -212,12 +212,12 @@ export class McpClient extends EventEmitter<AllEvents> {
               } else {
                 resolve(result);
               }
-            }
+            },
           });
 
           // Add a timeout just in case UI doesn't respond
           setTimeout(() => {
-             reject(new Error('Sampling request timed out waiting for user interaction'));
+            reject(new Error('Sampling request timed out waiting for user interaction'));
           }, 300000); // 5 minutes
         });
       });
@@ -438,7 +438,7 @@ export class McpClient extends EventEmitter<AllEvents> {
           method: 'resources/read',
           params: { uri },
         },
-        ReadResourceResultSchema
+        ReadResourceResultSchema,
       );
 
       this.emit('resource:read-completed', { uri, result });
@@ -462,7 +462,7 @@ export class McpClient extends EventEmitter<AllEvents> {
           method: 'prompts/get',
           params: { name, arguments: args },
         },
-        GetPromptResultSchema
+        GetPromptResultSchema,
       );
 
       this.emit('prompt:get-completed', { name, result });
