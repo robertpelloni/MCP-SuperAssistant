@@ -69,6 +69,8 @@ export interface UserPreferences {
   customInstructions: string;
   customInstructionsEnabled: boolean;
   trustedTools?: string[];
+  accentColor: string; // Theme accent color (indigo, blue, green, purple, red, orange)
+  autoExecuteWhitelist: string[]; // Tool names allowed to auto-execute
 }
 
 export interface Notification {

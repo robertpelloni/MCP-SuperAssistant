@@ -3,11 +3,12 @@ import { devtools, persist, createJSONStorage } from 'zustand/middleware';
 import { eventBus, initializeEventBus } from '../events'; // Assuming initializeEventBus might be called here or in a main initializer
 import type { GlobalSettings } from '../types/stores';
 import { createLogger } from '@extension/shared/lib/logger';
-// Placeholder for initializePluginRegistry - will be properly imported when plugin system is built
 
-const logger = createLogger('initializePluginRegistry');
+const logger = createLogger('AppStore');
 
-const initializePluginRegistry = async () => logger.debug('Plugin registry initialized (placeholder)');
+// Plugin registry is not yet implemented (see IDEAS.md).
+// When the plugin marketplace feature is built, replace this stub with the real initialization.
+const initializePluginRegistry = async () => logger.debug('[AppStore] Plugin registry not yet implemented — skipping.');
 
 export interface AppState {
   isInitialized: boolean;
@@ -62,7 +63,8 @@ export const useAppStore = create<AppState>()(
 
             set({ isInitialized: true, initializationError: null });
             logger.debug('[AppStore] Initialization complete.');
-            eventBus.emit('app:initialized', { version: '0.1.0', timestamp: Date.now() }); // Example version
+            const version = typeof chrome !== 'undefined' && chrome.runtime?.getManifest?.()?.version || '0.0.0';
+            eventBus.emit('app:initialized', { version, timestamp: Date.now() });
           } catch (error: unknown) {
             const errorMessage = error instanceof Error ? error.message : 'Unknown initialization error';
             logger.error('[AppStore] Initialization failed:', errorMessage, error);

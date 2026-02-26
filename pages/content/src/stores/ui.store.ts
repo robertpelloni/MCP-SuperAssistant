@@ -4,6 +4,7 @@ import { devtools } from 'zustand/middleware'; // persist is now imported with c
 import { eventBus } from '../events';
 import type { UserPreferences, SidebarState, Notification, GlobalSettings } from '../types/stores';
 import type { RemoteNotification, NotificationAction } from './config.store';
+import { useConfigStore } from './config.store';
 import { useAppStore, type AppState } from './app.store'; // Assuming AppState includes theme
 import { createLogger } from '@extension/shared/lib/logger';
 
@@ -151,8 +152,6 @@ export const useUIStore = create<UIState>()(
         },
 
         addRemoteNotification: (notification: RemoteNotification): string => {
-          // Import config store to check notification limits
-          const { useConfigStore } = require('./config.store');
           const configStore = useConfigStore.getState();
 
           // Check if notifications are enabled
@@ -164,7 +163,7 @@ export const useUIStore = create<UIState>()(
           // Check frequency limits
           const today = new Date().toDateString();
           const todayNotifications = get().notifications.filter(
-            n => new Date(n.timestamp).toDateString() === today && (n as any).source === 'remote',
+            n => new Date(n.timestamp).toDateString() === today && 'source' in n && n.source === 'remote',
           ).length;
 
           if (todayNotifications >= configStore.notificationConfig.maxPerDay) {
@@ -198,7 +197,7 @@ export const useUIStore = create<UIState>()(
           // Add to notifications list, sorting by priority
           set(state => ({
             notifications: [...state.notifications, newNotification].sort(
-              (a, b) => ((b as any).priority || 1) - ((a as any).priority || 1),
+              (a, b) => ('priority' in b ? (b as any).priority : 1) - ('priority' in a ? (a as any).priority : 1),
             ),
           }));
 
@@ -239,7 +238,7 @@ export const useUIStore = create<UIState>()(
           const notification = get().notifications.find(n => n.id === id);
           if (notification) {
             // Track dismissal for remote notifications
-            if ((notification as any).source === 'remote') {
+            if ('source' in notification && notification.source === 'remote') {
               eventBus.emit('notification:dismissed', {
                 notificationId: id,
                 reason: reason || 'user_dismissed',
@@ -251,7 +250,7 @@ export const useUIStore = create<UIState>()(
                 event: 'notification_dismissed',
                 parameters: {
                   notification_id: id,
-                  campaign_id: (notification as any).campaignId,
+                  campaign_id: 'campaignId' in notification ? notification.campaignId : undefined,
                   reason: reason || 'user_dismissed',
                   source: 'remote',
                 },
