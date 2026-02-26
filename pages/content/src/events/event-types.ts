@@ -128,6 +128,7 @@ export interface EventMap {
   'context:bridge-initialized': { timestamp: number };
   'context:bridge-restored': { timestamp: number };
   'context:bridge-invalidated': { timestamp: number; error: string };
+  'context:save': { content: string; source?: string; timestamp: number };
 
   // Additional error and recovery events
   'error:breadcrumb': { message: string; category: string; data?: Record<string, any>; timestamp: number };

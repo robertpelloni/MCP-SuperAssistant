@@ -7,6 +7,7 @@ export const useKeyboardShortcuts = (actions: {
   closeSidebar: () => void;
   focusSearch: () => void;
   switchTab: (direction: 'next' | 'prev') => void;
+  toggleCommandPalette?: () => void;
   testConnection?: () => void;
 }) => {
 
@@ -47,6 +48,12 @@ export const useKeyboardShortcuts = (actions: {
       if (event.ctrlKey && event.key === 'ArrowLeft') {
         event.preventDefault();
         actions.switchTab('prev');
+      }
+
+      // Toggle Command Palette: Ctrl + K
+      if (event.ctrlKey && (event.key === 'k' || event.key === 'K') && actions.toggleCommandPalette) {
+        event.preventDefault();
+        actions.toggleCommandPalette();
       }
     },
     [actions],
