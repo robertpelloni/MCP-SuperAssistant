@@ -122,8 +122,12 @@
 | [GPT.md](./GPT.md) | GPT/Codex-specific addenda |
 | [VISION.md](./VISION.md) | Project philosophy & architecture |
 | [ROADMAP.md](./ROADMAP.md) | Phased feature checklist |
+| [TODO.md](./TODO.md) | Short-term tasks & bug fixes |
 | [DEEP_ANALYSIS.md](./DEEP_ANALYSIS.md) | Technical architecture deep dive |
 | [PROJECT_STRUCTURE.md](./PROJECT_STRUCTURE.md) | Monorepo structure & dependencies |
+| [MEMORY.md](./MEMORY.md) | Codebase observations & design preferences |
+| [DEPLOY.md](./DEPLOY.md) | Build, deployment & publishing instructions |
 | [HANDOFF.md](./HANDOFF.md) | Agent handoff protocol |
 | [MANUAL.md](./MANUAL.md) | User-facing setup & usage guide |
 | [CHANGELOG.md](../CHANGELOG.md) | Version history |
+| [IDEAS.md](../IDEAS.md) | Future innovations & brainstorming |

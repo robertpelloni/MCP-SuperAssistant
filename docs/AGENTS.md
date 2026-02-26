@@ -7,7 +7,7 @@
 
 > [!IMPORTANT]
 > **All LLM agents must read this file before making any changes.**
-> Model-specific instructions are in `CLAUDE.md`, `GEMINI.md`, and `GPT.md` — they reference this document as their base.
+> Model-specific addenda are in `CLAUDE.md`, `GEMINI.md`, and `GPT.md` — they reference this document as their base.
 > **Codex 5.3**: Also read `GPT.md` — same family addenda apply.
 
 ---
@@ -19,7 +19,7 @@ MCP SuperAssistant is a Chrome/Edge/Firefox extension that bridges the **Model C
 ### Architecture
 
 ```
-AI Website ↔ Chrome Extension (Content Script) ↔ SSE/WS Proxy ↔ MCP Servers
+AI Website ↔ Chrome Extension (Content Script) ↔ SSE/WS/HTTP Proxy ↔ MCP Servers
 ```
 
 - **`chrome-extension/`**: Manifest V3 config, background service workers, popup UI.
@@ -82,6 +82,7 @@ Update `CHANGELOG.md` **before committing**. Use these categories:
 5. **Submodule hygiene**: If submodules are added, update and push them before the parent commit.
 6. **Conflict resolution**: When merging, preserve all features from both sides. Never silently drop functionality.
 7. **Push after each feature**: Commit, push, then continue to the next task.
+8. **Feature branch catch-up**: If feature branches fall behind `main`, merge `main` into them so they can be easily merged later.
 
 ---
 
@@ -96,26 +97,44 @@ Update `CHANGELOG.md` **before committing**. Use these categories:
 - **Styling**: Tailwind CSS (configured in `tailwind.config.ts`).
 - **Imports**: Use `@src/` path alias for content script imports; `@extension/` for shared packages.
 
+### Code Comments
+- Comment in depth: what it's doing, why it's there, why it's the way it is.
+- Document side effects, bugs, optimizations, and alternate methods.
+- If code is self-explanatory, leave it bare — don't comment for the sake of commenting.
+- Comment existing uncommented code if you encounter it and it needs explanation.
+
 ### Quality Checks
 Always run before committing:
 ```bash
-pnpm type-check
-pnpm lint
+pnpm build      # Must pass 12/12 tasks
+pnpm type-check # TypeScript compilation
 ```
 
 ---
 
 ## 6. Documentation Protocol
 
+### Core Documents
 - **VISION.md**: The "why" — project philosophy and ultimate goals.
-- **ROADMAP.md**: The "what" — phased feature checklist with status.
+- **ROADMAP.md**: The "what" — phased feature checklist with status (long-term structural plans).
+- **TODO.md**: The "now" — fine-grained tasks, bug fixes, and short-term items.
 - **DASHBOARD.md**: Package versions, directory structure, build info.
+- **DEEP_ANALYSIS.md**: Technical architecture deep dive.
+- **PROJECT_STRUCTURE.md**: Monorepo structure and dependencies.
 - **MANUAL.md**: User-facing documentation (setup, features, troubleshooting).
 - **CHANGELOG.md**: Version history (developer-facing).
+- **DEPLOY.md**: Build, deployment, and publishing instructions.
+- **MEMORY.md**: Ongoing observations about the codebase and design preferences.
+- **HANDOFF.md**: Agent handoff protocol — what was done, what's next.
+- **IDEAS.md**: Brainstorming dump for future innovations.
 - **AGENTS.md** (this file): Universal instructions for all LLM agents.
 - **CLAUDE.md / GEMINI.md / GPT.md**: Model-specific addenda (Codex 5.3 uses GPT.md).
 
-Update the relevant docs whenever you change features, architecture, or configuration.
+### Update Rules
+- Update the relevant docs whenever you change features, architecture, or configuration.
+- Keep `TODO.md` current — check off items as they're completed.
+- Update `MEMORY.md` when you discover new patterns or gotchas.
+- Update `HANDOFF.md` at the end of each session.
 
 ---
 
@@ -136,7 +155,7 @@ pnpm install
 # Development (watch mode)
 pnpm dev
 
-# Production build
+# Production build (Chrome/Edge)
 pnpm build
 
 # Firefox build
@@ -165,3 +184,6 @@ The following directives were provided by the project maintainer and apply to **
 6. **Submodule documentation**: All referenced projects/packages must be documented in `DASHBOARD.md`.
 7. **UI completeness**: Every implemented feature must be fully represented in the UI with labels, descriptions, and tooltips.
 8. **Handoff readiness**: Leave the project in a state where another agent can pick up seamlessly.
+9. **Code comments**: Comment existing code if you see it and it needs explanation.
+10. **Git hygiene**: Pull, commit, push regularly between features. Merge feature branches into main. Sync upstream.
+11. **Cross-model verification**: Work may be checked by Opus 4.6, Gemini 3 Pro, or Codex 5.3. Document thoroughly.

@@ -1,0 +1,35 @@
+# TODO: Short-Term Tasks & Bug Fixes
+
+> This file tracks fine-grained, actionable items. For long-term structural plans, see [ROADMAP.md](./ROADMAP.md).
+
+## Critical / High Priority
+
+- [ ] **Plugin Registry is a placeholder**: `app.store.ts:10` — `initializePluginRegistry` is a no-op stub. Either implement the plugin system or remove the placeholder to avoid confusion.
+- [ ] **Feature Flags UI**: `config.store.ts` has a full `FeatureFlag` system with rollout percentages, targeting (versions, regions, user segments), and remote notifications — but **none of it is exposed in the Settings UI**. Wire it up or document it as internal-only.
+- [ ] **Remote Notifications not surfaced**: `config.store.ts` has `RemoteNotification` with actions, targeting, and campaign support. The store logic exists but there is no UI component to display or manage these notifications.
+- [ ] **Dead reconnection code in mcpHandler.ts**: ~200 lines of commented-out reconnection logic (exponential backoff, max attempts, context validation). Either restore and integrate this with the current `connection.store.ts` retry system, or remove it to reduce confusion.
+- [ ] **Macro store not in stores/ directory**: The macro store lives in `lib/macro.store.ts` instead of `stores/macro.store.ts`. Consider relocating for consistency with the 10 other stores.
+- [ ] **Context store not in stores/ directory**: Same issue — `lib/context.store.ts` should be moved to `stores/` for discoverability.
+
+## Medium Priority
+
+- [ ] **Prompt Templates**: Create a new sidebar tab for saving and reusing common prompts (Phase 4 roadmap item). See implementation plan.
+- [ ] **Resource Browser**: Implement a tab to browse MCP server resources (Phase 4 roadmap item).
+- [ ] **MANUAL.md refresh**: The user manual (`docs/MANUAL.md`) likely needs updating to cover Macros, Context Manager, Command Palette, and new sidebar features added since v0.6.0.
+- [ ] **Accessibility audit**: Run `axe-core` against the sidebar Shadow DOM and fix violations to achieve WCAG 2.1 AA compliance.
+- [ ] **Virtual scrolling for Activity Log**: `ActivityLog` renders all items. For lists >1000 entries, implement virtual scrolling (e.g., `react-virtuoso`).
+- [ ] **Test suite setup**: Add Vitest unit tests for stores and services; Playwright for e2e sidebar interactions.
+
+## Low Priority / Nice to Have
+
+- [ ] **i18n activation**: The `packages/i18n` infrastructure exists but has no translations loaded. Generate English strings file and wire it up.
+- [ ] **Cloud Sync**: Sync macros and context across devices via Chrome Sync API or external backend.
+- [ ] **Multi-Proxy**: Connect to multiple MCP servers simultaneously.
+- [ ] **Tool Chaining Visual Builder**: Replace the linear Macro steps with a node-based graph editor.
+- [ ] **Clean up UNIVERSAL_LLM_INSTRUCTIONS.md**: This file exists at the root of `docs/` and may duplicate or conflict with `AGENTS.md`. Consolidate or remove.
+
+## Code Hygiene
+
+- [ ] **Remove 500+ commented lines from mcpHandler.ts**: The file is cluttered with old code. Archive it in a git branch and clean the main codebase.
+- [ ] **Consolidate duplicate theme sync logic**: `ui.store.ts:340-360` subscribes to `app.store` for theme sync. The comment says "Ensure this logic is robust or handled by a single source of truth for theme." — resolve this ambiguity.
+- [ ] **`helpers.ts:91` temporary visual indicator**: A "temporary visual indicator to help identify Shadow DOM boundaries" is still in production code. Remove or guard behind a dev flag.
