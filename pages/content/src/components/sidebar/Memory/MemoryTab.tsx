@@ -20,8 +20,8 @@ import {
   SettingsIcon,
 } from 'lucide-react';
 import { useToast } from '../../ui/use-toast';
-import { VectorAdapter } from '../../../services/memory/adapters/VectorAdapter';
 import { AnythingLLMAdapter } from '../../../services/memory/adapters/AnythingLLMAdapter';
+import { useMemoryActions } from '../../../hooks/useMemoryActions';
 
 export const MemoryTab: React.FC = () => {
   const {
@@ -31,17 +31,17 @@ export const MemoryTab: React.FC = () => {
     vectorSearchTool,
     setVectorConfig,
     searchResults,
-    setSearchResults,
     anythingLlmBaseUrl,
     anythingLlmApiKey,
     setAnythingLlmConfig,
   } = useMemoryStore();
 
+  const { saveContent, searchMemory, isSearching, isSaving } = useMemoryActions();
+
   const [obsidianVault, setObsidianVault] = useState('');
   const [noteTitle, setNoteTitle] = useState('');
   const [noteContent, setNoteContent] = useState('');
   const [memoryQuery, setMemoryQuery] = useState('');
-  const [isSearching, setIsSearching] = useState(false);
 
   // AnythingLLM Chat State
   const [chatInput, setChatInput] = useState('');
@@ -107,48 +107,6 @@ export const MemoryTab: React.FC = () => {
     window.open(uri, '_self'); // Use _self to trigger the protocol handler
   };
 
-  const handleSaveToMemoryServer = async () => {
-    try {
-      const adapter = new VectorAdapter({
-        saveToolName: vectorSaveTool,
-        searchToolName: vectorSearchTool,
-      });
-
-      const success = await adapter.save(noteContent, {
-        title: noteTitle,
-        url: capturedContent?.url || window.location.href,
-        siteName: capturedContent?.siteName || '',
-        timestamp: new Date().toISOString(),
-      });
-
-      if (success) {
-        toast({ title: 'Saved to Memory', description: 'Content successfully stored in Vector DB.' });
-      }
-    } catch (error) {
-      toast({ title: 'Save Failed', description: String(error), variant: 'destructive' });
-    }
-  };
-
-  const handleSaveToAnythingLLM = async () => {
-    try {
-      const adapter = new AnythingLLMAdapter({
-        baseUrl: anythingLlmBaseUrl,
-        apiKey: anythingLlmApiKey,
-        workspaceSlug: 'default', // TODO: Add workspace selector
-      });
-
-      const success = await adapter.save(noteContent, {
-        title: noteTitle,
-        url: capturedContent?.url || window.location.href,
-      });
-
-      if (success) {
-        toast({ title: 'Sent to AnythingLLM', description: 'Content uploaded successfully.' });
-      }
-    } catch (error) {
-      toast({ title: 'AnythingLLM Upload Failed', description: String(error), variant: 'destructive' });
-    }
-  };
 
   const handleAnythingLLMChat = async () => {
       if (!chatInput.trim()) return;
@@ -175,23 +133,6 @@ export const MemoryTab: React.FC = () => {
       }
   };
 
-  const handleSearchMemory = async () => {
-    if (!memoryQuery) return;
-    setIsSearching(true);
-    try {
-      const adapter = new VectorAdapter({
-        saveToolName: vectorSaveTool,
-        searchToolName: vectorSearchTool,
-      });
-      const results = await adapter.search(memoryQuery);
-      setSearchResults(results);
-    } catch (error) {
-      toast({ title: 'Search Failed', description: String(error), variant: 'destructive' });
-    } finally {
-      setIsSearching(false);
-    }
-  };
-
   return (
     <div className="flex h-full flex-col p-4 space-y-4">
       {/* Search Section */}
@@ -199,12 +140,12 @@ export const MemoryTab: React.FC = () => {
         <CardContent className="p-3 space-y-2">
           <div className="flex space-x-2">
             <Input
-              placeholder="Search memories..."
+              placeholder="Search memories (Vector DB)..."
               value={memoryQuery}
               onChange={e => setMemoryQuery(e.target.value)}
-              onKeyDown={e => e.key === 'Enter' && handleSearchMemory()}
+              onKeyDown={e => e.key === 'Enter' && searchMemory('vector', memoryQuery)}
             />
-            <Button size="icon" onClick={handleSearchMemory} disabled={isSearching}>
+            <Button size="icon" onClick={() => searchMemory('vector', memoryQuery)} disabled={isSearching}>
               <SearchIcon className={isSearching ? 'animate-spin h-4 w-4' : 'h-4 w-4'} />
             </Button>
           </div>
@@ -285,9 +226,14 @@ export const MemoryTab: React.FC = () => {
                   />
                   <p className="text-xs text-muted-foreground">Required for "Save to Obsidian" button.</p>
                 </div>
-                <Button onClick={handleSaveToObsidian} className="w-full">
-                  <ExternalLinkIcon className="mr-2 h-4 w-4" /> Save to Obsidian
-                </Button>
+                <div className="flex flex-col gap-2">
+                    <Button onClick={handleSaveToObsidian} className="w-full">
+                        <ExternalLinkIcon className="mr-2 h-4 w-4" /> Save to Obsidian
+                    </Button>
+                    <Button onClick={() => saveContent('local', noteContent, noteTitle)} className="w-full" variant="secondary">
+                        <SaveIcon className="mr-2 h-4 w-4" /> Save to Context Manager
+                    </Button>
+                </div>
               </TabsContent>
 
               <TabsContent value="server" className="space-y-4">
@@ -319,7 +265,7 @@ export const MemoryTab: React.FC = () => {
                   </div>
                 </div>
 
-                <Button onClick={handleSaveToMemoryServer} className="w-full" variant="default">
+                <Button onClick={() => saveContent('vector', noteContent, noteTitle)} className="w-full" variant="default" disabled={isSaving}>
                   <SaveIcon className="mr-2 h-4 w-4" /> Save to Memory Server
                 </Button>
               </TabsContent>
@@ -353,7 +299,7 @@ export const MemoryTab: React.FC = () => {
                     </div>
                   </div>
                 </div>
-                <Button onClick={handleSaveToAnythingLLM} className="w-full" variant="default">
+                <Button onClick={() => saveContent('anything', noteContent, noteTitle)} className="w-full" variant="default" disabled={isSaving}>
                   <ExternalLinkIcon className="mr-2 h-4 w-4" /> Send to AnythingLLM
                 </Button>
 
