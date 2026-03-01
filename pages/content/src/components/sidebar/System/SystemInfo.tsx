@@ -27,17 +27,17 @@ const SystemInfo: React.FC = () => {
     <div className="flex flex-col h-full space-y-4 p-4 overflow-y-auto">
       <div className="flex flex-col space-y-2">
         <div className="flex justify-between items-start">
-            <div>
-                <Typography variant="h4" className="font-semibold text-slate-800 dark:text-slate-100">
-                System Status
-                </Typography>
-                <Typography variant="caption" className="text-slate-500 dark:text-slate-400">
-                Build information and project structure.
-                </Typography>
-            </div>
-            <Button size="xs" variant="outline" onClick={handleReload} title="Reload Extension">
-                <Icon name="refresh-cw" size="xs" className="mr-1" /> Reload
-            </Button>
+          <div>
+            <Typography variant="h4" className="font-semibold text-slate-800 dark:text-slate-100">
+              System Status
+            </Typography>
+            <Typography variant="caption" className="text-slate-500 dark:text-slate-400">
+              Build information and project structure.
+            </Typography>
+          </div>
+          <Button size="xs" variant="outline" onClick={handleReload} title="Reload Extension">
+            <Icon name="refresh-cw" size="xs" className="mr-1" /> Reload
+          </Button>
         </div>
       </div>
 
@@ -66,14 +66,14 @@ const SystemInfo: React.FC = () => {
           <CardTitle className="text-sm font-semibold text-slate-700 dark:text-slate-300">Dependencies</CardTitle>
         </CardHeader>
         <CardContent className="p-0">
-            <div className="divide-y divide-slate-100 dark:divide-slate-800">
-                {dependencies.map((dep) => (
-                    <div key={dep.name} className="flex justify-between items-center p-3">
-                        <span className="text-xs font-medium text-slate-700 dark:text-slate-300">{dep.name}</span>
-                        <span className="text-xs font-mono text-slate-500">{dep.version}</span>
-                    </div>
-                ))}
-            </div>
+          <div className="divide-y divide-slate-100 dark:divide-slate-800">
+            {dependencies.map(dep => (
+              <div key={dep.name} className="flex justify-between items-center p-3">
+                <span className="text-xs font-medium text-slate-700 dark:text-slate-300">{dep.name}</span>
+                <span className="text-xs font-mono text-slate-500">{dep.version}</span>
+              </div>
+            ))}
+          </div>
         </CardContent>
       </Card>
 

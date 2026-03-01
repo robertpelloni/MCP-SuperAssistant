@@ -11,8 +11,8 @@ vi.mock('../../../core/mcp-client', () => {
       getInstance: () => ({
         callTool: mockCallTool,
         listTools: mockListTools,
-      })
-    }
+      }),
+    },
   };
 });
 
@@ -27,17 +27,13 @@ describe('VectorAdapter', () => {
   });
 
   it('connects successfully if tools exist', async () => {
-    mockClient.listTools.mockResolvedValue([
-      { name: 'save' }, { name: 'search' }
-    ]);
+    mockClient.listTools.mockResolvedValue([{ name: 'save' }, { name: 'search' }]);
     const connected = await adapter.connect();
     expect(connected).toBe(true);
   });
 
   it('fails to connect if tools are missing', async () => {
-    mockClient.listTools.mockResolvedValue([
-      { name: 'other_tool' }
-    ]);
+    mockClient.listTools.mockResolvedValue([{ name: 'other_tool' }]);
     const connected = await adapter.connect();
     expect(connected).toBe(false);
   });
@@ -46,15 +42,18 @@ describe('VectorAdapter', () => {
     mockClient.callTool.mockResolvedValue({ content: [] });
     await adapter.save('test content', { title: 'Test' });
 
-    expect(mockClient.callTool).toHaveBeenCalledWith('save', expect.objectContaining({
-      content: 'test content',
-      tags: expect.arrayContaining(['browser-clip'])
-    }));
+    expect(mockClient.callTool).toHaveBeenCalledWith(
+      'save',
+      expect.objectContaining({
+        content: 'test content',
+        tags: expect.arrayContaining(['browser-clip']),
+      }),
+    );
   });
 
   it('searches content correctly', async () => {
     mockClient.callTool.mockResolvedValue({
-      content: [{ type: 'text', text: 'result 1' }]
+      content: [{ type: 'text', text: 'result 1' }],
     });
 
     const results = await adapter.search('query');

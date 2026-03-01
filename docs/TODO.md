@@ -8,6 +8,7 @@ This file tracks granular tasks, bugs, and polish items that are too small for t
 - [x] **Web Clipper**: Implement Obsidian-like clipper (Readability + Markdown).
 - [x] **Vector Memory**: Implement generic MCP client for memory storage/search.
 - [x] **AnythingLLM**: Implement direct integration for uploading content.
+- [x] **Global Memory Search**: Command Palette (`Cmd+K`) integration via `?` prefix.
 
 ## Immediate Polish
 - [x] **Console Cleanup**: Remove debug `console.log` statements in production builds (verify `logger` config).

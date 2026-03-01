@@ -268,6 +268,7 @@ Integrated features from Obsidian Web Clipper and ByteRover.
 Connects to MCP Memory Servers (like OpenMemory, SuperMemory, Core).
 *   **Memory Server**: Configure any MCP tool for saving and searching memory (e.g., `save_memory`, `search_memory`).
 *   **Search**: Search your long-term memory directly from the Memory Tab.
+*   **Global Search**: Press `Cmd+K` to open the Command Palette, then type `?` to instantly search your saved memories from anywhere.
 *   **Save**: Send clipped content to your Vector DB with metadata.
 
 ### AnythingLLM Integration

@@ -76,29 +76,29 @@ export class AnythingLLMAdapter implements MemoryAdapter {
   }
 
   async chat(message: string, history: any[] = []): Promise<string> {
-      try {
-          const response = await fetch(`${this.config.baseUrl}/api/v1/workspace/${this.config.workspaceSlug}/chat`, {
-              method: 'POST',
-              headers: {
-                  'Authorization': `Bearer ${this.config.apiKey}`,
-                  'Content-Type': 'application/json'
-              },
-              body: JSON.stringify({
-                  message,
-                  mode: 'chat',
-                  history
-              })
-          });
+    try {
+      const response = await fetch(`${this.config.baseUrl}/api/v1/workspace/${this.config.workspaceSlug}/chat`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${this.config.apiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          message,
+          mode: 'chat',
+          history,
+        }),
+      });
 
-          if (!response.ok) {
-              throw new Error(`Chat failed: ${response.statusText}`);
-          }
-
-          const result = await response.json();
-          return result.textResponse || result.response || 'No response';
-      } catch (e) {
-          console.error('Failed to chat with AnythingLLM:', e);
-          throw e;
+      if (!response.ok) {
+        throw new Error(`Chat failed: ${response.statusText}`);
       }
+
+      const result = await response.json();
+      return result.textResponse || result.response || 'No response';
+    } catch (e) {
+      console.error('Failed to chat with AnythingLLM:', e);
+      throw e;
+    }
   }
 }

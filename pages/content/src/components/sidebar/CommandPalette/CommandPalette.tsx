@@ -2,6 +2,8 @@ import type React from 'react';
 import { useState, useEffect, useRef } from 'react';
 import { useSidebarState, useUserPreferences } from '@src/hooks';
 import { useProfileStore } from '@src/stores/profile.store';
+import { useMemoryActions } from '@src/hooks/useMemoryActions';
+import { useMemoryStore } from '@src/stores/memory.store';
 import { Icon, Typography } from '../ui';
 import { cn } from '@src/lib/utils';
 
@@ -30,9 +32,41 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose, onNavi
   const inputRef = useRef<HTMLInputElement>(null);
 
   const { profiles, setActiveProfile } = useProfileStore();
+  const { searchMemory, isSearching } = useMemoryActions();
+  const { searchResults } = useMemoryStore();
+
+  const [memoryMode, setMemoryMode] = useState(false);
+  const [debouncedQuery, setDebouncedQuery] = useState(query);
+
+  // Debounce for memory search
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedQuery(query);
+    }, 500);
+    return () => clearTimeout(handler);
+  }, [query]);
+
+  // Trigger memory search
+  useEffect(() => {
+    if (memoryMode && debouncedQuery.length > 2) {
+      // Defaulting to 'local' for instant feedback, could expand to 'vector' based on settings
+      searchMemory('local', debouncedQuery);
+    }
+  }, [debouncedQuery, memoryMode, searchMemory]);
 
   // Define commands
   const commands: CommandItem[] = [
+    {
+      id: 'search-memory',
+      title: 'Search Memory...',
+      icon: 'search',
+      category: 'Navigation',
+      action: () => {
+        setMemoryMode(true);
+        setQuery('');
+      },
+      shortcut: '?',
+    },
     {
       id: 'nav-tools',
       title: 'Go to Available Tools',
@@ -93,8 +127,10 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose, onNavi
     if (isOpen) {
       inputRef.current?.focus();
       setSelectedIndex(0);
+      setMemoryMode(false);
     } else {
       setQuery('');
+      setMemoryMode(false);
     }
   }, [isOpen]);
 
@@ -115,7 +151,12 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose, onNavi
           onClose();
         }
       } else if (e.key === 'Escape') {
-        onClose();
+        if (memoryMode) {
+          setMemoryMode(false);
+          setQuery('');
+        } else {
+          onClose();
+        }
       }
     };
 
@@ -133,49 +174,95 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose, onNavi
         className="w-full max-w-lg bg-white dark:bg-slate-900 rounded-xl shadow-2xl overflow-hidden border border-slate-200 dark:border-slate-700 animate-in zoom-in-95 duration-100"
         onClick={e => e.stopPropagation()}>
         <div className="flex items-center px-4 py-3 border-b border-slate-100 dark:border-slate-800">
-          <Icon name="search" size="sm" className="text-slate-400 mr-3" />
+          <Icon
+            name={memoryMode ? 'database' : 'search'}
+            size="sm"
+            className={cn('mr-3', memoryMode ? 'text-purple-500' : 'text-slate-400')}
+          />
+          {memoryMode && (
+            <span className="bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 text-xs px-2 py-0.5 rounded mr-2 font-medium">
+              Memory
+            </span>
+          )}
           <input
             ref={inputRef}
             className="flex-1 bg-transparent border-none outline-none text-sm text-slate-800 dark:text-slate-200 placeholder:text-slate-400"
-            placeholder="Type a command or search..."
+            placeholder={
+              memoryMode ? 'Search your notes and clips...' : 'Type a command or search... (type ? for memory)'
+            }
             value={query}
             onChange={e => {
-              setQuery(e.target.value);
+              const val = e.target.value;
+              if (val === '?' && !memoryMode) {
+                setMemoryMode(true);
+                setQuery('');
+              } else {
+                setQuery(val);
+              }
               setSelectedIndex(0);
             }}
           />
+          {isSearching && <Icon name="loader" size="xs" className="animate-spin text-slate-400 mr-2" />}
           <div className="text-[10px] bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded text-slate-500 font-mono">
             ESC
           </div>
         </div>
 
-        <div className="max-h-[300px] overflow-y-auto py-2">
-          {filteredCommands.length === 0 ? (
-            <div className="px-4 py-8 text-center text-slate-500 text-sm">No commands found.</div>
+        <div className="max-h-[400px] overflow-y-auto py-2">
+          {!memoryMode ? (
+            filteredCommands.length === 0 ? (
+              <div className="px-4 py-8 text-center text-slate-500 text-sm">No commands found.</div>
+            ) : (
+              filteredCommands.map((cmd, index) => (
+                <div
+                  key={cmd.id}
+                  className={cn(
+                    'px-4 py-2 flex items-center cursor-pointer text-sm',
+                    index === selectedIndex
+                      ? 'bg-primary-50 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 border-l-2 border-primary-500'
+                      : 'text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 border-l-2 border-transparent',
+                  )}
+                  onClick={() => {
+                    cmd.action();
+                    onClose();
+                  }}
+                  onMouseEnter={() => setSelectedIndex(index)}>
+                  <Icon
+                    name={cmd.icon}
+                    size="sm"
+                    className={cn('mr-3', index === selectedIndex ? 'text-primary-500' : 'text-slate-400')}
+                  />
+                  <span className="flex-1">{cmd.title}</span>
+                  {cmd.shortcut && <span className="text-xs text-slate-400 font-mono">{cmd.shortcut}</span>}
+                </div>
+              ))
+            )
+          ) : // Memory Search Results View
+          query.length < 3 ? (
+            <div className="px-4 py-8 text-center text-slate-500 text-sm">
+              Type at least 3 characters to search memory.
+            </div>
+          ) : searchResults.length === 0 && !isSearching ? (
+            <div className="px-4 py-8 text-center text-slate-500 text-sm">No memories found.</div>
           ) : (
-            filteredCommands.map((cmd, index) => (
-              <div
-                key={cmd.id}
-                className={cn(
-                  'px-4 py-2 flex items-center cursor-pointer text-sm',
-                  index === selectedIndex
-                    ? 'bg-primary-50 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 border-l-2 border-primary-500'
-                    : 'text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 border-l-2 border-transparent',
-                )}
-                onClick={() => {
-                  cmd.action();
-                  onClose();
-                }}
-                onMouseEnter={() => setSelectedIndex(index)}>
-                <Icon
-                  name={cmd.icon}
-                  size="sm"
-                  className={cn('mr-3', index === selectedIndex ? 'text-primary-500' : 'text-slate-400')}
-                />
-                <span className="flex-1">{cmd.title}</span>
-                {cmd.shortcut && <span className="text-xs text-slate-400 font-mono">{cmd.shortcut}</span>}
-              </div>
-            ))
+            <div className="px-2">
+              {searchResults.map((res, idx) => (
+                <div
+                  key={idx}
+                  className="mb-2 p-3 bg-slate-50 dark:bg-slate-800/50 rounded border border-slate-100 dark:border-slate-700 hover:border-purple-300 dark:hover:border-purple-700 transition-colors cursor-pointer"
+                  onClick={() => {
+                    // In a real app, clicking might insert it or navigate to it.
+                    // For now, we'll navigate to the memory tab.
+                    onNavigate('memory');
+                    onClose();
+                  }}>
+                  <div className="font-semibold text-sm mb-1 text-slate-800 dark:text-slate-200">
+                    {res.metadata?.title || 'Untitled Memory'}
+                  </div>
+                  <div className="text-xs text-slate-500 line-clamp-2">{res.content}</div>
+                </div>
+              ))}
+            </div>
           )}
         </div>
 

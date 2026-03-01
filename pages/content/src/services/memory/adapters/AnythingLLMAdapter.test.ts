@@ -24,16 +24,19 @@ describe('AnythingLLMAdapter', () => {
 
     await adapter.save('content', { title: 'Test' });
 
-    expect(fetch).toHaveBeenCalledWith('http://test/api/v1/document/raw-text', expect.objectContaining({
+    expect(fetch).toHaveBeenCalledWith(
+      'http://test/api/v1/document/raw-text',
+      expect.objectContaining({
         method: 'POST',
-        body: expect.stringContaining('content')
-    }));
+        body: expect.stringContaining('content'),
+      }),
+    );
   });
 
   it('chats successfully', async () => {
     (fetch as any).mockResolvedValue({
-        ok: true,
-        json: async () => ({ textResponse: 'Hello' })
+      ok: true,
+      json: async () => ({ textResponse: 'Hello' }),
     });
 
     const response = await adapter.chat('Hi');

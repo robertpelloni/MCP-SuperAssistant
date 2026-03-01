@@ -45,7 +45,7 @@ export const MemoryTab: React.FC = () => {
 
   // AnythingLLM Chat State
   const [chatInput, setChatInput] = useState('');
-  const [chatHistory, setChatHistory] = useState<{role: 'user' | 'assistant', content: string}[]>([]);
+  const [chatHistory, setChatHistory] = useState<{ role: 'user' | 'assistant'; content: string }[]>([]);
   const [isChatting, setIsChatting] = useState(false);
   const { toast } = useToast();
 
@@ -107,30 +107,29 @@ export const MemoryTab: React.FC = () => {
     window.open(uri, '_self'); // Use _self to trigger the protocol handler
   };
 
-
   const handleAnythingLLMChat = async () => {
-      if (!chatInput.trim()) return;
+    if (!chatInput.trim()) return;
 
-      const userMsg = chatInput;
-      setChatHistory(prev => [...prev, { role: 'user', content: userMsg }]);
-      setChatInput('');
-      setIsChatting(true);
+    const userMsg = chatInput;
+    setChatHistory(prev => [...prev, { role: 'user', content: userMsg }]);
+    setChatInput('');
+    setIsChatting(true);
 
-      try {
-          const adapter = new AnythingLLMAdapter({
-              baseUrl: anythingLlmBaseUrl,
-              apiKey: anythingLlmApiKey,
-              workspaceSlug: 'default'
-          });
+    try {
+      const adapter = new AnythingLLMAdapter({
+        baseUrl: anythingLlmBaseUrl,
+        apiKey: anythingLlmApiKey,
+        workspaceSlug: 'default',
+      });
 
-          const response = await adapter.chat(userMsg);
-          setChatHistory(prev => [...prev, { role: 'assistant', content: response }]);
-      } catch (error) {
-          toast({ title: 'Chat Failed', description: String(error), variant: 'destructive' });
-          setChatHistory(prev => [...prev, { role: 'assistant', content: 'Error: Failed to get response.' }]);
-      } finally {
-          setIsChatting(false);
-      }
+      const response = await adapter.chat(userMsg);
+      setChatHistory(prev => [...prev, { role: 'assistant', content: response }]);
+    } catch (error) {
+      toast({ title: 'Chat Failed', description: String(error), variant: 'destructive' });
+      setChatHistory(prev => [...prev, { role: 'assistant', content: 'Error: Failed to get response.' }]);
+    } finally {
+      setIsChatting(false);
+    }
   };
 
   return (
@@ -227,12 +226,15 @@ export const MemoryTab: React.FC = () => {
                   <p className="text-xs text-muted-foreground">Required for "Save to Obsidian" button.</p>
                 </div>
                 <div className="flex flex-col gap-2">
-                    <Button onClick={handleSaveToObsidian} className="w-full">
-                        <ExternalLinkIcon className="mr-2 h-4 w-4" /> Save to Obsidian
-                    </Button>
-                    <Button onClick={() => saveContent('local', noteContent, noteTitle)} className="w-full" variant="secondary">
-                        <SaveIcon className="mr-2 h-4 w-4" /> Save to Context Manager
-                    </Button>
+                  <Button onClick={handleSaveToObsidian} className="w-full">
+                    <ExternalLinkIcon className="mr-2 h-4 w-4" /> Save to Obsidian
+                  </Button>
+                  <Button
+                    onClick={() => saveContent('local', noteContent, noteTitle)}
+                    className="w-full"
+                    variant="secondary">
+                    <SaveIcon className="mr-2 h-4 w-4" /> Save to Context Manager
+                  </Button>
                 </div>
               </TabsContent>
 
@@ -265,7 +267,11 @@ export const MemoryTab: React.FC = () => {
                   </div>
                 </div>
 
-                <Button onClick={() => saveContent('vector', noteContent, noteTitle)} className="w-full" variant="default" disabled={isSaving}>
+                <Button
+                  onClick={() => saveContent('vector', noteContent, noteTitle)}
+                  className="w-full"
+                  variant="default"
+                  disabled={isSaving}>
                   <SaveIcon className="mr-2 h-4 w-4" /> Save to Memory Server
                 </Button>
               </TabsContent>
@@ -299,38 +305,43 @@ export const MemoryTab: React.FC = () => {
                     </div>
                   </div>
                 </div>
-                <Button onClick={() => saveContent('anything', noteContent, noteTitle)} className="w-full" variant="default" disabled={isSaving}>
+                <Button
+                  onClick={() => saveContent('anything', noteContent, noteTitle)}
+                  className="w-full"
+                  variant="default"
+                  disabled={isSaving}>
                   <ExternalLinkIcon className="mr-2 h-4 w-4" /> Send to AnythingLLM
                 </Button>
 
-                 <div className="border-t pt-4 mt-4">
-                    <Label className="mb-2 block">Chat with Workspace</Label>
-                    <div className="h-48 border rounded p-2 overflow-y-auto mb-2 bg-slate-50 dark:bg-slate-900 text-xs">
-                        {chatHistory.length === 0 ? (
-                            <div className="text-slate-400 text-center mt-10">Ask a question about your documents...</div>
-                        ) : (
-                            chatHistory.map((msg, i) => (
-                                <div key={i} className={`mb-2 ${msg.role === 'user' ? 'text-right' : 'text-left'}`}>
-                                    <span className={`inline-block p-2 rounded-lg ${msg.role === 'user' ? 'bg-primary-100 text-primary-900' : 'bg-slate-200 dark:bg-slate-700'}`}>
-                                        {msg.content}
-                                    </span>
-                                </div>
-                            ))
-                        )}
-                    </div>
-                    <div className="flex space-x-2">
-                        <Input
-                            value={chatInput}
-                            onChange={(e) => setChatInput(e.target.value)}
-                            placeholder="Ask AnythingLLM..."
-                            className="h-8 text-xs"
-                            onKeyDown={(e) => e.key === 'Enter' && handleAnythingLLMChat()}
-                        />
-                        <Button size="sm" onClick={handleAnythingLLMChat} disabled={isChatting}>
-                            {isChatting ? <span className="animate-spin">...</span> : "Send"}
-                        </Button>
-                    </div>
-                 </div>
+                <div className="border-t pt-4 mt-4">
+                  <Label className="mb-2 block">Chat with Workspace</Label>
+                  <div className="h-48 border rounded p-2 overflow-y-auto mb-2 bg-slate-50 dark:bg-slate-900 text-xs">
+                    {chatHistory.length === 0 ? (
+                      <div className="text-slate-400 text-center mt-10">Ask a question about your documents...</div>
+                    ) : (
+                      chatHistory.map((msg, i) => (
+                        <div key={i} className={`mb-2 ${msg.role === 'user' ? 'text-right' : 'text-left'}`}>
+                          <span
+                            className={`inline-block p-2 rounded-lg ${msg.role === 'user' ? 'bg-primary-100 text-primary-900' : 'bg-slate-200 dark:bg-slate-700'}`}>
+                            {msg.content}
+                          </span>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                  <div className="flex space-x-2">
+                    <Input
+                      value={chatInput}
+                      onChange={e => setChatInput(e.target.value)}
+                      placeholder="Ask AnythingLLM..."
+                      className="h-8 text-xs"
+                      onKeyDown={e => e.key === 'Enter' && handleAnythingLLMChat()}
+                    />
+                    <Button size="sm" onClick={handleAnythingLLMChat} disabled={isChatting}>
+                      {isChatting ? <span className="animate-spin">...</span> : 'Send'}
+                    </Button>
+                  </div>
+                </div>
               </TabsContent>
             </Tabs>
 
