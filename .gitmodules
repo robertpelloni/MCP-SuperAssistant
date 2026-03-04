@@ -1,0 +1,3 @@
+[submodule "packages/byterover-cipher"]
+	path = packages/byterover-cipher
+	url = https://github.com/campfirein/cipher.git

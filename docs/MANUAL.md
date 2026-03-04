@@ -263,6 +263,7 @@ Integrated features from Obsidian Web Clipper and ByteRover.
     *   **Copy**: Copy Markdown to clipboard.
     *   **Download**: Save as a `.md` file.
     *   **Save to Obsidian**: One-click save to your local Obsidian vault (requires vault name).
+    *   **Omni-Memory Save**: In the "Raw" tab, select multiple destinations (Local, Vector DB, AnythingLLM) and push your clip to all of them concurrently with one click. This mixes and matches backend capabilities (inspired by ByteRover).
 
 ### Vector & Long-Term Memory
 Connects to MCP Memory Servers (like OpenMemory, SuperMemory, Core).

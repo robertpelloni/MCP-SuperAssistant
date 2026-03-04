@@ -34,20 +34,63 @@ export const useMemoryActions = () => {
   );
 
   const saveContent = useCallback(
-    async (type: 'vector' | 'anything' | 'local', content: string, title: string) => {
+    async (type: 'vector' | 'anything' | 'local' | 'omni', content: string, title: string) => {
       if (!content) return;
       setIsSaving(true);
       try {
-        const adapter = getAdapter(type);
-        const success = await adapter.save(content, {
+        const metadata = {
           title,
           url: capturedContent?.url || window.location.href,
           siteName: capturedContent?.siteName || '',
           timestamp: new Date().toISOString(),
-        });
+        };
 
-        if (success) {
-          toast({ title: 'Saved', description: `Content saved to ${adapter.name}.`, variant: 'default' });
+        if (type === 'omni') {
+          // Omni-save: Mix and match based on config
+          const dests = useMemoryStore.getState().omniHarvestDestinations;
+          const promises = [];
+          const adaptersUsed = [];
+
+          if (dests.local) {
+            const ad = getAdapter('local');
+            promises.push(ad.save(content, metadata));
+            adaptersUsed.push(ad.name);
+          }
+          if (dests.vector) {
+            const ad = getAdapter('vector');
+            promises.push(
+              ad.save(content, metadata).catch(e => {
+                console.error('Vector save failed in Omni', e);
+                return false;
+              }),
+            );
+            adaptersUsed.push(ad.name);
+          }
+          if (dests.anything) {
+            const ad = getAdapter('anything');
+            promises.push(
+              ad.save(content, metadata).catch(e => {
+                console.error('AnythingLLM save failed in Omni', e);
+                return false;
+              }),
+            );
+            adaptersUsed.push(ad.name);
+          }
+
+          await Promise.all(promises);
+          toast({
+            title: 'Omni-Save Complete',
+            description: `Content pushed to: ${adaptersUsed.join(', ')}`,
+            variant: 'default',
+          });
+        } else {
+          // Single adapter save
+          const adapter = getAdapter(type);
+          const success = await adapter.save(content, metadata);
+
+          if (success) {
+            toast({ title: 'Saved', description: `Content saved to ${adapter.name}.`, variant: 'default' });
+          }
         }
       } catch (error) {
         toast({ title: 'Save Failed', description: String(error), variant: 'destructive' });

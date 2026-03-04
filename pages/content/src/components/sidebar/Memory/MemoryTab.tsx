@@ -36,6 +36,8 @@ export const MemoryTab: React.FC = () => {
     setAnythingLlmConfig,
   } = useMemoryStore();
 
+  const { omniHarvestingEnabled, setOmniHarvesting, omniHarvestDestinations, setOmniDestinations } = useMemoryStore();
+
   const { saveContent, searchMemory, isSearching, isSaving } = useMemoryActions();
 
   const [obsidianVault, setObsidianVault] = useState('');
@@ -206,12 +208,59 @@ export const MemoryTab: React.FC = () => {
                 </div>
               </TabsContent>
 
-              <TabsContent value="raw" className="flex-1">
+              <TabsContent value="raw" className="flex-1 flex flex-col space-y-2">
                 <Textarea
-                  className="h-full resize-none font-mono text-xs"
+                  className="flex-1 resize-none font-mono text-xs"
                   value={noteContent}
                   onChange={e => setNoteContent(e.target.value)}
                 />
+
+                {/* Omni-Memory Quick Save */}
+                <div className="bg-primary-50 dark:bg-primary-900/10 p-2 rounded border border-primary-100 dark:border-primary-800">
+                  <div className="flex items-center justify-between mb-2">
+                    <Label className="text-xs font-semibold text-primary-700 dark:text-primary-300">
+                      Omni-Memory Save
+                    </Label>
+                  </div>
+                  <div className="flex gap-2 text-xs mb-2">
+                    <label className="flex items-center gap-1 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={omniHarvestDestinations.local}
+                        onChange={e => setOmniDestinations({ local: e.target.checked })}
+                      />
+                      Local Context
+                    </label>
+                    <label className="flex items-center gap-1 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={omniHarvestDestinations.vector}
+                        onChange={e => setOmniDestinations({ vector: e.target.checked })}
+                      />
+                      Vector DB
+                    </label>
+                    <label className="flex items-center gap-1 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={omniHarvestDestinations.anything}
+                        onChange={e => setOmniDestinations({ anything: e.target.checked })}
+                      />
+                      AnythingLLM
+                    </label>
+                  </div>
+                  <Button
+                    size="sm"
+                    className="w-full bg-primary-600 hover:bg-primary-700 text-white"
+                    onClick={() => saveContent('omni', noteContent, noteTitle)}
+                    disabled={
+                      isSaving ||
+                      (!omniHarvestDestinations.local &&
+                        !omniHarvestDestinations.vector &&
+                        !omniHarvestDestinations.anything)
+                    }>
+                    <Icon name="database" size="xs" className="mr-2" /> Push to All Selected
+                  </Button>
+                </div>
               </TabsContent>
 
               <TabsContent value="obsidian" className="space-y-4">
