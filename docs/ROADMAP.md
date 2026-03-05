@@ -42,10 +42,10 @@
 ## Phase 4: Advanced (Planned)
 - [ ] Test suite: Unit tests (Vitest), e2e tests (Playwright)
 - [ ] Tool chaining: Compose multi-step tool pipelines visually
-- [ ] Resource browser: Browse MCP server resources
+- [x] Resource browser: Browse MCP server resources
 - [x] Prompt templates: Save and reuse common prompts
 - [ ] Plugin marketplace: Community adapters and extensions
-- [ ] Notification center: Aggregated error/success history
+- [x] Notification center: Aggregated error/success history
 - [ ] Accessibility audit: WCAG 2.1 AA compliance
 - [ ] i18n: Multi-language support (infrastructure exists in `packages/i18n`)
 - [ ] Cloud Sync: Sync macros and context across devices
