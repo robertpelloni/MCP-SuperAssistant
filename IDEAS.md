@@ -22,7 +22,13 @@ MCP SuperAssistant is a Chrome extension that brings MCP tools to any web-based 
 *   **The "Super-Tool" Marketplace:** Create a **Built-in Registry** for community-contributed MCP servers. Users could browse, preview, and "One-Click Install" new tools directly from the extension's sidebar, with the extension handling the `config.json` updates automatically.
 *   **Embedded "Bobcoin" Tool Staking:** Integrate **Bobcoin**. Tool developers could earn Bobcoin when their tools are executed, and users earn Bobcoin for "Rating & Reviewing" tools, creating a self-sustaining economy for the Model Context Protocol.
 
-## 6. UI/UX Polish & Automation Refactoring
+## 6. Code Architecture & Reliability (Audit Insights)
+*   **AST-based Tool Parsing:** Migrate from regex-based block parsing in the AI adapters to full AST (Abstract Syntax Tree) parsing of the chat DOM mutations. This would make tool extraction completely resilient to UI changes by ChatGPT/Claude.
+*   **Zustand Slice Pattern Migration:** Currently there are 10 separate Zustand stores. Refactoring them into a unified "Slice" pattern would eliminate cross-store synchronization issues (like the dual sync logic between `ui.store` and `app.store` for themes).
+*   **Integrated JSON Schema Validator:** When tools are fetched from the MCP server, run them through an embedded Zod/Ajv schema validator to instantly catch malformed schema definitions before they break the AI generation loop.
+*   **Real-time MCP Health Telemetry:** Use Background SSEs to stream real-time memory/CPU usage of the active MCP proxy servers directly into the "Server Status" sidebar tab.
+
+## 7. UI/UX Polish & Automation Refactoring
 *   **Visual Node-based Tool Chaining (Macro Builder V2):** Instead of a linear list of steps for Macros, build a visual node graph (like React Flow or n8n) where users can drag and drop tools, link their outputs to the inputs of other tools, and visually map out complex automation pipelines.
 *   **Command Palette (Cmd+K) Everywhere:** We have a command palette, but it should be globally accessible even when the sidebar is closed, appearing as a floating spotlight search in the center of the web page to execute tools or macros instantly.
 *   **Floating Result Widgets:** When a tool executes (e.g., `fetch_weather`), instead of just dumping JSON text into the chat, the extension renders a beautiful, interactive floating React component (a weather widget) directly inside the ChatGPT/Claude UI DOM.

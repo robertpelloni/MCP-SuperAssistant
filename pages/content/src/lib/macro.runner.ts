@@ -1,4 +1,4 @@
-import { Macro, MacroStep } from './macro.store';
+import { Macro, MacroStep } from '../stores/macro.store';
 import { logMessage } from '@src/utils/helpers';
 
 export class MacroRunner {
@@ -58,21 +58,21 @@ export class MacroRunner {
           if (name) {
             // Check if valueExpr is a simple string or an expression
             // For now, simple evaluation of "lastResult.prop" or static string
-            let value = valueExpr;
+            let value: any = valueExpr;
 
             // Basic resolution of variables in the value expression
             if (valueExpr === 'lastResult') {
-                value = lastResult;
+              value = lastResult;
             } else if (valueExpr.startsWith('lastResult.')) {
-                const path = valueExpr.replace('lastResult.', '');
-                value = path.split('.').reduce((o, k) => (o || {})[k], lastResult);
+              const path = valueExpr.replace('lastResult.', '');
+              value = path.split('.').reduce((o, k) => (o || {})[k], lastResult);
             } else if (valueExpr.startsWith('env.')) {
-                const path = valueExpr.replace('env.', '');
-                value = path.split('.').reduce((o, k) => (o || {})[k], env);
+              const path = valueExpr.replace('env.', '');
+              value = path.split('.').reduce((o, k) => (o || {})[k], env);
             } else if (valueExpr === 'allResults') {
-                value = results;
+              value = results;
             } else if (!isNaN(Number(valueExpr))) {
-                value = Number(valueExpr);
+              value = Number(valueExpr);
             }
             // else treat as string literal
 
@@ -111,7 +111,7 @@ export class MacroRunner {
             currentStepIndex++;
           }
         } else {
-            currentStepIndex++;
+          currentStepIndex++;
         }
       } catch (error) {
         this.onLog(`Step failed: ${error}`, 'error');
@@ -133,26 +133,26 @@ export class MacroRunner {
           const val = obj[key];
           // Check for variable substitution: {{variableName}}
           if (val.match(/^\{\{[\w\d\.]+\}\}$/)) {
-             // Exact match substitution (preserves type)
-             const varName = val.slice(2, -2);
-             if (varName === 'lastResult') obj[key] = lastResult;
-             else if (env[varName] !== undefined) obj[key] = env[varName];
-             else if (varName.startsWith('lastResult.')) {
-                 const path = varName.replace('lastResult.', '');
-                 obj[key] = path.split('.').reduce((o: any, k: string) => (o || {})[k], lastResult);
-             }
+            // Exact match substitution (preserves type)
+            const varName = val.slice(2, -2);
+            if (varName === 'lastResult') obj[key] = lastResult;
+            else if (env[varName] !== undefined) obj[key] = env[varName];
+            else if (varName.startsWith('lastResult.')) {
+              const path = varName.replace('lastResult.', '');
+              obj[key] = path.split('.').reduce((o: any, k: string) => (o || {})[k], lastResult);
+            }
           } else if (val.includes('{{')) {
-             // String interpolation
-             obj[key] = val.replace(/\{\{([\w\d\.]+)\}\}/g, (_: string, varName: string) => {
-                 if (varName === 'lastResult') return JSON.stringify(lastResult);
-                 if (env[varName] !== undefined) return String(env[varName]);
-                 if (varName.startsWith('lastResult.')) {
-                     const path = varName.replace('lastResult.', '');
-                     const res = path.split('.').reduce((o: any, k: string) => (o || {})[k], lastResult);
-                     return res !== undefined ? String(res) : '';
-                 }
-                 return '';
-             });
+            // String interpolation
+            obj[key] = val.replace(/\{\{([\w\d\.]+)\}\}/g, (_: string, varName: string) => {
+              if (varName === 'lastResult') return JSON.stringify(lastResult);
+              if (env[varName] !== undefined) return String(env[varName]);
+              if (varName.startsWith('lastResult.')) {
+                const path = varName.replace('lastResult.', '');
+                const res = path.split('.').reduce((o: any, k: string) => (o || {})[k], lastResult);
+                return res !== undefined ? String(res) : '';
+              }
+              return '';
+            });
           }
         } else if (typeof obj[key] === 'object' && obj[key] !== null) {
           walk(obj[key]);

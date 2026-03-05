@@ -16,10 +16,12 @@ import SystemInfo from './System/SystemInfo';
 import CommandPalette from './CommandPalette/CommandPalette';
 import Onboarding from './Onboarding/Onboarding';
 import PromptTemplates from './PromptTemplates/PromptTemplates';
+import { ResourceBrowser } from './ResourceBrowser';
 import { useMcpCommunication } from '@src/hooks/useMcpCommunication';
 import { logMessage } from '@src/utils/helpers';
 import { eventBus } from '@src/events/event-bus';
 import { Typography, Toggle, ToggleWithoutLabel, ResizeHandle, Icon, Button } from './ui';
+import { NotificationCenter } from './ui/NotificationCenter';
 import { ToastContainer } from './ui/Toast';
 import { useToastStore } from '@src/stores/toast.store';
 import { useActivityStore } from '@src/stores/activity.store';
@@ -396,9 +398,18 @@ const Sidebar: React.FC<SidebarProps> = ({ initialPreferences }) => {
     );
   }, [sidebarVisible, isMinimized, isPushMode, sidebarWidth]);
 
-  // Local UI state that doesn't need to be in the store
+  // Local UI state that doesn't need to be  // Active Tab State
   const [activeTab, setActiveTab] = useState<
-    'availableTools' | 'instructions' | 'activity' | 'dashboard' | 'macros' | 'prompts' | 'settings' | 'help' | 'system'
+    | 'availableTools'
+    | 'instructions'
+    | 'activity'
+    | 'resources'
+    | 'dashboard'
+    | 'macros'
+    | 'prompts'
+    | 'settings'
+    | 'system'
+    | 'help'
   >('availableTools');
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -878,6 +889,7 @@ const Sidebar: React.FC<SidebarProps> = ({ initialPreferences }) => {
               </>
             </div>
             <div className="flex items-center space-x-2 pr-1">
+              <NotificationCenter />
               {/* Theme Toggle Button */}
               <Button
                 variant="ghost"
@@ -1065,6 +1077,16 @@ const Sidebar: React.FC<SidebarProps> = ({ initialPreferences }) => {
                   <button
                     className={cn(
                       'py-2 px-4 font-medium text-sm transition-all duration-200',
+                      activeTab === 'resources'
+                        ? 'border-b-2 border-primary-600 text-primary-600 dark:border-primary-400 dark:text-primary-400'
+                        : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-t-lg',
+                    )}
+                    onClick={() => setActiveTab('resources')}>
+                    Resources
+                  </button>
+                  <button
+                    className={cn(
+                      'py-2 px-4 font-medium text-sm transition-all duration-200',
                       activeTab === 'dashboard'
                         ? 'border-b-2 border-primary-600 text-primary-600 dark:border-primary-400 dark:text-primary-400'
                         : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-t-lg',
@@ -1168,13 +1190,22 @@ const Sidebar: React.FC<SidebarProps> = ({ initialPreferences }) => {
                 <ActivityLog />
               </div>
 
+              {/* Resources */}
+              <div
+                className={cn(
+                  'h-full overflow-y-auto scrollbar-thin scrollbar-thumb-slate-300 dark:scrollbar-thumb-slate-600 scrollbar-track-transparent',
+                  { hidden: activeTab !== 'resources' },
+                )}>
+                <ResourceBrowser />
+              </div>
+
               {/* Dashboard */}
               <div
                 className={cn(
                   'h-full overflow-y-auto scrollbar-thin scrollbar-thumb-slate-300 dark:scrollbar-thumb-slate-600 scrollbar-track-transparent',
                   { hidden: activeTab !== 'dashboard' },
                 )}>
-                <Dashboard onExecute={sendMessage} />
+                <Dashboard />
               </div>
 
               {/* Macros */}

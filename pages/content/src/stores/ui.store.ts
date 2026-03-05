@@ -29,6 +29,8 @@ export interface UIState {
   addRemoteNotification: (notification: RemoteNotification) => string; // Enhanced remote notification support
   removeNotification: (id: string) => void;
   dismissNotification: (id: string, reason?: string) => void;
+  markAsRead: (id: string) => void;
+  markAllAsRead: () => void;
   clearNotifications: () => void;
   openModal: (modalName: string) => void;
   closeModal: () => void;
@@ -74,6 +76,8 @@ const initialState: Omit<
   | 'addRemoteNotification'
   | 'removeNotification'
   | 'dismissNotification'
+  | 'markAsRead'
+  | 'markAllAsRead'
   | 'clearNotifications'
   | 'openModal'
   | 'closeModal'
@@ -260,6 +264,22 @@ export const useUIStore = create<UIState>()(
 
           // Remove the notification
           get().removeNotification(id);
+        },
+
+        markAsRead: (id: string) => {
+          set(state => ({
+            notifications: state.notifications.map(n =>
+              n.id === id ? { ...n, read: true } : n
+            )
+          }));
+          logger.debug(`Notification marked as read: ${id}`);
+        },
+
+        markAllAsRead: () => {
+          set(state => ({
+            notifications: state.notifications.map(n => ({ ...n, read: true }))
+          }));
+          logger.debug('[UIStore] All notifications marked as read.');
         },
 
         clearNotifications: () => {

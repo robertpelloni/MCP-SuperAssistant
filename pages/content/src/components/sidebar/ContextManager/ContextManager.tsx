@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useContextStore, type ContextItem } from '@src/lib/context.store';
+import { useContextStore, type ContextItem } from '@src/stores/context.store';
 import { Button, Icon, Typography, Textarea, Input } from '../ui';
 import { useToastStore } from '@src/stores/toast.store';
 import { cn } from '@src/lib/utils';
@@ -127,7 +127,7 @@ const ContextManager: React.FC<ContextManagerProps> = ({ onInsert, onClose, init
 
             {contexts.length === 0 ? (
               <div className="text-center py-8 text-slate-400 dark:text-slate-500">
-                <Icon name="inbox" size="lg" className="mx-auto mb-2 opacity-50" />
+                <Icon name="box" size="sm" className="text-slate-400 dark:text-slate-500 mr-2" />
                 <Typography variant="body" className="text-sm">No saved contexts</Typography>
               </div>
             ) : (
@@ -145,14 +145,14 @@ const ContextManager: React.FC<ContextManagerProps> = ({ onInsert, onClose, init
                             className="p-1 hover:bg-slate-100 dark:hover:bg-slate-700 rounded text-slate-400 hover:text-blue-600"
                             title="Edit"
                           >
-                            <Icon name="edit" size="xs" />
+                            <Icon name="info" size="sm" />
                           </button>
                           <button
                             onClick={(e) => handleDelete(ctx.id, e)}
                             className="p-1 hover:bg-slate-100 dark:hover:bg-slate-700 rounded text-slate-400 hover:text-red-600"
                             title="Delete"
                           >
-                            <Icon name="trash" size="xs" />
+                            <Icon name="x" size="sm" />
                           </button>
                         </div>
                       </div>
@@ -161,9 +161,9 @@ const ContextManager: React.FC<ContextManagerProps> = ({ onInsert, onClose, init
                       </Typography>
                       <div className="mt-2 flex justify-end">
                         <Button
-                          size="xs"
-                          variant="secondary"
-                          className="h-6 text-xs bg-primary-50 hover:bg-primary-100 text-primary-700 dark:bg-primary-900/20 dark:hover:bg-primary-900/40 dark:text-primary-300 border-primary-100 dark:border-primary-800"
+                          size="sm"
+                          variant="outline"
+                          className="bg-primary-50 hover:bg-primary-100 text-primary-700 dark:bg-primary-900/20 dark:hover:bg-primary-900/40 dark:text-primary-300 border-primary-100 dark:border-primary-800"
                           onClick={() => {
                             onInsert(ctx.content);
                             onClose();

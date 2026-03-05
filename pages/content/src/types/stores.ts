@@ -80,4 +80,5 @@ export interface Notification {
   message: string;
   timestamp: number;
   duration?: number; // Optional duration in milliseconds
+  read?: boolean;
 }

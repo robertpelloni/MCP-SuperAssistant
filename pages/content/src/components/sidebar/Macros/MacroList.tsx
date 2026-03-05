@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { useMacroStore, type Macro } from '@src/lib/macro.store';
+import { useMacroStore, type Macro } from '@src/stores/macro.store';
 import { Icon, Typography, Button } from '../ui';
 import { Card } from '@src/components/ui/card';
 import MacroBuilder from './MacroBuilder';
@@ -203,10 +203,14 @@ const MacroList: React.FC<MacroListProps> = ({ onExecute }) => {
           />
           <div className="flex gap-1">
             <Button onClick={handleImportUrlClick} size="sm" variant="ghost" className="h-8 w-8 p-0" title="Import from URL">
-              <Icon name="globe" size="xs" />
+              <Icon name="server" size="xs" />
+            </Button>
+            <Button onClick={() => window.open('https://mcp.localhost', '_blank')} size="sm" variant="outline" className="flex items-center gap-1 hidden sm:flex" title="Browse Community Macros">
+              <Icon name="server" size="sm" />
+              Community
             </Button>
             <Button onClick={handleImportClick} size="sm" variant="outline" className="flex items-center gap-1 hidden sm:flex" title="Import from JSON">
-              <Icon name="upload" size="xs" className="mr-1" />
+              <Icon name="cloud" size="sm" className="text-slate-400 dark:text-slate-500" />
               Import
             </Button>
           </div>
@@ -236,12 +240,12 @@ const MacroList: React.FC<MacroListProps> = ({ onExecute }) => {
       <div className="flex-1 overflow-y-auto min-h-0 space-y-3 pr-1 scrollbar-thin scrollbar-thumb-slate-300 dark:scrollbar-thumb-slate-600">
         {macros.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-40 text-slate-400 dark:text-slate-500 border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-lg">
-            <Icon name="code" size="lg" className="mb-2 opacity-50" />
+            <Icon name="braces" size="lg" className="mb-2 opacity-50" />
             <Typography variant="body" className="text-sm">
               No macros created yet
             </Typography>
             <div className="flex gap-2 mt-3">
-               <Button variant="outline" size="sm" onClick={handleImportClick}>
+              <Button variant="outline" size="sm" onClick={handleImportClick}>
                 Import Macro
               </Button>
               <Button variant="ghost" size="sm" onClick={handleCreate} className="text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300">
@@ -271,7 +275,7 @@ const MacroList: React.FC<MacroListProps> = ({ onExecute }) => {
                     onClick={(e) => handleRun(macro, e)}
                     title="Run Macro"
                   >
-                    <Icon name={runningMacroId === macro.id ? "loader" : "play"} size="sm" className={runningMacroId === macro.id ? "animate-spin" : ""} />
+                    <Icon name={runningMacroId === macro.id ? "refresh" : "play"} size="sm" className={runningMacroId === macro.id ? "animate-spin" : ""} />
                   </div>
                   <div className="min-w-0 flex-1">
                     <Typography variant="subtitle" className="font-medium text-slate-800 dark:text-slate-200 truncate">
@@ -291,15 +295,15 @@ const MacroList: React.FC<MacroListProps> = ({ onExecute }) => {
                   </div>
 
                   <div className="flex flex-col gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                     <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-7 w-7 text-slate-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded"
-                        onClick={(e) => handleDelete(macro.id, e)}
-                        title="Delete Macro"
-                      >
-                        <Icon name="trash" size="xs" />
-                      </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7 text-slate-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded"
+                      onClick={(e) => handleDelete(macro.id, e)}
+                      title="Delete Macro"
+                    >
+                      <Icon name="x" size="xs" />
+                    </Button>
                   </div>
                 </div>
               </div>

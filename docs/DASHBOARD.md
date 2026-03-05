@@ -1,18 +1,28 @@
 # Project Dashboard
 
-**Version**: `0.7.1`
-**Last Updated**: 2026-02-12
-**Status**: Phase 3 Complete ✅ | Build: Chrome ✅ Firefox ✅ Edge ✅
+**Version**: `0.7.3-WIP`
+**Last Updated**: 2026-03-05
+**Status**: Phase 4 In Progress 🚧 | Build: Chrome ✅ Firefox ✅ Edge ✅
 
 ---
 
-## Package Versions
+## Package Versions (Monorepo)
 
 | Package | Version | Location |
 |---------|---------|----------|
-| `mcp-superassistant` (root) | 0.7.1 | `package.json` |
-| `chrome-extension` | 0.7.1 | `chrome-extension/package.json` |
-| `@extension/content` | 0.7.1 | `pages/content/package.json` |
+| `mcp-superassistant` (root) | 0.7.3 | `package.json` |
+| `chrome-extension` | 0.7.3 | `chrome-extension/package.json` |
+| `@extension/content` | 0.7.3 | `pages/content/package.json` |
+
+## Submodules & Project Structure
+
+*Note: This project does **not** rely on external git submodules (e.g., `git submodule`). Instead, it uses a strict **monorepo workspace** structure managed by `pnpm` and `turborepo`. All modular internal packages behave exactly like submodules but are version-locked in the same Git history for build stability.*
+
+### Directory Layout
+- `/chrome-extension`: The top-level bundler entry point for the browser extension.
+- `/pages/content`: The core logic, React sidebar, Zustand stores, and MCP proxy bridge.
+- `/pages/background`: The persistent Service Worker.
+- `/packages/*`: Internal modular packages (pseudo-submodules) shared across the project.
 
 ## Key Dependencies
 

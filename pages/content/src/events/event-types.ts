@@ -7,8 +7,9 @@ import type {
   GlobalSettings,
   Tool,
 } from '../types/stores';
-import type { AdapterConfig } from '../plugins/plugin-types'; // Added for plugin:config-updated
+import type { AdapterConfig } from '../plugins/plugin-types';
 import type { RemoteNotification, FeatureFlag } from '../stores/config.store';
+import type { Resource, ResourceTemplate } from '../stores/resource.store';
 
 export interface EventMap {
   // App lifecycle events
@@ -77,6 +78,11 @@ export interface EventMap {
   'feature-flags:evaluated': { flagName: string; enabled: boolean; userSegment: string };
   'feature-flag:enabled': { flagName: string; config?: any; timestamp: number };
   'feature-flag:disabled': { flagName: string; reason?: string; timestamp: number };
+
+  // Resource events
+  'resource:list-updated': { resources: Resource[]; templates: ResourceTemplate[] };
+  'resource:selected': { uri: string | null };
+  'resource:content-loaded': { uri: string };
 
   // Notification events (enhanced)
   'notification:remote-received': { notification: RemoteNotification; timestamp: number };

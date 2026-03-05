@@ -87,26 +87,4 @@ export const debugShadowDomStyles = (shadowRoot: ShadowRoot): void => {
   });
 
   logMessage(`Total CSS rules in Shadow DOM: ${totalRules}`);
-
-  // Add a temporary visual indicator to help identify Shadow DOM boundaries
-  const debugStyle = document.createElement('style');
-  debugStyle.textContent = `
-    :host {
-      outline: 2px dashed red !important;
-    }
-    * {
-      background-color: rgba(0, 0, 255, 0.05) !important;
-    }
-  `;
-
-  shadowRoot.appendChild(debugStyle);
-  logMessage('Added debug styling to Shadow DOM - will be visible for 5 seconds');
-
-  // Remove the debug styles after 5 seconds
-  setTimeout(() => {
-    if (debugStyle.parentNode) {
-      debugStyle.parentNode.removeChild(debugStyle);
-      logMessage('Removed debug styling from Shadow DOM');
-    }
-  }, 5000);
 };

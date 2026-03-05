@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useMacroStore, type Macro, type MacroStep, type StepType, type ActionType } from '@src/lib/macro.store';
+import { useMacroStore, type Macro, type MacroStep, type StepType, type ActionType } from '@src/stores/macro.store';
 import { Icon, Typography, Button, Input, Textarea, Select } from '../ui';
 import { cn } from '@src/lib/utils';
 import { useToastStore } from '@src/stores/toast.store';
@@ -154,17 +154,17 @@ const MacroBuilder: React.FC<MacroBuilderProps> = ({ existingMacro, onClose }) =
               Steps ({steps.length})
             </Typography>
             <div className="flex gap-2">
-              <Button size="xs" variant="outline" onClick={() => addStep('tool')}>
-                <Icon name="plus" size="xs" className="mr-1" /> Tool
+              <Button size="sm" variant="outline" onClick={() => addStep('tool')}>
+                <Icon name="plus" size="sm" className="mr-1" /> Tool
               </Button>
-              <Button size="xs" variant="outline" onClick={() => addStep('condition')}>
-                <Icon name="git-branch" size="xs" className="mr-1" /> Condition
+              <Button size="sm" variant="outline" onClick={() => addStep('condition')}>
+                <Icon name="git-merge" size="sm" className="mr-1" /> Condition
               </Button>
-              <Button size="xs" variant="outline" onClick={() => addStep('delay')}>
-                <Icon name="clock" size="xs" className="mr-1" /> Delay
+              <Button size="sm" variant="outline" onClick={() => addStep('delay')}>
+                <Icon name="clock" size="sm" className="mr-1" /> Delay
               </Button>
-              <Button size="xs" variant="outline" onClick={() => addStep('set_variable')}>
-                <Icon name="database" size="xs" className="mr-1" /> Set Var
+              <Button size="sm" variant="outline" onClick={() => addStep('set_variable')}>
+                <Icon name="database" size="sm" className="mr-1" /> Set Var
               </Button>
             </div>
           </div>

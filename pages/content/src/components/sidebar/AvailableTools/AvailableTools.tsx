@@ -1,6 +1,6 @@
 import type React from 'react';
 import { useState, useEffect, useMemo } from 'react';
-import type { Tool } from '@src/types/mcp';
+import type { Tool } from '@src/types/stores';
 import { useAvailableTools, useToolExecution, useToolEnablement } from '../../../hooks';
 import { logMessage } from '@src/utils/helpers';
 import { Typography, Icon, Button } from '../ui';
