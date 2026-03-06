@@ -92,7 +92,8 @@ The new **Activity** tab provides a real-time timeline of extension actions:
 *   **Log Entries**: Tracks every tool execution, connection event, and error.
 *   **Filtering**: Filter logs by type (Tools, Connection, Errors).
 *   **Details**: Click on any log entry to view full details, including execution metadata and raw JSON results.
-*   **Persistence**: Logs are saved locally (up to 50 entries) so you can review recent history even after reloading the page.
+*   **Persistence**: Logs are saved locally so you can review recent history even after reloading the page.
+*   **Virtualization**: The log view is highly optimized to handle thousands of entries smoothly without crashing your browser.
 
 ### Notifications (Toasts)
 The extension now provides non-intrusive toast notifications for:

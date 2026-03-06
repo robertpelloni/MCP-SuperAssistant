@@ -23,6 +23,11 @@ const SystemInfo: React.FC = () => {
     { name: 'Lucide React', version: '0.477.0' },
   ];
 
+  const submodules = [
+    { name: 'byterover-cipher', path: 'packages/byterover-cipher', url: 'https://github.com/campfirein/cipher.git', status: 'Active' },
+    // Hardcoded for now, ideally generated via build script
+  ];
+
   return (
     <div className="flex flex-col h-full space-y-4 p-4 overflow-y-auto">
       <div className="flex flex-col space-y-2">
@@ -79,6 +84,28 @@ const SystemInfo: React.FC = () => {
 
       <Card className="border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm">
         <CardHeader className="pb-2 border-b border-slate-100 dark:border-slate-800">
+          <CardTitle className="text-sm font-semibold text-slate-700 dark:text-slate-300">Submodules</CardTitle>
+        </CardHeader>
+        <CardContent className="p-0">
+            <div className="divide-y divide-slate-100 dark:divide-slate-800">
+                {submodules.map((sub) => (
+                    <div key={sub.name} className="flex flex-col p-3">
+                        <div className="flex justify-between items-center mb-1">
+                            <span className="text-xs font-semibold text-slate-800 dark:text-slate-200">{sub.name}</span>
+                            <span className="text-[10px] px-1.5 py-0.5 bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 rounded-full">{sub.status}</span>
+                        </div>
+                        <div className="text-[10px] text-slate-500 font-mono mb-1">{sub.path}</div>
+                        <a href={sub.url} target="_blank" rel="noopener noreferrer" className="text-[10px] text-primary-600 hover:underline flex items-center">
+                            <Icon name="github" size="xs" className="mr-1" /> View Source
+                        </a>
+                    </div>
+                ))}
+            </div>
+        </CardContent>
+      </Card>
+
+      <Card className="border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm">
+        <CardHeader className="pb-2 border-b border-slate-100 dark:border-slate-800">
           <CardTitle className="text-sm font-semibold text-slate-700 dark:text-slate-300">Project Structure</CardTitle>
         </CardHeader>
         <CardContent className="p-4">
@@ -98,7 +125,8 @@ const SystemInfo: React.FC = () => {
 │
 ├── packages/               (Shared Libraries)
 │   ├── shared/             (Utils, Logger)
-│   └── storage/            (Chrome Storage)
+│   ├── storage/            (Chrome Storage)
+│   └── byterover-cipher/   (Submodule)
 │
 └── docs/                   (Documentation)`}
           </div>

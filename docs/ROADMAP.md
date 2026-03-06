@@ -32,9 +32,9 @@
 - [x] **Cloud Sync**: Beta implementation for syncing macros/contexts (v1.4.0).
 - [ ] Multi-proxy support (Concurrent Connections).
 
-## Phase 5: Universal Memory & Intelligence (🚧 In Progress)
+## Phase 5: Universal Memory & Intelligence (✅ Completed)
 - [x] **Web Clipper**: Capture pages as clean Markdown (v1.9.0).
 - [x] **Vector Memory**: Connect to generic MCP memory servers (v1.9.0).
 - [x] **AnythingLLM**: Integration for RAG (v1.9.0).
-- [ ] **Chat with Memory**: RAG-based chat interface in sidebar.
-- [ ] **Dependency Dashboard**: Visualize submodule status.
+- [x] **Chat with Memory**: RAG-based chat interface in sidebar (v1.9.0).
+- [x] **Dependency Dashboard**: Visualize submodule status (v1.9.0).

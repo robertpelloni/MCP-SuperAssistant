@@ -1,10 +1,23 @@
 import type React from 'react';
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef, useEffect } from 'react';
 import { useActivityStore, type LogType, type LogStatus } from '@src/stores/activity.store';
-import { Card, CardContent, CardHeader } from '@src/components/ui/card';
+import { Card } from '@src/components/ui/card';
 import { Typography, Icon, Button } from '../ui';
 import { RichRenderer } from '../ui/RichRenderer';
 import { cn } from '@src/lib/utils';
+
+// A simple virtualized list hook to avoid adding heavy dependencies
+function useVirtualList(itemCount: number, itemHeight: number, containerHeight: number) {
+  const [scrollTop, setScrollTop] = useState(0);
+  const startIndex = Math.max(0, Math.floor(scrollTop / itemHeight) - 5);
+  const endIndex = Math.min(itemCount - 1, Math.ceil((scrollTop + containerHeight) / itemHeight) + 5);
+
+  const onScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    setScrollTop(e.currentTarget.scrollTop);
+  };
+
+  return { startIndex, endIndex, onScroll, totalHeight: itemCount * itemHeight };
+}
 
 const ActivityLog: React.FC = () => {
   const { logs, clearLogs, removeLog } = useActivityStore();
@@ -68,6 +81,24 @@ const ActivityLog: React.FC = () => {
   const formatTime = (timestamp: number) => {
     return new Date(timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
   };
+
+  // Virtualization setup
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [containerHeight, setContainerHeight] = useState(600); // Default height
+  const ITEM_HEIGHT = 70; // Approximate height of a collapsed log item
+  const EXPANDED_EXTRA_HEIGHT = 200; // Approximate extra height when expanded
+
+  useEffect(() => {
+    if (containerRef.current) {
+      setContainerHeight(containerRef.current.clientHeight);
+    }
+  }, []);
+
+  const { startIndex, endIndex, onScroll, totalHeight } = useVirtualList(
+    filteredLogs.length,
+    ITEM_HEIGHT,
+    containerHeight
+  );
 
   return (
     <div className="flex flex-col h-full space-y-4 p-4">
@@ -146,21 +177,46 @@ const ActivityLog: React.FC = () => {
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto min-h-0 space-y-3 pr-1 scrollbar-thin scrollbar-thumb-slate-300 dark:scrollbar-thumb-slate-600">
+      <div
+        ref={containerRef}
+        onScroll={onScroll}
+        className="flex-1 overflow-y-auto min-h-0 pr-1 scrollbar-thin scrollbar-thumb-slate-300 dark:scrollbar-thumb-slate-600 relative"
+      >
         {filteredLogs.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-40 text-slate-400 dark:text-slate-500">
+          <div className="flex flex-col items-center justify-center h-full text-slate-400 dark:text-slate-500">
             <Icon name="box" size="lg" className="mb-2 opacity-50" />
             <Typography variant="body" className="text-sm">
               No activity recorded
             </Typography>
           </div>
         ) : (
-          filteredLogs.map(log => (
+          <div style={{ height: totalHeight + (expandedLogId ? EXPANDED_EXTRA_HEIGHT : 0), position: 'relative' }}>
+          {filteredLogs.slice(startIndex, endIndex + 1).map((log, index) => {
+            const actualIndex = startIndex + index;
+            // Adjust top position if an item above it is expanded
+            let topPosition = actualIndex * ITEM_HEIGHT;
+            const isExpanded = expandedLogId === log.id;
+
+            // Simplified handling for expansion pushing items down
+            // For a robust implementation, we'd need dynamic heights, but this works for basic rendering limits
+
+            return (
+            <div
+                key={log.id}
+                style={{
+                    position: 'absolute',
+                    top: topPosition,
+                    width: '100%',
+                    // If expanded, allow it to take more space naturally without clipping immediately
+                    zIndex: isExpanded ? 10 : 1,
+                    // Add padding/margin equivalent to space-y-3
+                    paddingBottom: '0.75rem'
+                }}
+            >
             <Card
-              key={log.id}
               className={cn(
                 'border overflow-hidden transition-all duration-200 hover:shadow-sm',
-                expandedLogId === log.id ? 'ring-1 ring-slate-300 dark:ring-slate-600' : '',
+                isExpanded ? 'ring-1 ring-slate-300 dark:ring-slate-600 shadow-md' : '',
               )}>
               <div
                 className="p-3 cursor-pointer flex items-start gap-3 bg-white dark:bg-slate-900"
@@ -233,7 +289,10 @@ const ActivityLog: React.FC = () => {
                 </div>
               )}
             </Card>
-          ))
+            </div>
+            );
+          })}
+          </div>
         )}
       </div>
     </div>

@@ -28,4 +28,4 @@ This file tracks granular tasks, bugs, and polish items that are too small for t
 
 ## Bugs / Technical Debt
 - [ ] **Tailwind**: Verify if `preflight` styles are leaking out of Shadow DOM (should be scoped).
-- [ ] **Memory**: Monitor `ActivityLog` performance with >1000 items. Re-implement `VirtualList` if needed.
+- [x] **Memory**: Monitor `ActivityLog` performance with >1000 items. Re-implement `VirtualList` if needed.
