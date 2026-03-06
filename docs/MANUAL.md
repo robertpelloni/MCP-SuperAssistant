@@ -41,7 +41,7 @@ The proxy bridges the browser (extension) to your local MCP servers.
 
 ## Connection Configuration
 
-Open the extension sidebar and go to the **Settings** tab or click the **Settings** icon in the Server Status area.
+Open the extension sidebar and navigate to the **Settings** tab.
 
 ### Connection Types
 
@@ -58,7 +58,7 @@ Enter the URL where your local proxy or remote MCP server is running.
 
 ### Testing Connection
 
-You can test the latency of your connection by clicking the **Test** button in the Connection Details panel (click the info icon next to the settings gear). This will measure the round-trip time to your MCP server.
+You can test the latency of your connection by clicking the **Test Server Context** button in the Settings > Network tab. This will measure the round-trip time to your MCP server.
 
 ## Features
 
@@ -78,14 +78,25 @@ These settings can be found in the **Settings** tab.
     *   *Warning*: Use with caution. This enables fully autonomous tool execution.
 
 ### Push Content Mode
-Toggle this in the Sidebar settings. It adjusts the page layout so the sidebar pushes the main content aside instead of overlaying it. This is useful for smaller screens to prevent the sidebar from blocking chat content.
+Toggle this in the Sidebar settings (Appearance Tab). It adjusts the page layout so the sidebar pushes the main content aside instead of overlaying it. This is useful for smaller screens to prevent the sidebar from blocking chat content.
+
+### Feature Flags & Experiments
+Also inside the Settings tab, you can navigate to the **Advanced** section to view and toggle experimental feature flags. This allows you to opt-in to bleeding-edge UI changes or new protocol handling routes before they are fully released.
 
 ### Tool Management
 In the **Available Tools** tab, you can:
 *   **Search**: Filter tools by name or description.
-*   **Favorites**: Click the sun icon next to a tool to mark it as a favorite. Toggle sort order to prioritize favorites.
+*   **Favorites**: Click the star icon next to a tool to mark it as a favorite. Toggle sort order to prioritize favorites.
 *   **Enable/Disable**: Toggle individual tools or entire server groups.
 *   **View Details**: Click on a tool to expand its description and view the JSON schema.
+
+### Resource Browser
+In the **Resources** tab, you can browse any raw data or templates exposed by your MCP servers.
+*   **List Resources**: View all active `resources` and `resourceTemplates` supplied.
+*   **Read Content**: Click on a resource to trigger the `read_resource` protocol and display the parsed text, JSON, or markdown contents directly in the extension.
+
+### Prompt Templates
+In the **Prompts** tab, you can execute predefined prompt chains supplied by your MCP servers. Selecting a prompt allows you to fill in any required arguments before instantly dispatching the text into your active chat window.
 
 ### Activity Monitoring & Logs
 The new **Activity** tab provides a real-time timeline of extension actions:
@@ -94,11 +105,10 @@ The new **Activity** tab provides a real-time timeline of extension actions:
 *   **Details**: Click on any log entry to view full details, including execution metadata and raw JSON results.
 *   **Persistence**: Logs are saved locally (up to 50 entries) so you can review recent history even after reloading the page.
 
-### Notifications (Toasts)
-The extension now provides non-intrusive toast notifications for:
-*   Successful connections.
-*   Tool execution results (success/failure).
-*   Settings updates.
+### Notifications & Alerts
+The extension provides two notification channels:
+*   **Toasts**: Non-intrusive popups for successful connections, tool executions, and settings saves.
+*   **Notification Center**: Click the bell icon at the top of the sidebar to view a persistent history of System Alerts and Remote Campaign Notifications. You can dismiss messages individually or clear all at once.
 
 ## Advanced Usage
 

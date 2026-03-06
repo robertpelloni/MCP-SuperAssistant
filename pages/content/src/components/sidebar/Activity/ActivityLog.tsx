@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader } from '@src/components/ui/card';
 import { Typography, Icon, Button } from '../ui';
 import { RichRenderer } from '../ui/RichRenderer';
 import { cn } from '@src/lib/utils';
+import { Virtuoso } from 'react-virtuoso';
 
 const ActivityLog: React.FC = () => {
   const { logs, clearLogs, removeLog } = useActivityStore();
@@ -126,7 +127,7 @@ const ActivityLog: React.FC = () => {
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto min-h-0 space-y-3 pr-1 scrollbar-thin scrollbar-thumb-slate-300 dark:scrollbar-thumb-slate-600">
+      <div className="flex-1 min-h-0 pr-1">
         {filteredLogs.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-40 text-slate-400 dark:text-slate-500">
             <Icon name="box" size="lg" className="mb-2 opacity-50" />
@@ -135,71 +136,78 @@ const ActivityLog: React.FC = () => {
             </Typography>
           </div>
         ) : (
-          filteredLogs.map(log => (
-            <Card
-              key={log.id}
-              className={cn(
-                'border overflow-hidden transition-all duration-200 hover:shadow-sm',
-                expandedLogId === log.id ? 'ring-1 ring-slate-300 dark:ring-slate-600' : '',
-              )}>
-              <div
-                className="p-3 cursor-pointer flex items-start gap-3 bg-white dark:bg-slate-900"
-                onClick={() => toggleExpand(log.id)}>
-                <div className={cn('p-1.5 rounded-full flex-shrink-0 mt-0.5 border', getStatusColor(log.status))}>
-                  <Icon name={getIcon(log.type, log.status)} size="xs" />
-                </div>
+          <Virtuoso
+            style={{ height: '100%' }}
+            data={filteredLogs}
+            className="scrollbar-thin scrollbar-thumb-slate-300 dark:scrollbar-thumb-slate-600"
+            itemContent={(index, log) => (
+              <div className="pb-3">
+                <Card
+                  key={log.id}
+                  className={cn(
+                    'border overflow-hidden transition-all duration-200 hover:shadow-sm',
+                    expandedLogId === log.id ? 'ring-1 ring-slate-300 dark:ring-slate-600' : '',
+                  )}>
+                  <div
+                    className="p-3 cursor-pointer flex items-start gap-3 bg-white dark:bg-slate-900"
+                    onClick={() => toggleExpand(log.id)}>
+                    <div className={cn('p-1.5 rounded-full flex-shrink-0 mt-0.5 border', getStatusColor(log.status))}>
+                      <Icon name={getIcon(log.type, log.status)} size="xs" />
+                    </div>
 
-                <div className="flex-1 min-w-0">
-                  <div className="flex justify-between items-start">
-                    <Typography
-                      variant="subtitle"
-                      className="font-medium text-sm truncate pr-2 text-slate-800 dark:text-slate-200">
-                      {log.title}
-                    </Typography>
-                    <span className="text-[10px] text-slate-400 dark:text-slate-500 font-mono flex-shrink-0">
-                      {formatTime(log.timestamp)}
-                    </span>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex justify-between items-start">
+                        <Typography
+                          variant="subtitle"
+                          className="font-medium text-sm truncate pr-2 text-slate-800 dark:text-slate-200">
+                          {log.title}
+                        </Typography>
+                        <span className="text-[10px] text-slate-400 dark:text-slate-500 font-mono flex-shrink-0">
+                          {formatTime(log.timestamp)}
+                        </span>
+                      </div>
+
+                      {log.detail && (
+                        <Typography
+                          variant="body"
+                          className="text-xs text-slate-500 dark:text-slate-400 line-clamp-1 mt-0.5">
+                          {log.detail}
+                        </Typography>
+                      )}
+                    </div>
                   </div>
 
-                  {log.detail && (
-                    <Typography
-                      variant="body"
-                      className="text-xs text-slate-500 dark:text-slate-400 line-clamp-1 mt-0.5">
-                      {log.detail}
-                    </Typography>
-                  )}
-                </div>
-              </div>
-
-              {/* Expanded Details */}
-              {expandedLogId === log.id && (
-                <div className="bg-slate-50 dark:bg-slate-800/50 border-t border-slate-100 dark:border-slate-800 p-3 animate-in slide-in-from-top-1 duration-200">
-                  {log.metadata && (
-                    <div className="mb-2">
-                      <Typography variant="caption" className="text-slate-500 dark:text-slate-400 block mb-1">
-                        Result / Metadata
-                      </Typography>
-                      <div className="bg-white dark:bg-slate-900 p-2 rounded border border-slate-200 dark:border-slate-700 overflow-hidden">
-                        <RichRenderer data={log.metadata} />
+                  {/* Expanded Details */}
+                  {expandedLogId === log.id && (
+                    <div className="bg-slate-50 dark:bg-slate-800/50 border-t border-slate-100 dark:border-slate-800 p-3 animate-in slide-in-from-top-1 duration-200">
+                      {log.metadata && (
+                        <div className="mb-2">
+                          <Typography variant="caption" className="text-slate-500 dark:text-slate-400 block mb-1">
+                            Result / Metadata
+                          </Typography>
+                          <div className="bg-white dark:bg-slate-900 p-2 rounded border border-slate-200 dark:border-slate-700 overflow-hidden">
+                            <RichRenderer data={log.metadata} />
+                          </div>
+                        </div>
+                      )}
+                      <div className="flex justify-end pt-1">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={e => {
+                            e.stopPropagation();
+                            removeLog(log.id);
+                          }}
+                          className="h-6 text-[10px] text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20">
+                          Delete Entry
+                        </Button>
                       </div>
                     </div>
                   )}
-                  <div className="flex justify-end pt-1">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={e => {
-                        e.stopPropagation();
-                        removeLog(log.id);
-                      }}
-                      className="h-6 text-[10px] text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20">
-                      Delete Entry
-                    </Button>
-                  </div>
-                </div>
-              )}
-            </Card>
-          ))
+                </Card>
+              </div>
+            )}
+          />
         )}
       </div>
     </div>

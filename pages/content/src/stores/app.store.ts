@@ -6,10 +6,6 @@ import { createLogger } from '@extension/shared/lib/logger';
 
 const logger = createLogger('AppStore');
 
-// Plugin registry is not yet implemented (see IDEAS.md).
-// When the plugin marketplace feature is built, replace this stub with the real initialization.
-const initializePluginRegistry = async () => logger.debug('[AppStore] Plugin registry not yet implemented — skipping.');
-
 export interface AppState {
   isInitialized: boolean;
   initializationError: string | null;
@@ -59,7 +55,6 @@ export const useAppStore = create<AppState>()(
             // Initialize critical systems in order
             // Event bus initialization might be called earlier in a global initializer.ts
             // await initializeEventBus(); // Ensure eventBus is ready
-            await initializePluginRegistry(); // Placeholder for actual plugin system init
 
             set({ isInitialized: true, initializationError: null });
             logger.debug('[AppStore] Initialization complete.');
