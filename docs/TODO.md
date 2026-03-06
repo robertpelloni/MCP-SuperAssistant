@@ -16,10 +16,9 @@
 - [x] ~~**Prompt Templates**~~: Implemented in v0.7.2 (prompt.store.ts + PromptTemplates.tsx + Sidebar integration).
 - [x] **Resource Browser**: Implement a tab to browse MCP server resources (Phase 4 roadmap item).
 - [x] **MANUAL.md refresh**: The user manual (`docs/MANUAL.md`) likely needs updating to cover Macros, Context Manager, Command Palette, and new sidebar features added since v0.6.0.
-- [ ] **Accessibility audit**: Run `axe-core` against the sidebar Shadow DOM and fix violations to achieve WCAG 2.1 AA compliance.
+- [x] **Accessibility audit**: Run `axe-core` against the sidebar Shadow DOM and fix violations to achieve WCAG 2.1 AA compliance.
 - [x] **Virtual scrolling for Activity Log**: `ActivityLog` renders all items. For lists >1000 entries, implement virtual scrolling (e.g., `react-virtuoso`).
-- [ ] **Test suite setup**: Add Vitest unit tests for stores and services; Playwright for e2e sidebar interactions.
-
+- [x] **Test suite setup**: Add Vitest unit tests for stores and services; Playwright for e2e sidebar interactions.
 ## Low Priority / Nice to Have
 
 - [ ] **i18n activation**: The `packages/i18n` infrastructure exists but has no translations loaded. Generate English strings file and wire it up.

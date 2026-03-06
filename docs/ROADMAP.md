@@ -40,13 +40,13 @@
 - [x] System Info panel
 
 ## Phase 4: Advanced (Planned)
-- [ ] Test suite: Unit tests (Vitest), e2e tests (Playwright)
+- [x] Test suite: Unit tests (Vitest), e2e tests (Playwright)
 - [ ] Tool chaining: Compose multi-step tool pipelines visually
 - [x] Resource browser: Browse MCP server resources
 - [x] Prompt templates: Save and reuse common prompts
 - [ ] Plugin marketplace: Community adapters and extensions
 - [x] Notification center: Aggregated error/success history
-- [ ] Accessibility audit: WCAG 2.1 AA compliance
+- [x] Accessibility audit: WCAG 2.1 AA compliance
 - [ ] i18n: Multi-language support (infrastructure exists in `packages/i18n`)
 - [ ] Cloud Sync: Sync macros and context across devices
 - [ ] Multi-Proxy: Connect to multiple MCP servers simultaneously

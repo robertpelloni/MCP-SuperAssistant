@@ -101,7 +101,7 @@ export interface ConfigState {
 }
 
 const initialUserProperties: UserProperties = {
-  extensionVersion: chrome?.runtime?.getManifest?.()?.version || '0.0.0',
+  extensionVersion: typeof chrome !== 'undefined' ? chrome?.runtime?.getManifest?.()?.version || '0.0.0' : '0.0.0',
   installDate: new Date().toISOString(),
   usageDays: 0,
   featuresUsed: [],
