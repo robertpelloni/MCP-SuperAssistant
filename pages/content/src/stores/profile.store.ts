@@ -1,3 +1,7 @@
+/**
+ * @deprecated This standalone store has been merged into `createConnectionSlice` in the unified Root Store.
+ * Import from `@src/stores` instead. This file is retained only for type reference.
+ */
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import type { ConnectionType } from '@src/types/stores';
@@ -50,9 +54,9 @@ export const useProfileStore = create<ProfileStore>()(
         set(state => ({
           profiles: state.profiles.map(p => (p.id === id ? { ...p, ...updates } : p)),
         })),
-      toggleProfileActive: id => 
-        set(state => ({ 
-          activeProfileIds: state.activeProfileIds.includes(id) 
+      toggleProfileActive: id =>
+        set(state => ({
+          activeProfileIds: state.activeProfileIds.includes(id)
             ? state.activeProfileIds.filter(activeId => activeId !== id)
             : [...state.activeProfileIds, id]
         })),

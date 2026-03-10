@@ -1,3 +1,7 @@
+/**
+ * @deprecated This standalone store has been migrated to `createResourceSlice` in the unified Root Store.
+ * Import from `@src/stores` instead. This file is retained only for type reference.
+ */
 import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
 import { createLogger } from '@extension/shared/lib/logger';

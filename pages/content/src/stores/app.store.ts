@@ -1,3 +1,7 @@
+/**
+ * @deprecated This standalone store has been merged into `createUISlice` in the unified Root Store.
+ * Import from `@src/stores` instead. This file is retained only for type reference.
+ */
 import { create } from 'zustand';
 import { devtools, persist, createJSONStorage } from 'zustand/middleware';
 import { eventBus, initializeEventBus } from '../events'; // Assuming initializeEventBus might be called here or in a main initializer

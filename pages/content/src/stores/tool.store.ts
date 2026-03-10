@@ -1,3 +1,7 @@
+/**
+ * @deprecated This standalone store has been migrated to `createToolSlice` in the unified Root Store.
+ * Import from `@src/stores` instead. This file is retained only for type reference.
+ */
 import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
 import { eventBus } from '../events';
@@ -70,10 +74,10 @@ export const useToolStore = create<ToolState>()(
         set(state => {
           const newToolsByProfile = { ...state.toolsByProfile, [profileId]: tools };
           const newAvailableTools = Object.values(newToolsByProfile).flat();
-          
+
           logger.debug(`[ToolStore] Available tools updated for profile ${profileId}`);
           eventBus.emit('tool:list-updated', { tools: newAvailableTools });
-          
+
           return { toolsByProfile: newToolsByProfile, availableTools: newAvailableTools };
         });
 

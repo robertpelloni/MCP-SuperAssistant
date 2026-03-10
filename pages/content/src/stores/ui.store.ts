@@ -1,3 +1,7 @@
+/**
+ * @deprecated This standalone store has been migrated to `createUISlice` in the unified Root Store.
+ * Import from `@src/stores` instead. This file is retained only for type reference.
+ */
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import { devtools } from 'zustand/middleware'; // persist is now imported with createJSONStorage
