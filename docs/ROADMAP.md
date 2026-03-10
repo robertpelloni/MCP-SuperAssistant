@@ -41,7 +41,7 @@
 
 ## Phase 4: Advanced (Planned)
 - [x] Test suite: Unit tests (Vitest), e2e tests (Playwright)
-- [ ] Tool chaining: Compose multi-step tool pipelines visually
+- [x] Tool chaining: Compose multi-step tool pipelines visually
 - [x] Resource browser: Browse MCP server resources
 - [x] Prompt templates: Save and reuse common prompts
 - [ ] Plugin marketplace: Community adapters and extensions

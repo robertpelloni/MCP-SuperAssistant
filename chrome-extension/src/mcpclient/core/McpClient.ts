@@ -23,6 +23,7 @@ export class McpClient extends EventEmitter<AllEvents> {
   private client: Client | null = null;
   private activePlugin: ITransportPlugin | null = null;
   private activeTransport: Transport | null = null;
+  private activeConnectionParams: { uri: string; type: TransportType } | null = null;
   private isConnectedFlag: boolean = false;
   private connectionPromise: Promise<void> | null = null;
   private healthCheckTimer: NodeJS.Timeout | null = null;
@@ -211,6 +212,7 @@ export class McpClient extends EventEmitter<AllEvents> {
       // Store connection state
       this.activePlugin = plugin;
       this.activeTransport = transport;
+      this.activeConnectionParams = { uri, type };
       this.isConnectedFlag = true;
 
       // Clear cache on new connection
@@ -327,6 +329,7 @@ export class McpClient extends EventEmitter<AllEvents> {
     }
 
     this.activeTransport = null;
+    this.activeConnectionParams = null;
     this.isConnectedFlag = false;
     this.clearPrimitivesCache();
   }
@@ -604,5 +607,9 @@ export class McpClient extends EventEmitter<AllEvents> {
     };
 
     logger.debug('[McpClient] Configuration updated');
+  }
+
+  public getServerConfig(): { uri: string; type: TransportType } | null {
+    return this.activeConnectionParams;
   }
 }

@@ -1,10 +1,10 @@
 import React, { useState, useRef } from 'react';
-import { useMacroStore, type Macro } from '@src/stores/macro.store';
+import { useMacroStore, type Macro } from '@src/stores';
 import { Icon, Typography, Button } from '../ui';
 import { Card } from '@src/components/ui/card';
 import MacroBuilder from './MacroBuilder';
 import { MacroRunner } from '@src/lib/macro.runner';
-import { useToastStore } from '@src/stores/toast.store';
+import { useToastStore } from '@src/stores';
 import { cn } from '@src/lib/utils';
 
 interface MacroListProps {
@@ -67,15 +67,16 @@ const MacroList: React.FC<MacroListProps> = ({ onExecute }) => {
 
       const macroData = await response.json();
 
-      // Basic validation
-      if (!macroData.name || !Array.isArray(macroData.steps)) {
-        throw new Error('Invalid macro file format');
+      // Basic validation for V2 macros
+      if (!macroData.name || !Array.isArray(macroData.nodes)) {
+        throw new Error('Invalid macro file format (must be V2 graph format with nodes/edges)');
       }
 
       addMacro({
         name: macroData.name + ' (Imported)',
         description: macroData.description || '',
-        steps: macroData.steps,
+        nodes: macroData.nodes,
+        edges: macroData.edges || [],
       });
 
       addToast({
@@ -106,15 +107,16 @@ const MacroList: React.FC<MacroListProps> = ({ onExecute }) => {
         const content = event.target?.result as string;
         const macroData = JSON.parse(content);
 
-        // Basic validation
-        if (!macroData.name || !Array.isArray(macroData.steps)) {
-          throw new Error('Invalid macro file format');
+        // Basic validation for V2 macros
+        if (!macroData.name || !Array.isArray(macroData.nodes)) {
+          throw new Error('Invalid macro file format (must be V2 graph format with nodes/edges)');
         }
 
         addMacro({
           name: macroData.name + ' (Imported)',
           description: macroData.description || '',
-          steps: macroData.steps,
+          nodes: macroData.nodes,
+          edges: macroData.edges || [],
         });
 
         addToast({
@@ -286,7 +288,7 @@ const MacroList: React.FC<MacroListProps> = ({ onExecute }) => {
                     </Typography>
                     <div className="mt-2 flex items-center gap-2">
                       <span className="text-[10px] bg-slate-100 dark:bg-slate-800 text-slate-500 px-1.5 py-0.5 rounded border border-slate-200 dark:border-slate-700">
-                        {macro.steps.length} steps
+                        {macro.nodes?.length || 0} nodes
                       </span>
                       <span className="text-[10px] text-slate-400">
                         Updated {new Date(macro.updatedAt).toLocaleDateString()}

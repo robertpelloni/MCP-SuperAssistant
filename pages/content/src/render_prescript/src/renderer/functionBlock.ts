@@ -13,7 +13,6 @@ import { getPreviousExecution, getPreviousExecutionLegacy, generateContentSignat
 import type { ParamValueElement } from '../core/types';
 import { extractJSONFunctionInfo, extractJSONParameters } from '../parser/jsonFunctionParser';
 import { createLogger } from '@extension/shared/lib/logger';
-import { AutomationService } from '@src/services/automation.service';
 
 // Define custom property for tracking scroll state
 
@@ -90,6 +89,7 @@ function getAutomationState() {
       autoInsert: automationState.autoInsert || false,
       autoSubmit: automationState.autoSubmit || false,
       autoExecute: automationState.autoExecute || false,
+      autoExecuteWhitelist: automationState.autoExecuteWhitelist || [],
     };
   }
 
@@ -99,6 +99,7 @@ function getAutomationState() {
     autoInsert: legacyState?.autoInsert === true,
     autoSubmit: legacyState?.autoSubmit === true,
     autoExecute: legacyState?.autoExecute === true,
+    autoExecuteWhitelist: [] as string[],
   };
 }
 
@@ -1138,7 +1139,7 @@ const AutoExecutionUtils = {
   },
 
   findReplacementBlock: (functionDetails: any): HTMLDivElement | null => {
-    const potentialBlocks = document.querySelectorAll<HTMLDivElement>('.function-block');
+    const potentialBlocks = Array.from(document.querySelectorAll<HTMLDivElement>('.function-block'));
     for (const block of potentialBlocks) {
       const preElement = block.querySelector('pre');
       if (!preElement?.textContent) continue;
@@ -1513,7 +1514,8 @@ export const renderFunctionCall = (block: HTMLPreElement, isProcessingRef: { cur
         }
 
         // Check whitelist
-        if (!AutomationService.getInstance().shouldAutoExecute(functionName)) {
+        const whitelist = automationState.autoExecuteWhitelist;
+        if (whitelist.length === 0 || !whitelist.includes(functionName)) {
           logger.debug(`Auto-execution blocked by whitelist for block ${blockId} (${functionName})`);
           return true;
         }

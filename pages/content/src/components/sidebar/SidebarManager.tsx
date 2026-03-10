@@ -4,7 +4,7 @@ import { BaseSidebarManager } from './base/BaseSidebarManager';
 import { logMessage } from '@src/utils/helpers';
 import Sidebar from './Sidebar';
 import type { UserPreferences } from '@src/types/stores';
-import { useUIStore } from '@src/stores/ui.store';
+import { useUIStore } from '@src/stores';
 
 // Helper function to get preferences from Zustand store
 const getZustandPreferences = (): UserPreferences => {
@@ -33,6 +33,8 @@ const getZustandPreferences = (): UserPreferences => {
     isMinimized: false,
     customInstructions: '',
     customInstructionsEnabled: false,
+    accentColor: 'indigo',
+    autoExecuteWhitelist: []
   };
 };
 

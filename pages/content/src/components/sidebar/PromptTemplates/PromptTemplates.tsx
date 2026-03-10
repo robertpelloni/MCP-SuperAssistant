@@ -6,9 +6,9 @@
  */
 
 import React, { useState, useMemo } from 'react';
-import { usePromptStore, type PromptTemplate } from '@src/stores/prompt.store';
+import { usePromptStore, type PromptTemplate } from '@src/stores';
 import { Button, Input, Textarea, Typography, Icon } from '../ui';
-import { useToastStore } from '@src/stores/toast.store';
+import { useToastStore } from '@src/stores';
 
 const PromptTemplates: React.FC = () => {
     const { templates, addTemplate, updateTemplate, deleteTemplate } = usePromptStore();

@@ -1,7 +1,7 @@
 import type React from 'react';
 import { useState, useEffect, useRef } from 'react';
 import { useSidebarState, useUserPreferences } from '@src/hooks';
-import { useProfileStore } from '@src/stores/profile.store';
+import { useProfileStore } from '@src/stores';
 import { Icon, Typography } from '../ui';
 import { cn } from '@src/lib/utils';
 
@@ -29,7 +29,7 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose, onNavi
   const [selectedIndex, setSelectedIndex] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const { profiles, setActiveProfile } = useProfileStore();
+  const { profiles, setProfilesActive } = useProfileStore();
 
   // Define commands
   const commands: CommandItem[] = [
@@ -83,7 +83,7 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose, onNavi
       title: `Switch to Profile: ${p.name}`,
       icon: 'server',
       category: 'Profiles' as const,
-      action: () => setActiveProfile(p.id),
+      action: () => setProfilesActive([p.id]),
     })),
   ];
 

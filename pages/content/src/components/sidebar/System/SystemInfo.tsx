@@ -32,7 +32,7 @@ const SystemInfo: React.FC = () => {
           </div>
           <div className="flex justify-between items-center">
             <span className="text-sm text-slate-600 dark:text-slate-400">Environment</span>
-            <span className="text-sm font-mono text-slate-900 dark:text-slate-100">{import.meta.env.MODE}</span>
+            <span className="text-sm font-mono text-slate-900 dark:text-slate-100">{(import.meta as any).env.MODE}</span>
           </div>
         </CardContent>
       </Card>

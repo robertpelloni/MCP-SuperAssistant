@@ -1,29 +1,38 @@
 import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
 import { eventBus } from '../events';
-import type { ConnectionStatus, ServerConfig } from '../types/stores';
+import type { ConnectionStatus, ServerConfig, MCPTelemetry } from '../types/stores';
 import { createLogger } from '@extension/shared/lib/logger';
 
 const logger = createLogger('useConnectionStore');
 
-export interface ConnectionState {
+export interface ProfileConnectionState {
   status: ConnectionStatus;
   serverConfig: ServerConfig;
   lastConnectedAt: number | null;
   connectionAttempts: number;
   error: string | null;
   isReconnecting: boolean;
+  telemetry?: MCPTelemetry;
+}
+
+export interface ConnectionState {
+  connections: Record<string, ProfileConnectionState>;
 
   // Actions
-  setStatus: (status: ConnectionStatus) => void;
-  setServerConfig: (config: Partial<ServerConfig>) => void;
-  setLastError: (error: string | null) => void;
-  incrementAttempts: () => void;
-  resetAttempts: () => void;
-  setConnected: (timestamp: number) => void;
-  setDisconnected: (error?: string) => void;
-  startReconnecting: () => void;
-  stopReconnecting: () => void;
+  setStatus: (profileId: string, status: ConnectionStatus) => void;
+  setServerConfig: (profileId: string, config: Partial<ServerConfig>) => void;
+  setLastError: (profileId: string, error: string | null) => void;
+  setTelemetry: (profileId: string, telemetry: MCPTelemetry) => void;
+  incrementAttempts: (profileId: string) => void;
+  resetAttempts: (profileId: string) => void;
+  setConnected: (profileId: string, timestamp: number) => void;
+  setDisconnected: (profileId: string, error?: string) => void;
+  startReconnecting: (profileId: string) => void;
+  stopReconnecting: (profileId: string) => void;
+  getProfileState: (profileId: string) => ProfileConnectionState;
+  ensureProfile: (profileId: string) => void;
+  removeProfile: (profileId: string) => void;
 }
 
 const defaultServerConfig: ServerConfig = {
@@ -34,18 +43,7 @@ const defaultServerConfig: ServerConfig = {
   retryDelay: 2000, // ms
 };
 
-const initialState: Omit<
-  ConnectionState,
-  | 'setStatus'
-  | 'setServerConfig'
-  | 'setLastError'
-  | 'incrementAttempts'
-  | 'resetAttempts'
-  | 'setConnected'
-  | 'setDisconnected'
-  | 'startReconnecting'
-  | 'stopReconnecting'
-> = {
+const defaultProfileState: ProfileConnectionState = {
   status: 'disconnected',
   serverConfig: defaultServerConfig,
   lastConnectedAt: null,
@@ -57,105 +55,195 @@ const initialState: Omit<
 export const useConnectionStore = create<ConnectionState>()(
   devtools(
     (set, get) => ({
-      ...initialState,
+      connections: {},
 
-      setStatus: (status: ConnectionStatus) => {
-        const oldStatus = get().status;
-        set({ status });
-        logger.debug(`Status changed from ${oldStatus} to: ${status}`);
-        eventBus.emit('connection:status-changed', { status, error: get().error || undefined });
-      },
-
-      setServerConfig: (config: Partial<ServerConfig>) => {
-        set(state => ({
-          serverConfig: { ...state.serverConfig, ...config },
-        }));
-        logger.debug('[ConnectionStore] Server config updated:', get().serverConfig);
-      },
-
-      setLastError: (error: string | null) => {
-        set({ error });
-        if (error) {
-          logger.error('[ConnectionStore] Error set:', error);
-          eventBus.emit('connection:error', { error: error });
+      ensureProfile: (profileId: string) => {
+        if (!get().connections[profileId]) {
+          set(state => ({
+            connections: {
+              ...state.connections,
+              [profileId]: { ...defaultProfileState },
+            },
+          }));
         }
       },
 
-      incrementAttempts: () => {
-        const newAttempts = get().connectionAttempts + 1;
-        set({ connectionAttempts: newAttempts });
-        logger.debug(`Connection attempts: ${newAttempts}`);
-        eventBus.emit('connection:attempt', { attempt: newAttempts, maxAttempts: get().serverConfig.retryAttempts });
-      },
-
-      resetAttempts: () => {
-        set({ connectionAttempts: 0 });
-        logger.debug('[ConnectionStore] Connection attempts reset.');
-      },
-
-      setConnected: (timestamp: number) => {
-        set({
-          status: 'connected',
-          lastConnectedAt: timestamp,
-          connectionAttempts: 0,
-          error: null,
-          isReconnecting: false,
+      removeProfile: (profileId: string) => {
+        set(state => {
+          const { [profileId]: _, ...rest } = state.connections;
+          return { connections: rest };
         });
-        logger.debug(`Connected at: ${new Date(timestamp).toISOString()}`);
-        eventBus.emit('connection:status-changed', { status: 'connected' });
       },
 
-      setDisconnected: (error?: string) => {
+      getProfileState: (profileId: string) => {
+        return get().connections[profileId] || defaultProfileState;
+      },
+
+      setStatus: (profileId: string, status: ConnectionStatus) => {
+        get().ensureProfile(profileId);
+        const oldStatus = get().connections[profileId]?.status;
         set(state => ({
-          status: error ? 'error' : 'disconnected',
-          error: error || state.error, // Keep existing error if no new one provided
-          isReconnecting: false, // Ensure reconnecting is false when explicitly disconnected
+          connections: {
+            ...state.connections,
+            [profileId]: {
+              ...state.connections[profileId],
+              status,
+            },
+          },
         }));
-        logger.debug(`Disconnected. ${error ? 'Error: ' + error : ''}`);
-        eventBus.emit('connection:status-changed', { status: get().status, error: error || get().error || undefined });
+        logger.debug(`Profile ${profileId} status changed from ${oldStatus} to: ${status}`);
+        eventBus.emit('connection:status-changed', { status, error: get().connections[profileId]?.error || undefined, profileId });
       },
 
-      startReconnecting: () => {
-        if (get().status === 'connected') return; // Don't try to reconnect if already connected
-        set({ isReconnecting: true, status: 'reconnecting' });
-        logger.debug('[ConnectionStore] Reconnecting started...');
-        eventBus.emit('connection:status-changed', { status: 'reconnecting' });
+      setServerConfig: (profileId: string, config: Partial<ServerConfig>) => {
+        get().ensureProfile(profileId);
+        set(state => ({
+          connections: {
+            ...state.connections,
+            [profileId]: {
+              ...state.connections[profileId],
+              serverConfig: { ...state.connections[profileId].serverConfig, ...config },
+            },
+          },
+        }));
+        logger.debug(`[ConnectionStore] Profile ${profileId} server config updated:`, get().connections[profileId].serverConfig);
       },
 
-      stopReconnecting: () => {
-        // Only stop if actually reconnecting, and revert to a sensible prior state
-        if (get().isReconnecting) {
-          const previousStatus = get().error ? 'error' : 'disconnected';
-          set({ isReconnecting: false, status: previousStatus });
-          logger.debug('[ConnectionStore] Reconnecting stopped.');
+      setLastError: (profileId: string, error: string | null) => {
+        get().ensureProfile(profileId);
+        set(state => ({
+          connections: {
+            ...state.connections,
+            [profileId]: {
+              ...state.connections[profileId],
+              error,
+            },
+          },
+        }));
+        if (error) {
+          logger.error(`[ConnectionStore] Profile ${profileId} error set:`, error);
+          eventBus.emit('connection:error', { error: error, profileId });
+        }
+      },
+
+      setTelemetry: (profileId: string, telemetry: MCPTelemetry) => {
+        get().ensureProfile(profileId);
+        set(state => ({
+          connections: {
+            ...state.connections,
+            [profileId]: {
+              ...state.connections[profileId],
+              telemetry,
+            },
+          },
+        }));
+        eventBus.emit('connection:telemetry', { telemetry, profileId });
+      },
+
+      incrementAttempts: (profileId: string) => {
+        get().ensureProfile(profileId);
+        const newAttempts = (get().connections[profileId]?.connectionAttempts || 0) + 1;
+        set(state => ({
+          connections: {
+            ...state.connections,
+            [profileId]: {
+              ...state.connections[profileId],
+              connectionAttempts: newAttempts,
+            },
+          },
+        }));
+        logger.debug(`Profile ${profileId} connection attempts: ${newAttempts}`);
+        eventBus.emit('connection:attempt', { attempt: newAttempts, maxAttempts: get().connections[profileId].serverConfig.retryAttempts, profileId });
+      },
+
+      resetAttempts: (profileId: string) => {
+        get().ensureProfile(profileId);
+        set(state => ({
+          connections: {
+            ...state.connections,
+            [profileId]: {
+              ...state.connections[profileId],
+              connectionAttempts: 0,
+            },
+          },
+        }));
+        logger.debug(`[ConnectionStore] Profile ${profileId} connection attempts reset.`);
+      },
+
+      setConnected: (profileId: string, timestamp: number) => {
+        get().ensureProfile(profileId);
+        set(state => ({
+          connections: {
+            ...state.connections,
+            [profileId]: {
+              ...state.connections[profileId],
+              status: 'connected',
+              lastConnectedAt: timestamp,
+              connectionAttempts: 0,
+              error: null,
+              isReconnecting: false,
+            },
+          },
+        }));
+        logger.debug(`Profile ${profileId} connected at: ${new Date(timestamp).toISOString()}`);
+        eventBus.emit('connection:status-changed', { status: 'connected', profileId });
+      },
+
+      setDisconnected: (profileId: string, error?: string) => {
+        get().ensureProfile(profileId);
+        set(state => {
+          const profileConn = state.connections[profileId];
+          return {
+            connections: {
+              ...state.connections,
+              [profileId]: {
+                ...profileConn,
+                status: error ? 'error' : 'disconnected',
+                error: error || profileConn.error,
+                isReconnecting: false,
+              },
+            },
+          };
+        });
+        logger.debug(`Profile ${profileId} disconnected. ${error ? 'Error: ' + error : ''}`);
+        eventBus.emit('connection:status-changed', { status: get().connections[profileId].status, error: error || get().connections[profileId].error || undefined, profileId });
+      },
+
+      startReconnecting: (profileId: string) => {
+        get().ensureProfile(profileId);
+        if (get().connections[profileId]?.status === 'connected') return;
+        set(state => ({
+          connections: {
+            ...state.connections,
+            [profileId]: {
+              ...state.connections[profileId],
+              isReconnecting: true,
+              status: 'reconnecting',
+            },
+          },
+        }));
+        logger.debug(`[ConnectionStore] Profile ${profileId} reconnecting started...`);
+        eventBus.emit('connection:status-changed', { status: 'reconnecting', profileId });
+      },
+
+      stopReconnecting: (profileId: string) => {
+        get().ensureProfile(profileId);
+        if (get().connections[profileId]?.isReconnecting) {
+          const previousStatus = get().connections[profileId].error ? 'error' : 'disconnected';
+          set(state => ({
+            connections: {
+              ...state.connections,
+              [profileId]: {
+                ...state.connections[profileId],
+                isReconnecting: false,
+                status: previousStatus,
+              },
+            },
+          }));
+          logger.debug(`[ConnectionStore] Profile ${profileId} reconnecting stopped.`);
         }
       },
     }),
-    { name: 'ConnectionStore', store: 'connection' }, // For Redux DevTools extension
+    { name: 'ConnectionStore', store: 'connection' },
   ),
 );
-
-// Example of how this store might be used by a connection manager service
-// (This logic would typically live in a separate service/module)
-/*
-const connect = () => {
-  const { serverConfig, incrementAttempts, setConnected, setLastError, setStatus } = useConnectionStore.getState();
-  setStatus('connecting');
-  incrementAttempts();
-
-  fetch(serverConfig.uri)
-    .then(response => {
-      if (!response.ok) throw new Error(`Server error: ${response.status}`);
-      return response.text(); // or .json() depending on SSE or other protocol
-    })
-    .then(() => {
-      setConnected(Date.now());
-    })
-    .catch(err => {
-      const errorMsg = err instanceof Error ? err.message : String(err);
-      setLastError(errorMsg);
-      setStatus('error');
-      // Implement retry logic here if needed, or handle in a dedicated connection manager
-    });
-};
-*/

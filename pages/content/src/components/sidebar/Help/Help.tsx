@@ -2,9 +2,9 @@ import React, { useState, useMemo } from 'react';
 import { Typography, Icon, Button } from '../ui';
 import { Card, CardContent, CardHeader, CardTitle } from '@src/components/ui/card';
 import { cn } from '@src/lib/utils';
-import { useProfileStore } from '@src/stores/profile.store';
-import { useActivityStore } from '@src/stores/activity.store';
-import { useToastStore } from '@src/stores/toast.store';
+import { useProfileStore } from '@src/stores';
+import { useActivityStore } from '@src/stores';
+import { useToastStore } from '@src/stores';
 
 type Section =
   | 'overview'

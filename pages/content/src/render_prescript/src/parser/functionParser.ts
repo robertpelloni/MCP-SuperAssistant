@@ -1,6 +1,7 @@
 import type { FunctionInfo } from '../core/types';
 import { extractLanguageTag } from './languageParser';
 import { containsJSONFunctionCalls, extractJSONFunctionInfo } from './jsonFunctionParser';
+import * as cheerio from 'cheerio';
 
 /**
  * Analyzes content to determine if it contains function calls
@@ -53,25 +54,23 @@ export const containsFunctionCalls = (block: HTMLElement): FunctionInfo => {
   // The content to analyze (with or without language tag)
   const contentToExamine = langTagResult.content || content;
 
-  // Check for Claude Opus style function calls (XML)
-  if (contentToExamine.includes('<function_calls>') || contentToExamine.includes('<invoke')) {
+  // Use cheerio for resilient AST parsing
+  const $ = cheerio.load(contentToExamine, null, false);
+  const invokeNode = $('invoke');
+  
+  if (invokeNode.length > 0) {
     result.hasFunctionCalls = true;
     result.detectedBlockType = 'antml';
+    result.hasInvoke = true;
+    result.invokeName = invokeNode.attr('name');
 
-    result.hasInvoke = contentToExamine.includes('<invoke');
-    result.hasParameters = contentToExamine.includes('<parameter');
+    const paramsNode = $('parameter');
+    result.hasParameters = paramsNode.length > 0;
 
-    // Extract function name from invoke tag if present
-    if (result.hasInvoke) {
-      const invokeMatch = contentToExamine.match(/<invoke name="([^"]+)"(?:\s+call_id="([^"]+)")?>/);
-      if (invokeMatch && invokeMatch[1]) {
-        result.invokeName = invokeMatch[1];
-      }
-    }
-
-    // Check for complete structure
-    const hasOpeningTag = contentToExamine.includes('<function_calls>');
-    const hasClosingTag = contentToExamine.includes('</function_calls>');
+    // Check for complete structure by seeing if we can find closing tags in raw text
+    // (Since parse5 auto-closes, we do a quick raw check for strictly the closing element)
+    const hasOpeningTag = contentToExamine.includes('<function_calls>') || contentToExamine.includes('<invoke');
+    const hasClosingTag = contentToExamine.includes('</function_calls>') || contentToExamine.includes('</invoke>');
 
     result.hasClosingTags = hasOpeningTag && hasClosingTag;
     result.isComplete = result.hasClosingTags;

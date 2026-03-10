@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { useUserPreferences } from '@src/hooks';
-import { useProfileStore } from '@src/stores/profile.store';
-import { useActivityStore } from '@src/stores/activity.store';
-import { useToastStore } from '@src/stores/toast.store';
-import { useConfigStore } from '@src/stores/config.store';
+import { useProfileStore } from '@src/stores';
+import { useActivityStore } from '@src/stores';
+import { useToastStore } from '@src/stores';
+import { useConfigStore } from '@src/stores';
 import { Card, CardContent, CardHeader, CardTitle } from '@src/components/ui/card';
 import { Typography, Icon, Button, ToggleWithoutLabel, Toggle } from '../ui';
 import { AutomationService } from '@src/services/automation.service';
@@ -80,7 +80,7 @@ const Settings: React.FC = () => {
     const data = {
       preferences: preferences,
       profiles: useProfileStore.getState().profiles,
-      activeProfileId: useProfileStore.getState().activeProfileId,
+      activeProfileId: useProfileStore.getState().activeProfileIds?.[0] || null,
       logs: useActivityStore.getState().logs,
       favorites: JSON.parse(localStorage.getItem('mcpFavorites') || '[]'),
       version: '0.7.0',
@@ -114,7 +114,7 @@ const Settings: React.FC = () => {
         const data = JSON.parse(e.target?.result as string);
 
         if (data.preferences) updatePreferences(data.preferences);
-        if (data.profiles) useProfileStore.setState({ profiles: data.profiles, activeProfileId: data.activeProfileId });
+        if (data.profiles) useProfileStore.setState({ profiles: data.profiles, activeProfileIds: data.activeProfileId ? [data.activeProfileId] : [] });
         if (data.logs) useActivityStore.setState({ logs: data.logs });
         if (data.favorites) localStorage.setItem('mcpFavorites', JSON.stringify(data.favorites));
 

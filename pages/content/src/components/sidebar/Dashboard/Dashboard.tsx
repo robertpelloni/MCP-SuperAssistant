@@ -1,6 +1,6 @@
 import type React from 'react';
 import { useMemo } from 'react';
-import { useActivityStore } from '@src/stores/activity.store';
+import { useActivityStore } from '@src/stores';
 import { Card, CardContent, CardHeader, CardTitle } from '@src/components/ui/card';
 import { Typography, Icon } from '../ui';
 import { cn } from '@src/lib/utils';

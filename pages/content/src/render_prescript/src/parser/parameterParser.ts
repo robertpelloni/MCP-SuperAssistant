@@ -1,6 +1,7 @@
 import { CONFIG } from '../core/config';
 import type { Parameter, PartialParameterState } from '../core/types';
 import { extractJSONParameters } from './jsonFunctionParser';
+import * as cheerio from 'cheerio';
 
 // State storage for streaming parameters
 export const partialParameterState = new Map<string, PartialParameterState>();
@@ -76,102 +77,83 @@ export const extractParameters = (content: string, blockId: string | null = null
     return extractParametersFromJSON(content, blockId);
   }
 
-  // XML format extraction
+  // XML format extraction using Cheerio AST
   const parameters: Parameter[] = [];
-  // Improved regex to handle more edge cases in opening tag - allow for attributes in any order
-  const regex = /<parameter\s+(?:name="([^"]+)"[^>]*|[^>]*name="([^"]+)")(?:>|$)/g;
   const partialParams: PartialParameterState = blockId ? partialParameterState.get(blockId) || {} : {};
-
-  let match;
-  let lastIndex = 0;
   const newPartialState: PartialParameterState = {};
 
-  // Process all complete and partial parameter tags
-  while ((match = regex.exec(content)) !== null) {
-    // Use the first non-undefined group as the parameter name
-    const paramName = match[1] || match[2];
-    const fullMatch = match[0];
-    const startPos = match.index + fullMatch.length;
+  const $ = cheerio.load(content, null, false);
+  const paramNodes = $('parameter');
 
-    const isIncompleteTag = !fullMatch.endsWith('>');
+  // To determine if a parameter is complete, we check if there are matching closing tags.
+  // Cheerio auto-closes, so we count occurrences of `</parameter>`.
+  // This is a heuristic that works well because parameters are sequential.
+  const closingTagMatches = content.match(/<\/parameter>/g);
+  const closingTagCount = closingTagMatches ? closingTagMatches.length : 0;
 
+  paramNodes.each((index, el) => {
+    // Determine if this specific parameter has been closed
+    const isComplete = index < closingTagCount;
+    
+    // Check if the opening tag is incomplete (e.g. streaming `<parameter name="co`)
+    // If the element has no name attribute but the raw content ends with an unclosed attribute
+    let paramName = $(el).attr('name');
+    let isIncompleteTag = false;
+    
+    if (!paramName) {
+      if (index === paramNodes.length - 1 && !content.endsWith('>')) {
+        // Last node, and content doesn't end with >, might be streaming `<parameter name="...`
+        const partialTagMatch = content.match(/<parameter(?:\s+(?:name="([^"]*)")?[^>]*)?$/);
+        if (partialTagMatch) {
+          paramName = partialTagMatch[1] || 'unnamed_parameter';
+          isIncompleteTag = true;
+        } else {
+          paramName = 'unnamed_parameter';
+        }
+      } else {
+        paramName = 'unnamed_parameter';
+      }
+    }
+
+    // Extract value
+    let paramValue = $(el).text();
+    
+    // For incomplete tag, the value is streaming (empty in AST but we preserve the partial tag state)
     if (isIncompleteTag) {
-      // Handle incomplete opening tag
-      const partialContent = content.substring(startPos);
-      newPartialState[paramName] = partialContent;
-      parameters.push({
-        name: paramName,
-        value: partialContent,
-        isComplete: false,
-        isNew: !partialParams[paramName] || partialParams[paramName] !== partialContent,
-        isStreaming: true,
-        originalContent: partialContent,
-        isIncompleteTag: true,
-      });
-      continue;
+      const partialTagMatch = content.match(/<parameter(?:\s+(?:name="([^"]*)")?[^>]*)?$/);
+      paramValue = partialTagMatch ? partialTagMatch[0] : '';
+      newPartialState[`__partial_tag_${Date.now()}`] = paramValue;
     }
 
-    // Find the matching closing tag, handling nested parameters
-    let endPos = startPos;
-    let nestLevel = 1;
-    let foundEnd = false;
-
-    // More robust tag matching algorithm
-    for (let i = startPos; i < content.length; i++) {
-      // Check for another opening parameter tag
-      if (i + 10 < content.length && content.substring(i, i + 10) === '<parameter') {
-        // Only increment if it's actually a tag and not part of a string
-        // Look for whitespace or '>' after the tag name to confirm it's a tag
-        if (content.charAt(i + 10) === ' ' || content.charAt(i + 10) === '>') {
-          nestLevel++;
-        }
-      }
-      // Check for closing parameter tag
-      else if (i + 12 < content.length && content.substring(i, i + 12) === '</parameter>') {
-        nestLevel--;
-        if (nestLevel === 0) {
-          endPos = i;
-          foundEnd = true;
-          break;
-        }
-        i += 11; // Skip past the closing tag
-      }
+    if (blockId && paramValue.length > CONFIG.largeContentThreshold && !isIncompleteTag) {
+      streamingContentLengths.set(`${blockId}-${paramName}`, paramValue.length);
     }
-
-    if (foundEnd) {
-      // Complete parameter with both start and end tags
-      const paramValue = content.substring(startPos, endPos);
-      if (blockId && paramValue.length > CONFIG.largeContentThreshold) {
-        streamingContentLengths.set(`${blockId}-${paramName}`, paramValue.length);
-      }
+    
+    if (isComplete && !isIncompleteTag) {
       parameters.push({
         name: paramName,
         value: paramValue,
         isComplete: true,
       });
-      lastIndex = endPos + 12; // Move past the closing tag
     } else {
-      // Parameter with start tag but no end tag (still streaming)
-      const partialValue = content.substring(startPos);
-      newPartialState[paramName] = partialValue;
-
-      if (blockId) {
+      newPartialState[paramName] = paramValue;
+      if (blockId && !isIncompleteTag) {
         const key = `${blockId}-${paramName}`;
         const prevLength = streamingContentLengths.get(key) || 0;
-        const newLength = partialValue.length;
+        const newLength = paramValue.length;
         streamingContentLengths.set(key, newLength);
 
         const isLargeContent = newLength > CONFIG.largeContentThreshold;
         const hasGrown = newLength > prevLength;
-        const isNew = !partialParams[paramName] || partialParams[paramName] !== partialValue;
+        const isNew = !partialParams[paramName] || partialParams[paramName] !== paramValue;
 
         parameters.push({
           name: paramName,
-          value: partialValue,
+          value: paramValue,
           isComplete: false,
           isNew: isNew || hasGrown,
           isStreaming: true,
-          originalContent: partialValue,
+          originalContent: paramValue,
           isLargeContent: isLargeContent,
           contentLength: newLength,
           truncated: isLargeContent,
@@ -179,66 +161,43 @@ export const extractParameters = (content: string, blockId: string | null = null
       } else {
         parameters.push({
           name: paramName,
-          value: partialValue,
+          value: isIncompleteTag ? '(streaming...)' : paramValue,
           isComplete: false,
-          isNew: !partialParams[paramName] || partialParams[paramName] !== partialValue,
+          isNew: !partialParams[paramName] || partialParams[paramName] !== paramValue,
           isStreaming: true,
-          originalContent: partialValue,
+          originalContent: paramValue,
+          isIncompleteTag,
         });
       }
     }
-  }
+  });
 
-  // Handle partial parameter tags at the end of content
-  if (blockId && content.includes('<parameter')) {
-    // More robust regex for partial opening tags
-    const partialTagRegex = /<parameter(?:\s+(?:name="([^"]*)")?[^>]*)?$/;
-    const partialTagMatch = content.match(partialTagRegex);
-
-    if (partialTagMatch) {
-      const paramName = partialTagMatch[1] || 'unnamed_parameter';
-      const partialTag = partialTagMatch[0];
-
-      // Store the partial tag with timestamp to avoid collisions
-      newPartialState[`__partial_tag_${Date.now()}`] = partialTag;
-
-      if (paramName && paramName !== 'unnamed_parameter') {
-        const existingParam = parameters.find(p => p.name === paramName);
-        if (!existingParam) {
-          parameters.push({
-            name: paramName,
-            value: '(streaming...)',
-            isComplete: false,
-            isStreaming: true,
-            isIncompleteTag: true,
-          });
+  // Check for the specific streaming scenario where an attribute is unquoted `<parameter name="` (cheerio drops it)
+  // or just `<parameter `
+  if (paramNodes.length === 0 && content.includes('<parameter')) {
+      const partialTagRegex = /<parameter(?:\s+(?:name="([^"]*)")?[^>]*)?$/;
+      const partialTagMatch = content.match(partialTagRegex);
+  
+      if (partialTagMatch) {
+        const paramName = partialTagMatch[1] || 'unnamed_parameter';
+        const partialTag = partialTagMatch[0];
+  
+        // Store the partial tag with timestamp to avoid collisions
+        newPartialState[`__partial_tag_${Date.now()}`] = partialTag;
+  
+        if (paramName && paramName !== 'unnamed_parameter') {
+          const existingParam = parameters.find(p => p.name === paramName);
+          if (!existingParam) {
+            parameters.push({
+              name: paramName,
+              value: '(streaming...)',
+              isComplete: false,
+              isStreaming: true,
+              isIncompleteTag: true,
+            });
+          }
         }
       }
-    }
-
-    // Enhanced regex to detect open parameter that might be streaming content
-    const lastParamTagRegex = /<parameter\s+(?:name="([^"]+)"[^>]*|[^>]*name="([^"]+)")>([^<]*?)$/i;
-    const lastParamTagMatch = content.match(lastParamTagRegex);
-
-    if (lastParamTagMatch) {
-      // Use the first non-undefined group as the parameter name
-      const paramName = lastParamTagMatch[1] || lastParamTagMatch[2];
-      const partialContent = lastParamTagMatch[3] || '';
-
-      if (paramName && partialContent) {
-        newPartialState[`__streaming_content_${paramName}`] = partialContent;
-        const existingParam = parameters.find(p => p.name === paramName);
-        if (!existingParam) {
-          parameters.push({
-            name: paramName,
-            value: partialContent,
-            isComplete: false,
-            isStreaming: true,
-            originalContent: partialContent,
-          });
-        }
-      }
-    }
   }
 
   // Update the partial state for this block if we have an ID

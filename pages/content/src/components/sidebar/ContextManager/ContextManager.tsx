@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { useContextStore, type ContextItem } from '@src/stores/context.store';
+import { useContextStore, type ContextItem } from '@src/stores';
 import { Button, Icon, Typography, Textarea, Input } from '../ui';
-import { useToastStore } from '@src/stores/toast.store';
+import { useToastStore } from '@src/stores';
 import { cn } from '@src/lib/utils';
 import { Card } from '@src/components/ui/card';
 

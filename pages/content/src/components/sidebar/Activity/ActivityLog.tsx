@@ -1,6 +1,6 @@
 import type React from 'react';
 import { useState, useMemo } from 'react';
-import { useActivityStore, type LogType, type LogStatus } from '@src/stores/activity.store';
+import { useActivityStore, type LogType, type LogStatus } from '@src/stores';
 import { Card, CardContent, CardHeader } from '@src/components/ui/card';
 import { Typography, Icon, Button } from '../ui';
 import { RichRenderer } from '../ui/RichRenderer';

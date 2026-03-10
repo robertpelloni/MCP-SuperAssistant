@@ -205,7 +205,8 @@ async function initializeApplicationState(): Promise<void> {
 
     // Check for connection configuration and attempt initial connection
     const connectionStore = useConnectionStore.getState();
-    const serverConfig = connectionStore.serverConfig;
+    const defaultProfileConfig = connectionStore.connections['default-sse']?.serverConfig;
+    const serverConfig = defaultProfileConfig;
 
     if (serverConfig && serverConfig.uri) {
       logger.debug('Server configuration found, connection will be handled by background script and MCP client');

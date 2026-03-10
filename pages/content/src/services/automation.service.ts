@@ -1,4 +1,4 @@
-import { useUIStore } from '@src/stores/ui.store';
+import { useUIStore } from '@src/stores';
 
 export class AutomationService {
   private static instance: AutomationService;

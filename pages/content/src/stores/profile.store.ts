@@ -11,11 +11,12 @@ export interface ConnectionProfile {
 
 interface ProfileStore {
   profiles: ConnectionProfile[];
-  activeProfileId: string | null;
+  activeProfileIds: string[];
   addProfile: (profile: Omit<ConnectionProfile, 'id'>) => void;
   removeProfile: (id: string) => void;
   updateProfile: (id: string, updates: Partial<ConnectionProfile>) => void;
-  setActiveProfile: (id: string | null) => void;
+  toggleProfileActive: (id: string) => void;
+  setProfilesActive: (ids: string[]) => void;
 }
 
 export const useProfileStore = create<ProfileStore>()(
@@ -35,7 +36,7 @@ export const useProfileStore = create<ProfileStore>()(
           connectionType: 'websocket',
         },
       ],
-      activeProfileId: 'default-sse',
+      activeProfileIds: ['default-sse'],
       addProfile: profile =>
         set(state => ({
           profiles: [...state.profiles, { ...profile, id: crypto.randomUUID() }],
@@ -43,14 +44,19 @@ export const useProfileStore = create<ProfileStore>()(
       removeProfile: id =>
         set(state => ({
           profiles: state.profiles.filter(p => p.id !== id),
-          // If active profile is removed, reset to null
-          activeProfileId: state.activeProfileId === id ? null : state.activeProfileId,
+          activeProfileIds: state.activeProfileIds.filter(activeId => activeId !== id),
         })),
       updateProfile: (id, updates) =>
         set(state => ({
           profiles: state.profiles.map(p => (p.id === id ? { ...p, ...updates } : p)),
         })),
-      setActiveProfile: id => set({ activeProfileId: id }),
+      toggleProfileActive: id => 
+        set(state => ({ 
+          activeProfileIds: state.activeProfileIds.includes(id) 
+            ? state.activeProfileIds.filter(activeId => activeId !== id)
+            : [...state.activeProfileIds, id]
+        })),
+      setProfilesActive: ids => set({ activeProfileIds: ids }),
     }),
     {
       name: 'mcp-connection-profiles',

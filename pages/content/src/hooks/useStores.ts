@@ -1,10 +1,6 @@
 // hooks/useStores.ts
-import { useAppStore } from '../stores/app.store';
-import { useConnectionStore } from '../stores/connection.store';
-import { useToolStore } from '../stores/tool.store';
-import type { AppState } from '../stores/app.store';
-import { useUIStore } from '../stores/ui.store';
-import { useAdapterStore } from '../stores/adapter.store';
+import { useAppStore, useConnectionStore, useToolStore, useUIStore, useAdapterStore } from '../stores';
+import type { AppState } from '../stores';
 import { useShallow } from 'zustand/shallow';
 
 // Composed store hook for components that need multiple stores
@@ -52,27 +48,40 @@ export const useCurrentSite = () =>
     })),
   );
 
-export const useConnectionStatus = () =>
+export const useConnectionStatus = (profileId: string = 'default-sse') =>
   useConnectionStore(
-    useShallow(state => ({
-      status: state.status,
-      isConnected: state.status === 'connected',
-      isConnecting: state.status === 'connecting',
-      isReconnecting: state.isReconnecting,
-      error: state.error,
-      serverConfig: state.serverConfig,
-      lastConnectedAt: state.lastConnectedAt,
-      connectionAttempts: state.connectionAttempts,
-      maxRetryAttempts: state.serverConfig.retryAttempts,
-    })),
+    useShallow(state => {
+      const pState = state.connections[profileId] || {
+        status: 'disconnected',
+        serverConfig: { uri: 'http://localhost:3006/sse', connectionType: 'sse', retryAttempts: 3 },
+        isReconnecting: false,
+        error: null,
+        lastConnectedAt: null,
+        connectionAttempts: 0
+      };
+      return {
+        status: pState.status,
+        isConnected: pState.status === 'connected',
+        isConnecting: pState.status === 'connecting',
+        isReconnecting: pState.isReconnecting,
+        error: pState.error,
+        serverConfig: pState.serverConfig,
+        lastConnectedAt: pState.lastConnectedAt,
+        connectionAttempts: pState.connectionAttempts,
+        maxRetryAttempts: pState.serverConfig?.retryAttempts || 3,
+      };
+    }),
   );
 
-export const useServerConfig = () =>
+export const useServerConfig = (profileId: string = 'default-sse') =>
   useConnectionStore(
-    useShallow(state => ({
-      config: state.serverConfig,
-      setConfig: state.setServerConfig,
-    })),
+    useShallow(state => {
+      const config = state.connections[profileId]?.serverConfig || { uri: 'http://localhost:3006/sse', connectionType: 'sse' };
+      return {
+        config,
+        setConfig: (newConfig: any) => state.setServerConfig(profileId, newConfig),
+      };
+    }),
   );
 
 export const useAvailableTools = () =>
@@ -271,10 +280,10 @@ export const useRegisteredAdapters = () =>
   );
 
 // Performance-optimized hooks for specific use cases
-export const useConnectionHealth = () =>
+export const useConnectionHealth = (profileId: string = 'default-sse') =>
   useConnectionStore(
     useShallow(state => ({
-      lastConnectedAt: state.lastConnectedAt,
+      lastConnectedAt: state.connections[profileId]?.lastConnectedAt || null,
     })),
   );
 

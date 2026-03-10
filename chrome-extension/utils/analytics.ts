@@ -9,8 +9,8 @@
 // Ensure .env is in your .gitignore file!
 // VITE_GA_API_SECRET=YOUR_API_SECRET
 // Ensure .env is in your .gitignore file!
-const MEASUREMENT_ID = import.meta.env.CEB_GA_MEASUREMENT_ID;
-const API_SECRET = import.meta.env.CEB_GA_API_SECRET;
+const MEASUREMENT_ID = (import.meta as any).env.CEB_GA_MEASUREMENT_ID;
+const API_SECRET = (import.meta as any).env.CEB_GA_API_SECRET;
 
 import { createLogger } from '@extension/shared/lib/logger';
 

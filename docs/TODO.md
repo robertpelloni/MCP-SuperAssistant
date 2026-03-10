@@ -24,7 +24,7 @@
 - [ ] **i18n activation**: The `packages/i18n` infrastructure exists but has no translations loaded. Generate English strings file and wire it up.
 - [ ] **Cloud Sync**: Sync macros and context across devices via Chrome Sync API or external backend.
 - [ ] **Multi-Proxy**: Connect to multiple MCP servers simultaneously.
-- [ ] **Tool Chaining Visual Builder**: Replace the linear Macro steps with a node-based graph editor.
+- [x] **Tool Chaining Visual Builder**: Replace the linear Macro steps with a node-based graph editor.
 - [x] **Clean up UNIVERSAL_LLM_INSTRUCTIONS.md**: This file exists at the root of `docs/` and may duplicate or conflict with `AGENTS.md`. Consolidate or remove.
 
 ## Code Hygiene

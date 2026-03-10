@@ -106,7 +106,7 @@ const contentAnalysisCache = new Map<
 >();
 
 // Debounced rendering to prevent rapid-fire updates
-const renderingDebouncer = new Map<string, number>();
+const renderingDebouncer = new Map<string, any>();
 const RENDER_DEBOUNCE_MS = 50; // 50ms debounce for smooth rendering
 
 // Make resyncingBlocks globally accessible to prevent re-rendering during resync
@@ -312,7 +312,7 @@ const processChunkImmediate = (
   }, delay);
 
   // Clear any existing timer and set new one
-  const existingTimer = renderingDebouncer.get(blockId);
+  const existingTimer: any = renderingDebouncer.get(blockId);
   if (existingTimer) clearTimeout(existingTimer);
   renderingDebouncer.set(blockId, timer);
 };
@@ -414,13 +414,13 @@ const analyzeFunctionContent = (
  */
 const scheduleOptimizedRender = (blockId: string, target: HTMLElement): void => {
   // Clear any existing debounce timer
-  const existingTimer = renderingDebouncer.get(blockId);
+  const existingTimer: any = renderingDebouncer.get(blockId);
   if (existingTimer) {
     clearTimeout(existingTimer);
   }
 
   // Schedule new render with debouncing
-  const timer = setTimeout(() => {
+  const timer: any = setTimeout(() => {
     renderingDebouncer.delete(blockId);
 
     // Only render if not completed or resyncing
@@ -673,7 +673,7 @@ export const checkStreamingUpdates = (): void => {
   for (const container of targetContainers) {
     for (const selector of CONFIG.targetSelectors) {
       const elements = container.querySelectorAll<HTMLElement>(selector);
-      for (const element of elements) {
+      for (const element of Array.from(elements)) {
         const blockId = element.getAttribute('data-block-id');
         if (!blockId) continue;
 

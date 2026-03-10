@@ -1,5 +1,5 @@
 import type { AdapterPlugin, PluginContext, AdapterCapability } from './plugin-types';
-import type { RemoteNotification, FeatureFlag } from '../stores/config.store';
+import type { RemoteNotification, FeatureFlag } from '../stores';
 
 export class RemoteConfigPlugin implements AdapterPlugin {
   readonly name = 'remote-config-plugin';

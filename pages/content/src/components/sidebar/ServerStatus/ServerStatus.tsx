@@ -3,7 +3,8 @@ import type React from 'react';
 import { useState, useEffect, useCallback } from 'react';
 import { useMcpCommunication } from '@src/hooks/useMcpCommunication';
 import { useConnectionStatus, useServerConfig } from '../../../hooks';
-import { useProfileStore } from '@src/stores/profile.store';
+import { useConnectionStore } from '@src/stores';
+import { useProfileStore } from '@src/stores';
 import { logMessage } from '@src/utils/helpers';
 import { eventBus } from '@src/events/event-bus';
 import { Typography, Icon, Button } from '../ui';
@@ -27,7 +28,21 @@ const ServerStatus: React.FC<ServerStatusProps> = ({ status: initialStatus }) =>
   } = useConnectionStatus();
 
   const { config: serverConfig, setConfig: setServerConfig } = useServerConfig();
-  const { profiles, activeProfileId, addProfile, removeProfile, setActiveProfile } = useProfileStore();
+  const { profiles, activeProfileIds, addProfile, removeProfile, setProfilesActive } = useProfileStore();
+  const activeProfileId = activeProfileIds?.[0] || null;
+  const setActiveProfile = (id: string | null) => {
+    if (id) {
+      setProfilesActive([id]);
+    } else {
+      setProfilesActive([]);
+    }
+  };
+
+  const telemetry = useConnectionStore(state =>
+    activeProfileId
+      ? state.connections[activeProfileId]?.telemetry
+      : undefined
+  ) || undefined;
 
   // Local UI state
   const [showDetails, setShowDetails] = useState(false);
@@ -653,7 +668,7 @@ const ServerStatus: React.FC<ServerStatusProps> = ({ status: initialStatus }) =>
         'relative px-4 py-3 border-b border-slate-200 dark:border-slate-800 transition-all duration-300 ease-out server-status-stable',
         // Add conditional styling for disconnected/error states with smooth transitions
         isDisconnectedOrError &&
-          'bg-gradient-to-r from-rose-50 to-red-50 dark:from-rose-900/10 dark:to-red-900/10 border border-rose-200 dark:border-rose-800/50 rounded-sm shadow-sm',
+        'bg-gradient-to-r from-rose-50 to-red-50 dark:from-rose-900/10 dark:to-red-900/10 border border-rose-200 dark:border-rose-800/50 rounded-sm shadow-sm',
       )}>
       {/* Success animation overlay - subtle */}
       {showSuccessAnimation && (
@@ -1088,6 +1103,51 @@ const ServerStatus: React.FC<ServerStatusProps> = ({ status: initialStatus }) =>
                   <div className="flex justify-between items-center py-1">
                     <span className="font-medium text-slate-700 dark:text-slate-200">Last reconnect:</span>
                     <span className="text-slate-600 dark:text-slate-300">{lastReconnectTime}</span>
+                  </div>
+                )}
+
+                {/* Telemetry Metrics Section */}
+                {telemetry && (
+                  <div className="pt-2 border-t border-slate-100 dark:border-slate-800">
+                    <div className="mb-2 font-medium text-slate-700 dark:text-slate-200">System Telemetry</div>
+
+                    {/* CPU Usage Bar */}
+                    <div className="flex flex-col gap-1 mb-2">
+                      <div className="flex justify-between text-xs text-slate-600 dark:text-slate-400">
+                        <span>CPU Usage</span>
+                        <span>{telemetry.cpuUsage?.toFixed(1) || 0}%</span>
+                      </div>
+                      <div className="h-1.5 w-full bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
+                        <div
+                          className="h-full bg-blue-500 rounded-full transition-all duration-500"
+                          style={{ width: `${Math.min(100, telemetry.cpuUsage || 0)}%` }}
+                        />
+                      </div>
+                    </div>
+
+                    {/* Memory Usage Bar */}
+                    <div className="flex flex-col gap-1 mb-2">
+                      <div className="flex justify-between text-xs text-slate-600 dark:text-slate-400">
+                        <span>Memory Usage</span>
+                        <span>{telemetry.memoryUsage?.toFixed(1) || 0} MB</span>
+                      </div>
+                      <div className="h-1.5 w-full bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
+                        <div
+                          className="h-full bg-purple-500 rounded-full transition-all duration-500"
+                          style={{ width: `${Math.min(100, Math.max(0, ((telemetry.memoryUsage || 0) / 1024) * 100))}%` }}
+                        />
+                      </div>
+                    </div>
+
+                    {/* Uptime */}
+                    {telemetry.uptime && (
+                      <div className="flex justify-between items-center py-1 mt-1 text-xs">
+                        <span className="text-slate-600 dark:text-slate-400">Uptime</span>
+                        <span className="text-slate-700 dark:text-slate-300 font-mono">
+                          {Math.floor(telemetry.uptime / 3600)}h {Math.floor((telemetry.uptime % 3600) / 60)}m
+                        </span>
+                      </div>
+                    )}
                   </div>
                 )}
 

@@ -19,6 +19,9 @@ import { initializeLogger, createLogger } from '@extension/shared/lib/logger';
 // Import the new initialization system
 import { applicationInit, applicationCleanup, initializationUtils } from './core/main-initializer';
 
+// Import global Spotlight
+import { spotlightManager } from './components/Spotlight/SpotlightManager';
+
 // Import the render script functions
 import {
   initialize as initializeRenderer,
@@ -109,6 +112,11 @@ logMessage('Content script loaded - initializing with Session 10 architecture');
 // Initialize URL change tracking for demographic analytics
 let lastUrl = window.location.href;
 const demographicData = collectDemographicData();
+
+// Initialize the global Spotlight overlay
+spotlightManager.initialize().catch(err => {
+  logger.error('[ContentScript] Failed to initialize Spotlight Manager:', err);
+});
 
 // Track initial page view with demographic data
 try {
@@ -549,7 +557,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     sendResponse({
       success: true,
       stats: {
-        mcpConnected: useConnectionStore.getState().status === 'connected',
+        mcpConnected: Object.values(useConnectionStore.getState().connections).some(conn => conn.status === 'connected'),
         activeSite: adapter?.name || 'Unknown',
       },
     });

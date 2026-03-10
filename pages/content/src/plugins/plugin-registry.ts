@@ -3,12 +3,7 @@ import { eventBus } from '../events/event-bus';
 import type { EventMap } from '../events';
 import performanceMonitor from '../core/performance';
 import globalErrorHandler from '../core/error-handler';
-import { useAdapterStore } from '../stores/adapter.store';
-import { useAppStore } from '../stores/app.store';
-import { useConnectionStore } from '../stores/connection.store';
-import { useToolStore } from '../stores/tool.store';
-import { useUIStore } from '../stores/ui.store';
-import { useConfigStore } from '../stores/config.store';
+import { useAdapterStore, useAppStore, useConnectionStore, useToolStore, useUIStore, useConfigStore } from '../stores';
 import type {
   AdapterPlugin,
   PluginRegistration,

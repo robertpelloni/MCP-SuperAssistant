@@ -6,6 +6,7 @@ import type {
   Notification,
   GlobalSettings,
   Tool,
+  MCPTelemetry,
 } from '../types/stores';
 import type { AdapterConfig } from '../plugins/plugin-types';
 import type { RemoteNotification, FeatureFlag } from '../stores/config.store';
@@ -20,10 +21,11 @@ export interface EventMap {
   'app:settings-updated': { settings: Partial<GlobalSettings> };
 
   // Connection events
-  'connection:status-changed': { status: ConnectionStatus; error?: string };
-  'connection:attempt': { attempt: number; maxAttempts: number };
-  'connection:heartbeat': { timestamp: number };
-  'connection:error': { error: string; code?: string | number };
+  'connection:status-changed': { status: ConnectionStatus; error?: string; profileId?: string };
+  'connection:attempt': { attempt: number; maxAttempts: number; profileId?: string };
+  'connection:heartbeat': { timestamp: number; profileId?: string };
+  'connection:error': { error: string; code?: string | number; profileId?: string };
+  'connection:telemetry': { telemetry: MCPTelemetry; profileId?: string };
 
   // Tool events
   'tool:detected': { tools: DetectedTool[]; source: string };
@@ -53,6 +55,7 @@ export interface EventMap {
   'sidebar:toggle-requested': {};
   'sidebar:show-with-outputs': {};
   'sidebar:refresh-content': {};
+  'sidebar:navigate': string;
 
   // Plugin events
   'plugin:registry-initialized': { timestamp: number; registeredPlugins: number };

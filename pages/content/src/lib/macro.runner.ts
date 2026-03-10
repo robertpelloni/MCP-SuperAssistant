@@ -1,5 +1,5 @@
-import { Macro, MacroStep } from '../stores/macro.store';
-import { logMessage } from '@src/utils/helpers';
+import { type Macro } from '../stores';
+import type { Edge, Node } from '@xyflow/react';
 
 export class MacroRunner {
   private sendMessage: (toolName: string, args: any) => Promise<any>;
@@ -16,73 +16,96 @@ export class MacroRunner {
   async run(macro: Macro) {
     this.onLog(`Starting macro: ${macro.name}`, 'info');
 
-    let currentStepIndex = 0;
+    // Build adjacency list for edges
+    const incomingEdges = new Map<string, Edge[]>();
+    const outgoingEdges = new Map<string, Edge[]>();
+
+    for (const node of macro.nodes) {
+      incomingEdges.set(node.id, []);
+      outgoingEdges.set(node.id, []);
+    }
+
+    for (const edge of macro.edges) {
+      if (!incomingEdges.has(edge.target)) incomingEdges.set(edge.target, []);
+      if (!outgoingEdges.has(edge.source)) outgoingEdges.set(edge.source, []);
+      incomingEdges.get(edge.target)!.push(edge);
+      outgoingEdges.get(edge.source)!.push(edge);
+    }
+
+    // Identify start nodes (nodes with 0 incoming edges)
+    // If a workflow has cycles, indegree 0 might not exist or might miss nodes.
+    // For simplicity, we start with indegree 0.
+    const startNodes = macro.nodes.filter(n => incomingEdges.get(n.id)!.length === 0);
+
+    // Fallback: if no empty incoming edges, randomly pick the first node.
+    const queue: Node[] = startNodes.length > 0 ? [...startNodes] : (macro.nodes.length > 0 ? [macro.nodes[0]] : []);
+
     const results: any[] = [];
     let lastResult: any = null;
     const env: Record<string, any> = {};
+    const visited = new Set<string>();
+
     const maxSteps = 1000; // Safety limit
     let stepCount = 0;
 
-    while (currentStepIndex < macro.steps.length && currentStepIndex >= 0) {
+    while (queue.length > 0) {
       if (stepCount++ > maxSteps) {
         throw new Error('Macro execution exceeded maximum step limit (potential infinite loop)');
       }
 
-      const step = macro.steps[currentStepIndex];
-      this.onLog(`Executing step ${currentStepIndex + 1}: ${step.type}`, 'info');
+      const node = queue.shift()!;
+      if (visited.has(node.id)) continue; // Keep it simple: no cycles, run once per node
+      visited.add(node.id);
+
+      this.onLog(`Executing node ${node.id} (${node.type || 'default'})`, 'info');
 
       try {
-        if (step.type === 'tool') {
-          if (!step.toolName) throw new Error('Tool name missing');
+        const data = (node.data || {}) as Record<string, any>;
+        let nextHandle: string | null = null; // Used by condition nodes to route next target
 
-          this.onLog(`Running tool: ${step.toolName}`, 'info');
+        if (node.type === 'tool') {
+          if (!data.toolName) throw new Error('Tool name missing in tool block');
 
-          const processedArgs = this.processArgs(step.args, lastResult, results, env);
+          this.onLog(`Running tool: ${data.toolName}`, 'info');
+          const processedArgs = this.processArgs(data.args, lastResult, results, env);
 
-          lastResult = await this.sendMessage(step.toolName, processedArgs);
+          lastResult = await this.sendMessage(data.toolName, processedArgs);
           results.push(lastResult);
 
-          this.onLog(`Tool finished: ${step.toolName}`, 'success');
-          currentStepIndex++;
+          this.onLog(`Tool finished: ${data.toolName}`, 'success');
 
-        } else if (step.type === 'delay') {
-          const delay = step.delayMs || 1000;
+        } else if (node.type === 'delay') {
+          const delay = data.delayMs || 1000;
           this.onLog(`Waiting ${delay}ms...`, 'info');
           await new Promise(r => setTimeout(r, delay));
-          currentStepIndex++;
 
-        } else if (step.type === 'set_variable') {
-          const name = step.variableName;
-          const valueExpr = step.variableValue || '';
+        } else if (node.type === 'set_variable') {
+          const name = data.variableName;
+          const valueExpr = data.variableValue || '';
 
           if (name) {
-            // Check if valueExpr is a simple string or an expression
-            // For now, simple evaluation of "lastResult.prop" or static string
             let value: any = valueExpr;
 
-            // Basic resolution of variables in the value expression
             if (valueExpr === 'lastResult') {
               value = lastResult;
-            } else if (valueExpr.startsWith('lastResult.')) {
+            } else if (typeof valueExpr === 'string' && valueExpr.startsWith('lastResult.')) {
               const path = valueExpr.replace('lastResult.', '');
-              value = path.split('.').reduce((o, k) => (o || {})[k], lastResult);
-            } else if (valueExpr.startsWith('env.')) {
+              value = path.split('.').reduce((o: any, k: string) => (o || {})[k], lastResult);
+            } else if (typeof valueExpr === 'string' && valueExpr.startsWith('env.')) {
               const path = valueExpr.replace('env.', '');
-              value = path.split('.').reduce((o, k) => (o || {})[k], env);
+              value = path.split('.').reduce((o: any, k: string) => (o || {})[k], env);
             } else if (valueExpr === 'allResults') {
               value = results;
-            } else if (!isNaN(Number(valueExpr))) {
+            } else if (typeof valueExpr === 'string' && !isNaN(Number(valueExpr)) && valueExpr.trim() !== '') {
               value = Number(valueExpr);
             }
-            // else treat as string literal
 
             env[name] = value;
             this.onLog(`Variable set: ${name} = ${JSON.stringify(value)}`, 'info');
           }
-          currentStepIndex++;
 
-        } else if (step.type === 'condition') {
-          const condition = step.expression || 'false';
+        } else if (node.type === 'condition') {
+          const condition = data.expression || 'false';
           let conditionResult = false;
 
           try {
@@ -93,28 +116,27 @@ export class MacroRunner {
             conditionResult = false;
           }
 
-          const action = conditionResult ? step.trueAction : step.falseAction;
-          const target = conditionResult ? step.trueTargetStepId : step.falseTargetStepId;
-
-          if (action === 'stop') {
-            this.onLog('Macro stopped by condition', 'info');
-            break;
-          } else if (action === 'goto' && target) {
-            const nextIndex = macro.steps.findIndex(s => s.id === target);
-            if (nextIndex === -1) {
-              this.onLog(`Target step ${target} not found`, 'error');
-              break;
-            }
-            currentStepIndex = nextIndex;
-          } else {
-            // 'continue' or default
-            currentStepIndex++;
-          }
-        } else {
-          currentStepIndex++;
+          // Condition nodes map true/false to specific target handles on their output edges.
+          // By convention, condition node has sourceHandle='true' and sourceHandle='false'.
+          nextHandle = conditionResult ? 'true' : 'false';
         }
+
+        // Push subsequent nodes into the execution queue
+        const outEdges = outgoingEdges.get(node.id) || [];
+        for (const edge of outEdges) {
+          // If we evaluated a Condition, only follow the edge matching the result handle
+          if (nextHandle && edge.sourceHandle && edge.sourceHandle !== nextHandle) {
+            continue;
+          }
+
+          const targetNode = macro.nodes.find(n => n.id === edge.target);
+          if (targetNode && !visited.has(targetNode.id)) {
+            queue.push(targetNode);
+          }
+        }
+
       } catch (error) {
-        this.onLog(`Step failed: ${error}`, 'error');
+        this.onLog(`Node execution failed: ${error}`, 'error');
         throw error;
       }
     }
@@ -132,7 +154,7 @@ export class MacroRunner {
         if (typeof obj[key] === 'string') {
           const val = obj[key];
           // Check for variable substitution: {{variableName}}
-          if (val.match(/^\{\{[\w\d\.]+\}\}$/)) {
+          if (val.match(/^\{\{[\w\d\.\[\]]+\}\}$/)) {
             // Exact match substitution (preserves type)
             const varName = val.slice(2, -2);
             if (varName === 'lastResult') obj[key] = lastResult;
@@ -143,7 +165,7 @@ export class MacroRunner {
             }
           } else if (val.includes('{{')) {
             // String interpolation
-            obj[key] = val.replace(/\{\{([\w\d\.]+)\}\}/g, (_: string, varName: string) => {
+            obj[key] = val.replace(/\{\{([\w\d\.\[\]]+)\}\}/g, (_: string, varName: string) => {
               if (varName === 'lastResult') return JSON.stringify(lastResult);
               if (env[varName] !== undefined) return String(env[varName]);
               if (varName.startsWith('lastResult.')) {
@@ -169,15 +191,10 @@ export class MacroRunner {
     if (expr === 'true') return true;
     if (expr === 'false') return false;
 
-    // Simple parser: path operator value
     // Matches: path operator value
     const match = expr.match(/^([\w\d\.\[\]]+)\s*(===|==|!==|!=|>|<|>=|<=)\s*(.+)$/);
 
-    if (!match) {
-      // Fallback: strict property existence check? No, default false.
-      // Maybe log warning in caller if needed, but here just return false.
-      return false;
-    }
+    if (!match) return false;
 
     const [_, path, op, rightStr] = match;
 
@@ -197,7 +214,7 @@ export class MacroRunner {
       rightVal = true;
     } else if (rightVal === 'false') {
       rightVal = false;
-    } else if (!isNaN(Number(rightVal))) {
+    } else if (!isNaN(Number(rightVal)) && rightVal !== '') {
       rightVal = Number(rightVal);
     }
 

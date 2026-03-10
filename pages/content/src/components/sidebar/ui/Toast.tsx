@@ -1,6 +1,6 @@
 import type React from 'react';
 import { useEffect, useState } from 'react';
-import { useToastStore, type Toast as ToastType } from '@src/stores/toast.store';
+import { useToastStore, type Toast as ToastType } from '@src/stores';
 import { Icon, Typography } from './'; // Using local UI components
 import { cn } from '@src/lib/utils';
 

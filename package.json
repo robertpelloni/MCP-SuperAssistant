@@ -41,7 +41,9 @@
   "dependencies": {
     "firebase": "^11.9.1",
     "react": "19.1.0",
-    "react-dom": "19.0.0"
+    "react-dom": "19.0.0",
+    "webext-bridge": "^6.0.1",
+    "zod": "^4.3.5"
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.11.1",

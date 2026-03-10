@@ -2,7 +2,7 @@ import type React from 'react';
 import { useState, useEffect } from 'react';
 import { cn } from '@src/lib/utils';
 import { Icon, Button } from '../ui';
-import { useToastStore } from '@src/stores/toast.store';
+import { useToastStore } from '@src/stores';
 import ContextManager from '../ContextManager/ContextManager';
 
 interface InputAreaProps {
@@ -35,13 +35,13 @@ const InputArea: React.FC<InputAreaProps> = ({ onSubmit, onToggleMinimize }) => 
 
     // Listen for context save events from sidebar/background
     const unsubscribeContextSave = eventBus.on('context:save', (data) => {
-        setContextManagerInitialContent(data.content);
-        setShowContextManager(true);
+      setContextManagerInitialContent(data.content);
+      setShowContextManager(true);
     });
 
     return () => {
-        document.removeEventListener('selectionchange', handleSelectionChange);
-        unsubscribeContextSave();
+      document.removeEventListener('selectionchange', handleSelectionChange);
+      unsubscribeContextSave();
     };
   }, []);
 
@@ -142,14 +142,14 @@ const InputArea: React.FC<InputAreaProps> = ({ onSubmit, onToggleMinimize }) => 
       {/* Context Manager Overlay */}
       {showContextManager && (
         <div className="absolute bottom-full left-0 right-0 h-[400px] mb-2 z-50 shadow-2xl rounded-t-lg overflow-hidden border border-slate-200 dark:border-slate-700">
-           <ContextManager
-             onInsert={handleInsertContext}
-             onClose={() => {
-                 setShowContextManager(false);
-                 setContextManagerInitialContent('');
-             }}
-             initialContent={contextManagerInitialContent}
-           />
+          <ContextManager
+            onInsert={handleInsertContext}
+            onClose={() => {
+              setShowContextManager(false);
+              setContextManagerInitialContent('');
+            }}
+            initialContent={contextManagerInitialContent}
+          />
         </div>
       )}
 

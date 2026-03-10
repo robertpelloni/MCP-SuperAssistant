@@ -5,6 +5,7 @@
  */
 
 import type { ServerConfig, ConnectionStatus, Tool } from './stores';
+import type { ProtocolWithReturn } from 'webext-bridge';
 
 // Base message structure for all communication
 export interface BaseMessage {
@@ -35,6 +36,7 @@ export interface ResponseMessage<T = any> extends BaseMessage {
 export interface CallToolRequest {
   toolName: string;
   args: Record<string, unknown>;
+  profileId: string;
 }
 
 export interface CallToolResponse {
@@ -42,7 +44,9 @@ export interface CallToolResponse {
 }
 
 // Connection status
-export interface GetConnectionStatusRequest {}
+export interface GetConnectionStatusRequest {
+  profileId?: string;
+}
 
 export interface GetConnectionStatusResponse {
   status: ConnectionStatus;
@@ -53,6 +57,7 @@ export interface GetConnectionStatusResponse {
 // Tools listing
 export interface GetToolsRequest {
   forceRefresh?: boolean;
+  profileId?: string; // Optional for backwards compatibility, but should be provided in Multi-Proxy
 }
 
 export interface GetToolsResponse {
@@ -60,7 +65,11 @@ export interface GetToolsResponse {
 }
 
 // Force reconnect
-export interface ForceReconnectRequest {}
+export interface ForceReconnectRequest {
+  profileId: string;
+  uri?: string;
+  transportType?: string;
+}
 
 export interface ForceReconnectResponse {
   isConnected: boolean;
@@ -69,7 +78,9 @@ export interface ForceReconnectResponse {
 }
 
 // Server configuration
-export interface GetServerConfigRequest {}
+export interface GetServerConfigRequest {
+  profileId?: string;
+}
 
 export interface GetServerConfigResponse {
   config: ServerConfig;
@@ -77,6 +88,7 @@ export interface GetServerConfigResponse {
 
 export interface UpdateServerConfigRequest {
   config: Partial<ServerConfig>;
+  profileId?: string;
 }
 
 export interface UpdateServerConfigResponse {
@@ -86,12 +98,15 @@ export interface UpdateServerConfigResponse {
 // Heartbeat
 export interface HeartbeatRequest {
   timestamp: number;
+  profileId?: string;
 }
 
 export interface HeartbeatResponse {
   timestamp: number;
   isConnected: boolean;
   receivedTimestamp: number;
+  profileId?: string;
+  telemetry?: any;
 }
 
 // Broadcast message types (one-way messages from background to content)
@@ -101,19 +116,23 @@ export interface ConnectionStatusChangedBroadcast {
   error?: string;
   isConnected: boolean;
   timestamp: number;
+  profileId?: string;
 }
 
 export interface ToolUpdateBroadcast {
   tools: Tool[];
+  profileId?: string;
 }
 
 export interface ServerConfigUpdatedBroadcast {
   config: ServerConfig;
+  profileId?: string;
 }
 
 export interface HeartbeatResponseBroadcast {
   timestamp: number;
   isConnected: boolean;
+  profileId?: string;
 }
 
 // Message type union for better type safety
@@ -255,4 +274,27 @@ export function createBroadcastMessage<T>(type: McpMessageType, payload: T): Bas
     origin: 'background',
     timestamp: Date.now(),
   };
+}
+
+// ---------------------------------------------------------------------------
+// webext-bridge ProtocolMap
+// ---------------------------------------------------------------------------
+
+declare module 'webext-bridge' {
+  export interface ProtocolMap {
+    // Two-way requests
+    'mcp:call-tool': ProtocolWithReturn<CallToolRequest, CallToolResponse>;
+    'mcp:get-connection-status': ProtocolWithReturn<GetConnectionStatusRequest, GetConnectionStatusResponse>;
+    'mcp:get-tools': ProtocolWithReturn<GetToolsRequest, GetToolsResponse>;
+    'mcp:force-reconnect': ProtocolWithReturn<ForceReconnectRequest, ForceReconnectResponse>;
+    'mcp:get-server-config': ProtocolWithReturn<GetServerConfigRequest, GetServerConfigResponse>;
+    'mcp:update-server-config': ProtocolWithReturn<UpdateServerConfigRequest, UpdateServerConfigResponse>;
+    'mcp:heartbeat': ProtocolWithReturn<HeartbeatRequest, HeartbeatResponse>;
+
+    // One-way broadcasts from background to UI
+    'connection:status-changed': ConnectionStatusChangedBroadcast;
+    'mcp:tool-update': ToolUpdateBroadcast;
+    'mcp:server-config-updated': ServerConfigUpdatedBroadcast;
+    'mcp:heartbeat-response': HeartbeatResponseBroadcast;
+  }
 }

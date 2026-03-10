@@ -2,15 +2,16 @@ import { useEffect, useCallback, useRef } from 'react';
 import { useConnectionStatus, useAvailableTools, useToolExecution, useServerConfig } from './useStores';
 import { mcpClient } from '../core/mcp-client';
 import { createLogger } from '@extension/shared/lib/logger';
-import { useToastStore } from '@src/stores/toast.store';
+import { useToastStore } from '@src/stores';
 
 const logger = createLogger('useMcpCommunication');
 
-export const useMcpCommunication = () => {
-  const { setStatus, setError, setIsConnected, isReconnecting, status } = useConnectionStatus();
-  const { setTools } = useAvailableTools();
-  const { addExecution, updateExecution } = useToolExecution();
-  const { config } = useServerConfig();
+export const useMcpCommunication = (profileId: string = 'default-sse') => {
+  const { isConnected, isReconnecting, status, error: connectionError } = useConnectionStatus(profileId);
+  // Connection store actions directly since we don't return them from useConnectionStatus anymore
+  const { setAvailableTools } = useAvailableTools();
+  const { startExecution, updateExecution, completeExecution } = useToolExecution();
+  const { config } = useServerConfig(profileId);
   const { addToast } = useToastStore.getState();
 
   const retryCountRef = useRef(0);
@@ -28,39 +29,24 @@ export const useMcpCommunication = () => {
       // But for now, let's trust the logic.
 
       // Update client configuration if needed
-      await mcpClient.updateServerConfig(config);
+      await mcpClient.updateServerConfig(config, profileId);
 
-      // Attempt connection (or reconnection)
-      // McpClient handles connection state internally, so we check status or force reconnect
-      const currentStatus = await mcpClient.getCurrentConnectionStatus();
+      const currentStatus = await mcpClient.getCurrentConnectionStatus(profileId);
 
       if (currentStatus.status === 'connected') {
-         setStatus('connected');
-         setIsConnected(true);
-         retryCountRef.current = 0;
-
-         const tools = await mcpClient.getAvailableTools();
-         setTools(tools);
+        retryCountRef.current = 0;
+        const tools = await mcpClient.getAvailableTools(false, profileId);
       } else {
-         // Force reconnect if not connected
-         setStatus('connecting');
-         const success = await mcpClient.forceReconnect();
-         if (success) {
-            setStatus('connected');
-            setIsConnected(true);
-            retryCountRef.current = 0;
-            const tools = await mcpClient.getAvailableTools();
-            setTools(tools);
-         } else {
-            throw new Error('Connection failed');
-         }
+        const success = await mcpClient.forceReconnect(profileId);
+        if (success) {
+          retryCountRef.current = 0;
+        } else {
+          throw new Error('Connection failed');
+        }
       }
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error);
-      logger.error('[useMcpCommunication] Connection error:', errorMessage);
-      setStatus('error');
-      setError(errorMessage);
-      setIsConnected(false);
+      logger.error(`[useMcpCommunication] Connection error for ${profileId}:`, errorMessage);
 
       // Auto-Retry Logic
       if (retryCountRef.current < maxRetries) {
@@ -82,33 +68,31 @@ export const useMcpCommunication = () => {
         });
       }
     }
-  }, [config, setStatus, setIsConnected, setError, setTools]);
+  }, [config, profileId]); // Removed setStatus, setIsConnected, setError, setTools which no longer exist in this scope
 
   // Handle server config updates
   const updateServerConfig = useCallback(
     async (newConfig: { uri: string; connectionType: any }) => {
-      logger.debug('[useMcpCommunication] Updating server config:', newConfig);
-      await mcpClient.updateServerConfig(newConfig);
-      // Reset retries when manually changing config
+      logger.debug(`[useMcpCommunication] Updating server config for ${profileId}:`, newConfig);
+      await mcpClient.updateServerConfig(newConfig, profileId);
       retryCountRef.current = 0;
       return connect();
     },
-    [connect],
+    [connect, profileId],
   );
 
-  // Force reconnection
   const forceReconnect = useCallback(async () => {
-    logger.debug('[useMcpCommunication] Forcing reconnection');
+    logger.debug(`[useMcpCommunication] Forcing reconnection for ${profileId}`);
     retryCountRef.current = 0;
-    const success = await mcpClient.forceReconnect();
+    const success = await mcpClient.forceReconnect(profileId);
     return success;
-  }, []);
+  }, [profileId]);
 
   // Check connection status
   const forceConnectionStatusCheck = useCallback(async () => {
-    const status = await mcpClient.getCurrentConnectionStatus();
+    const status = await mcpClient.getCurrentConnectionStatus(profileId);
     return status.isConnected;
-  }, []);
+  }, [profileId]);
 
   // Send message / Execute tool
   const sendMessage = useCallback(
@@ -128,22 +112,12 @@ export const useMcpCommunication = () => {
       try {
         logger.debug('[useMcpCommunication] Executing tool:', toolName);
 
-        const executionId = crypto.randomUUID();
-        addExecution({
-          id: executionId,
-          toolName: toolName,
-          status: 'pending',
-          startTime: Date.now(),
-          args: toolArgs,
-        });
+        // startExecution handles ID generation and store initialization
+        const executionId = startExecution(toolName, toolArgs);
 
-        const result = await mcpClient.callTool(toolName, toolArgs);
+        const result = await mcpClient.callTool(toolName, toolArgs, profileId);
 
-        updateExecution(executionId, {
-          status: 'success',
-          endTime: Date.now(),
-          result: result,
-        });
+        completeExecution(executionId, result, 'success');
 
         return result;
       } catch (error) {
@@ -152,35 +126,33 @@ export const useMcpCommunication = () => {
         throw error;
       }
     },
-    [addExecution, updateExecution],
+    [startExecution, completeExecution, profileId],
   );
 
   // Refresh tools
   const refreshTools = useCallback(
     async (force = false) => {
       try {
-        const tools = await mcpClient.getAvailableTools(force);
-        setTools(tools);
+        const tools = await mcpClient.getAvailableTools(force, profileId);
         return tools;
       } catch (error) {
-        logger.error('[useMcpCommunication] Error refreshing tools:', error);
+        logger.error(`[useMcpCommunication] Error refreshing tools for ${profileId}:`, error);
         return [];
       }
     },
-    [setTools],
+    [profileId],
   );
 
-  // Get current server config
   const getServerConfig = useCallback(async () => {
-    return mcpClient.getServerConfig();
-  }, []);
+    return mcpClient.getServerConfig(profileId);
+  }, [profileId]);
 
   // Initial connection on mount
   useEffect(() => {
     // We only trigger connect if config is available.
     // mcpClient might already be initialized by global singleton, but we sync state here.
     if (config.uri) {
-        connect();
+      connect();
     }
 
     return () => {
@@ -202,6 +174,6 @@ export const useMcpCommunication = () => {
     updateServerConfig,
     getServerConfig,
     forceConnectionStatusCheck,
-    lastConnectionError: useConnectionStatus().error,
+    lastConnectionError: connectionError,
   };
 };

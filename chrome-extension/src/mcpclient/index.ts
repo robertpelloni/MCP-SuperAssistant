@@ -2,6 +2,7 @@
 import { McpClient } from './core/McpClient.js';
 import { PluginRegistry } from './core/PluginRegistry.js';
 import { EventEmitter } from './core/EventEmitter.js';
+import { McpManager, mcpManager } from './core/McpManager.js';
 
 // Plugin implementations
 import { SSEPlugin } from './plugins/sse/SSEPlugin.js';
@@ -11,12 +12,13 @@ import { WebSocketTransport } from './plugins/websocket/WebSocketTransport.js';
 // Configuration
 import { DEFAULT_CLIENT_CONFIG } from './types/config.js';
 import { createLogger } from '@extension/shared/lib/logger';
+import { validateToolSchema } from './utils/schemaValidator.js';
 
 // Export core classes
 
 const logger = createLogger('mcp_client');
 
-export { McpClient, PluginRegistry, EventEmitter };
+export { McpClient, PluginRegistry, EventEmitter, McpManager, mcpManager };
 
 // Export plugins
 export { SSEPlugin, WebSocketPlugin, WebSocketTransport };
@@ -303,17 +305,15 @@ export function normalizeToolsFromPrimitives(primitives: any[]): any[] {
     .filter(p => p.type === 'tool')
     .map(p => {
       const tool = p.value;
+      const parsedSchema = tool.inputSchema || tool.input_schema || {};
       return {
         name: tool.name,
         description: tool.description || '',
-        input_schema: tool.inputSchema || tool.input_schema || {},
-        schema: tool.inputSchema
-          ? JSON.stringify(tool.inputSchema)
-          : tool.input_schema
-            ? JSON.stringify(tool.input_schema)
-            : '{}',
+        input_schema: parsedSchema,
+        schema: Object.keys(parsedSchema).length ? JSON.stringify(parsedSchema) : '{}',
         ...(tool.uri && { uri: tool.uri }),
         ...(tool.arguments && { arguments: tool.arguments }),
       };
-    });
+    })
+    .filter(tool => validateToolSchema(tool.name, tool.input_schema));
 }

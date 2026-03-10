@@ -1,6 +1,10 @@
+import { createRoot } from 'react-dom/client';
+import React from 'react';
 import { CONFIG } from '../core/config';
 import { applyThemeClass, isDarkTheme } from '../utils/themeDetector';
 import { createLogger } from '@extension/shared/lib/logger';
+import { ToolResultWidget } from '@src/components/ToolResultWidget/ToolResultWidget';
+import { injectTailwindToShadowDom } from '@src/utils/shadowDom';
 
 // State management for rendered elements
 
@@ -418,28 +422,34 @@ export const renderFunctionResult = (block: HTMLElement, isProcessingRef: { curr
       const callIdMatch = content.match(/call_id="([^"]*)"/);
       const callId = callIdMatch ? callIdMatch[1] : '';
 
-      // Create configuration for expandable block
-      const config: ExpandableConfig = {
-        blockId,
-        className: 'function-result-container',
-        headerText: 'Function Result',
-        expandTitle: 'Expand function result',
-        collapseTitle: 'Collapse function result',
+      // Create configuration for the result widget
+      const config = {
         callId,
+        resultContent,
+        timestamp: Date.now(),
       };
 
-      // Create content area and render content
-      const contentArea = createThemedContentArea('param-value function-result-content');
-      renderFunctionResultContent(resultContent, contentArea);
+      // Create a unified shadow host container
+      const shadowHost = document.createElement('div');
+      shadowHost.style.margin = '10px 0';
+      shadowHost.setAttribute('data-block-id', blockId);
+      
+      const shadowRoot = shadowHost.attachShadow({ mode: 'open' });
+      injectTailwindToShadowDom(shadowRoot).catch((err: unknown) => {
+        logger.error('Failed to inject Tailwind into tool result shadow DOM', err);
+      });
+      
+      const reactContainer = document.createElement('div');
+      shadowRoot.appendChild(reactContainer);
 
-      // Create the complete expandable block
-      const resultContainer = createExpandableBlock(config, contentArea);
+      const reactRoot = createRoot(reactContainer);
+      reactRoot.render(React.createElement(ToolResultWidget, config));
 
       // Replace the original block with our rendered version
-      replaceBlockContent(block, resultContainer);
+      replaceBlockContent(block, shadowHost);
 
       // Store the rendered block for future reference
-      renderedFunctionResults.set(blockId, resultContainer);
+      renderedFunctionResults.set(blockId, shadowHost as HTMLDivElement);
 
       return true;
     } catch (e) {

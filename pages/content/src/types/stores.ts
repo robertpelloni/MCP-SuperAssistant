@@ -20,6 +20,13 @@ export interface ServerConfig {
 
 export type ConnectionStatus = 'connected' | 'disconnected' | 'connecting' | 'error' | 'reconnecting';
 
+export interface MCPTelemetry {
+  cpuUsage: number;
+  memoryUsage: number;
+  uptime: number;
+  version?: string;
+}
+
 export interface Tool {
   name: string;
   description: string;
@@ -27,6 +34,7 @@ export interface Tool {
   schema?: any;
   // Newer field preferred going forward
   input_schema: any; // Keeping 'any' as per original spec, can be refined later
+  profileId?: string; // Optional for backward compatibility, but required for multi-proxy
 }
 
 export interface DetectedTool {
@@ -44,6 +52,7 @@ export interface ToolExecution {
   timestamp: number;
   status: 'pending' | 'success' | 'error';
   error?: string;
+  profileId?: string;
 }
 
 export interface SidebarState {

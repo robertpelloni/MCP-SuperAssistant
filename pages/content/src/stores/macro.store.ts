@@ -1,37 +1,13 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
-
-export type StepType = 'tool' | 'condition' | 'delay' | 'set_variable';
-export type ActionType = 'continue' | 'stop' | 'goto';
-
-export interface MacroStep {
-  id: string;
-  type: StepType;
-
-  // For 'tool' type
-  toolName?: string;
-  args?: Record<string, any>; // JSON string or object
-
-  // For 'condition' type
-  expression?: string; // JS expression: 'lastResult.status === "success"'
-  trueAction?: ActionType;
-  trueTargetStepId?: string;
-  falseAction?: ActionType;
-  falseTargetStepId?: string;
-
-  // For 'delay' type
-  delayMs?: number;
-
-  // For 'set_variable' type
-  variableName?: string;
-  variableValue?: string; // Expression or static value
-}
+import type { Node, Edge } from '@xyflow/react';
 
 export interface Macro {
   id: string;
   name: string;
   description: string;
-  steps: MacroStep[];
+  nodes: Node[];
+  edges: Edge[];
   createdAt: number;
   updatedAt: number;
 }
@@ -74,7 +50,7 @@ export const useMacroStore = create<MacroStore>()(
       getMacro: (id) => get().macros.find((m) => m.id === id),
     }),
     {
-      name: 'mcp-macros',
+      name: 'mcp-macros-v2', // Changed storage key to drop old incompatible state
       storage: createJSONStorage(() => localStorage),
     }
   )

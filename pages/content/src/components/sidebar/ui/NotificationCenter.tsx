@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { useUIStore } from '@src/stores/ui.store';
+import { useUIStore } from '@src/stores';
 import { Icon, Typography, Button } from '.';
 import { cn } from '@src/lib/utils';
 import { createLogger } from '@extension/shared/lib/logger';

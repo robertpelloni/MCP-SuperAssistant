@@ -9,11 +9,6 @@ const logger = createLogger('Services Index');
 
 export {
   AutomationService,
-  automationService,
-  initializeAutomationService,
-  cleanupAutomationService,
-  type AutomationState,
-  type ToolExecutionCompleteDetail,
 } from './automation.service';
 
 // Export initialization function for all services
@@ -22,8 +17,8 @@ export async function initializeAllServices(): Promise<void> {
 
   try {
     // Initialize automation service
-    const { initializeAutomationService } = await import('./automation.service');
-    initializeAutomationService();
+    const { AutomationService } = await import('./automation.service');
+    AutomationService.getInstance();
 
     logger.debug('[Services] All services initialized successfully');
   } catch (error) {
@@ -38,8 +33,8 @@ export async function cleanupAllServices(): Promise<void> {
 
   try {
     // Cleanup automation service
-    const { cleanupAutomationService } = await import('./automation.service');
-    cleanupAutomationService();
+    // const { cleanupAutomationService } = await import('./automation.service');
+    // cleanupAutomationService();
 
     logger.debug('[Services] All services cleaned up successfully');
   } catch (error) {

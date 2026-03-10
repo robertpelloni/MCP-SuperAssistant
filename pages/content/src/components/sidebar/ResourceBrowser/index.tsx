@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { useResourceStore } from '@src/stores/resource.store';
-import { useAppStore } from '@src/stores/app.store';
+import { useResourceStore } from '@src/stores';
+import { useAppStore } from '@src/stores';
 import { Typography, Icon, Button } from '../ui';
 import { cn } from '@src/lib/utils';
 import { createLogger } from '@extension/shared/lib/logger';

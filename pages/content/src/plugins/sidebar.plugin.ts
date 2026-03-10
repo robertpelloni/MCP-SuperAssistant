@@ -1,7 +1,7 @@
 import type { AdapterPlugin, PluginContext, AdapterCapability } from './plugin-types';
 import { SidebarManager } from '../components/sidebar/SidebarManager';
 import type { SiteType } from '../components/sidebar/base/BaseSidebarManager';
-import { useUIStore } from '../stores/ui.store';
+import { useUIStore } from '../stores';
 import { createLogger } from '@extension/shared/lib/logger';
 const logger = createLogger('SidebarPlugin');
 

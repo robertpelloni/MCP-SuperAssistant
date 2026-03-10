@@ -9,6 +9,7 @@ const logger = createLogger('useToolStore');
 
 export interface ToolState {
   availableTools: Tool[];
+  toolsByProfile: Record<string, Tool[]>;
   detectedTools: DetectedTool[];
   toolExecutions: Record<string, ToolExecution>; // Store executions by ID
   isExecuting: boolean;
@@ -18,7 +19,7 @@ export interface ToolState {
   isLoadingEnablement: boolean; // Loading state for tool enablement
 
   // Actions
-  setAvailableTools: (tools: Tool[]) => void;
+  setAvailableTools: (profileId: string, tools: Tool[]) => void;
   addDetectedTool: (tool: DetectedTool) => void;
   clearDetectedTools: () => void;
   startToolExecution: (toolName: string, parameters: Record<string, any>) => string; // Returns execution ID
@@ -51,6 +52,7 @@ const initialState: Omit<
   | 'loadToolEnablementState'
 > = {
   availableTools: [],
+  toolsByProfile: {},
   detectedTools: [],
   toolExecutions: {},
   isExecuting: false,
@@ -64,10 +66,16 @@ export const useToolStore = create<ToolState>()(
     (set, get) => ({
       ...initialState,
 
-      setAvailableTools: (tools: Tool[]) => {
-        set({ availableTools: tools });
-        logger.debug('[ToolStore] Available tools updated:', tools);
-        eventBus.emit('tool:list-updated', { tools });
+      setAvailableTools: (profileId: string, tools: Tool[]) => {
+        set(state => {
+          const newToolsByProfile = { ...state.toolsByProfile, [profileId]: tools };
+          const newAvailableTools = Object.values(newToolsByProfile).flat();
+          
+          logger.debug(`[ToolStore] Available tools updated for profile ${profileId}`);
+          eventBus.emit('tool:list-updated', { tools: newAvailableTools });
+          
+          return { toolsByProfile: newToolsByProfile, availableTools: newAvailableTools };
+        });
 
         // Load tool enablement state from storage
         get().loadToolEnablementState();

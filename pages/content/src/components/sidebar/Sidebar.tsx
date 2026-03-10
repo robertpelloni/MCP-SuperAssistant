@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { useCurrentAdapter } from '@src/hooks/useAdapter';
 import { useTheme, useSidebarState, useUserPreferences, useConnectionStatus } from '@src/hooks';
 import { useKeyboardShortcuts } from '@src/hooks/useKeyboardShortcuts';
-import { useUIStore } from '@src/stores/ui.store';
+import { useUIStore } from '@src/stores';
 import ServerStatus from './ServerStatus/ServerStatus';
 import AvailableTools from './AvailableTools/AvailableTools';
 import InstructionManager from './Instructions/InstructionManager';
@@ -16,6 +16,7 @@ import SystemInfo from './System/SystemInfo';
 import CommandPalette from './CommandPalette/CommandPalette';
 import Onboarding from './Onboarding/Onboarding';
 import PromptTemplates from './PromptTemplates/PromptTemplates';
+import { Debugger } from './Debugger';
 import { ResourceBrowser } from './ResourceBrowser';
 import { useMcpCommunication } from '@src/hooks/useMcpCommunication';
 import { logMessage } from '@src/utils/helpers';
@@ -23,8 +24,8 @@ import { eventBus } from '@src/events/event-bus';
 import { Typography, Toggle, ToggleWithoutLabel, ResizeHandle, Icon, Button } from './ui';
 import { NotificationCenter } from './ui/NotificationCenter';
 import { ToastContainer } from './ui/Toast';
-import { useToastStore } from '@src/stores/toast.store';
-import { useActivityStore } from '@src/stores/activity.store';
+import { useToastStore } from '@src/stores';
+import { useActivityStore } from '@src/stores';
 import { cn } from '@src/lib/utils';
 import { Card, CardContent } from '@src/components/ui/card';
 import type { UserPreferences } from '@src/types/stores';
@@ -407,11 +408,11 @@ const Sidebar: React.FC<SidebarProps> = ({ initialPreferences }) => {
     | 'dashboard'
     | 'macros'
     | 'prompts'
+    | 'debugger'
     | 'settings'
     | 'system'
     | 'help'
   >('availableTools');
-  const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [isInputMinimized, setIsInputMinimized] = useState(false);
@@ -433,7 +434,7 @@ const Sidebar: React.FC<SidebarProps> = ({ initialPreferences }) => {
       if (!isMinimized) toggleMinimize('shortcut');
     },
     toggleCommandPalette: () => {
-      setIsCommandPaletteOpen(prev => !prev);
+      // Handled globally by Spotlight
     },
     focusSearch: () => {
       // This requires passing a ref down to AvailableTools or managing focus globally
@@ -442,13 +443,17 @@ const Sidebar: React.FC<SidebarProps> = ({ initialPreferences }) => {
       // Ideally we would focus the input inside AvailableTools
     },
     switchTab: direction => {
-      const tabs: ('availableTools' | 'instructions' | 'activity' | 'dashboard' | 'macros' | 'prompts' | 'settings' | 'help' | 'system')[] = [
+      const tabs: ('availableTools' | 'instructions' | 'activity' | 'dashboard' | 'macros' | 'prompts' | 'debugger' | 'resources' | 'settings' | 'help' | 'system')[] = [
         'availableTools',
         'instructions',
         'activity',
+        'resources',
         'dashboard',
         'macros',
         'prompts',
+        'debugger',
+        'prompts',
+        'resources',
         'settings',
         'help',
         'system',
@@ -932,15 +937,6 @@ const Sidebar: React.FC<SidebarProps> = ({ initialPreferences }) => {
       <div className="sidebar-inner-content flex-1 relative overflow-hidden bg-white dark:bg-slate-900">
         <Onboarding />
         <ToastContainer />
-        <CommandPalette
-          isOpen={isCommandPaletteOpen}
-          onClose={() => setIsCommandPaletteOpen(false)}
-          onNavigate={tab => {
-            setActiveTab(tab);
-            if (!sidebarVisible) toggleSidebar();
-          }}
-          togglePushMode={() => handlePushModeToggle(!isPushMode)}
-        />
         {/* Virtual slide - content always at full width */}
         <div
           ref={contentRef}
@@ -1117,6 +1113,16 @@ const Sidebar: React.FC<SidebarProps> = ({ initialPreferences }) => {
                   <button
                     className={cn(
                       'py-2 px-4 font-medium text-sm transition-all duration-200',
+                      activeTab === 'debugger'
+                        ? 'border-b-2 border-primary-600 text-primary-600 dark:border-primary-400 dark:text-primary-400'
+                        : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-t-lg',
+                    )}
+                    onClick={() => setActiveTab('debugger')}>
+                    Debugger
+                  </button>
+                  <button
+                    className={cn(
+                      'py-2 px-4 font-medium text-sm transition-all duration-200',
                       activeTab === 'settings'
                         ? 'border-b-2 border-primary-600 text-primary-600 dark:border-primary-400 dark:text-primary-400'
                         : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-t-lg',
@@ -1224,6 +1230,15 @@ const Sidebar: React.FC<SidebarProps> = ({ initialPreferences }) => {
                   { hidden: activeTab !== 'prompts' },
                 )}>
                 <PromptTemplates />
+              </div>
+
+              {/* Debugger */}
+              <div
+                className={cn(
+                  'h-full overflow-y-auto scrollbar-thin scrollbar-thumb-slate-300 dark:scrollbar-thumb-slate-600 scrollbar-track-transparent',
+                  { hidden: activeTab !== 'debugger' },
+                )}>
+                <Debugger />
               </div>
 
               {/* Settings */}
