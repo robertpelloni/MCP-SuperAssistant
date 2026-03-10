@@ -21,7 +21,7 @@ export const useRootStore = create<RootState>()(
         ...createAdapterSlice(...a),
       }),
       {
-        name: 'mcp-superassistant-root-store',
+        name: 'borg-extension-root-store',
         storage: createJSONStorage(() => localStorage),
         partialize: (state) => ({
           ui: {

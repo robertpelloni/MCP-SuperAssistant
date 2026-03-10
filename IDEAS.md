@@ -1,9 +1,9 @@
-# Ideas for Improvement: MCP SuperAssistant
+# Ideas for Improvement: Borg Extension
 
-MCP SuperAssistant is a Chrome extension that brings MCP tools to any web-based AI chat. To move from "Extension" to "Universal Agent Interface," here are several creative ideas:
+Borg Extension is a Chrome extension that brings MCP tools to any web-based AI chat. To move from "Extension" to "Universal Agent Interface," here are several creative ideas:
 
 ## 1. Architectural & Performance Perspectives
-*   **The "Edge-MCP" Runtime:** Implement a **WASM-based MCP server runner** directly within the extension. This would allow the extension to execute simple tools (like "Read File", "Run Regex") completely on-device without needing the `npx mcp-superassistant-proxy` server running locally.
+*   **The "Edge-MCP" Runtime:** Implement a **WASM-based MCP server runner** directly within the extension. This would allow the extension to execute simple tools (like "Read File", "Run Regex") completely on-device without needing the `npx borg-extension-proxy` server running locally.
 *   **WebGPU-Accelerated "Render Mode":** Enhance the "Render Mode" to handle **Massive Function Results**. If a tool returns a 10,000-line JSON or a high-res image, use WebGPU to perform "Visual Filtering" or "Auto-Summarization" directly in the DOM, preventing the AI chat tab from hanging.
 
 ## 2. AI & Intelligence Perspectives

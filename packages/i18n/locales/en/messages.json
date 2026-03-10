@@ -1,30 +1,82 @@
 {
   "extensionDescription": {
     "description": "Extension description",
-    "message": "Chrome extension boilerplate developed with Vite, React and Typescript"
+    "message": "Supercharge your AI chat with MCP tools and automations"
   },
   "extensionName": {
     "description": "Extension name",
-    "message": "Chrome extension boilerplate"
+    "message": "Borg Extension"
   },
-  "toggleTheme": {
-    "message": "Toggle theme"
+  "navDashboard": {
+    "message": "Dashboard"
   },
-  "loading": {
-    "message": "Loading..."
+  "navChat": {
+    "message": "Chat"
   },
-  "greeting": {
-    "description": "Greeting message",
-    "message": "Hello, My name is $NAME$",
-    "placeholders": {
-      "name": {
-        "content": "$1",
-        "example": "John Doe"
-      }
-    }
+  "navTools": {
+    "message": "Tools"
   },
-  "hello": {
-    "description": "Placeholder example",
-    "message": "Hello $1"
+  "navResources": {
+    "message": "Resources"
+  },
+  "navMacros": {
+    "message": "Macros"
+  },
+  "navContext": {
+    "message": "Context"
+  },
+  "navTemplates": {
+    "message": "Templates"
+  },
+  "navActivity": {
+    "message": "Activity"
+  },
+  "navDebugger": {
+    "message": "Debugger"
+  },
+  "navSettings": {
+    "message": "Settings"
+  },
+  "navHelp": {
+    "message": "Help"
+  },
+  "settingsTitle": {
+    "message": "Settings"
+  },
+  "settingsGeneral": {
+    "message": "General"
+  },
+  "settingsAdvanced": {
+    "message": "Advanced"
+  },
+  "settingsAbout": {
+    "message": "About"
+  },
+  "settingsTheme": {
+    "message": "Theme"
+  },
+  "settingsThemeSystem": {
+    "message": "System"
+  },
+  "settingsThemeLight": {
+    "message": "Light"
+  },
+  "settingsThemeDark": {
+    "message": "Dark"
+  },
+  "serverStatus": {
+    "message": "Server Status"
+  },
+  "serverStatusConnected": {
+    "message": "Connected"
+  },
+  "serverStatusDisconnected": {
+    "message": "Disconnected"
+  },
+  "actionSave": {
+    "message": "Save"
+  },
+  "actionCancel": {
+    "message": "Cancel"
   }
 }

@@ -228,7 +228,7 @@ const renderSystemMessageBox = (block: HTMLElement, content: string): void => {
     const config: ExpandableConfig = {
       blockId,
       className: 'system-message-container',
-      headerText: 'MCP SuperAssistant',
+      headerText: 'Borg Extension',
       expandTitle: 'Expand system message',
       collapseTitle: 'Collapse system message',
     };
@@ -384,7 +384,7 @@ export const renderFunctionResult = (block: HTMLElement, isProcessingRef: { curr
     // let content = block.textContent || '';
     const content = block.textContent || '';
 
-    // Check if it contains MCP SuperAssistant system message tags
+    // Check if it contains Borg Extension system message tags
     if (
       content.includes('<SYSTEM>') ||
       content.includes('</SYSTEM>') ||

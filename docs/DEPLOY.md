@@ -1,6 +1,6 @@
 # Deployment Instructions
 
-> How to build and deploy MCP SuperAssistant for Chrome, Edge, and Firefox.
+> How to build and deploy Borg Extension for Chrome, Edge, and Firefox.
 
 ## Prerequisites
 

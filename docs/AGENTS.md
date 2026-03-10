@@ -1,7 +1,7 @@
 # Universal Agent Instructions
 
-**Project**: MCP SuperAssistant
-**Repository**: `robertpelloni/mcp-superassistant` (fork of `srbhptl39/MCP-SuperAssistant`)
+**Project**: Borg Extension
+**Repository**: `robertpelloni/borg-extension` (fork of `srbhptl39/Borg-Extension`)
 **Version**: `0.7.1`
 **Goal**: Create the ultimate browser-based AI operating system via MCP.
 
@@ -14,7 +14,7 @@
 
 ## 1. Project Overview
 
-MCP SuperAssistant is a Chrome/Edge/Firefox extension that bridges the **Model Context Protocol (MCP)** with web-based AI platforms (ChatGPT, Gemini, Perplexity, Grok, DeepSeek, OpenRouter, T3 Chat, GitHub Copilot, Mistral, Kimi, Qwen, Z Chat, and more). It injects a sidebar UI into these platforms, enabling tool discovery, execution, and result insertion — all powered by a local proxy server.
+Borg Extension is a Chrome/Edge/Firefox extension that bridges the **Model Context Protocol (MCP)** with web-based AI platforms (ChatGPT, Gemini, Perplexity, Grok, DeepSeek, OpenRouter, T3 Chat, GitHub Copilot, Mistral, Kimi, Qwen, Z Chat, and more). It injects a sidebar UI into these platforms, enabling tool discovery, execution, and result insertion — all powered by a local proxy server.
 
 ### Architecture
 
@@ -78,7 +78,7 @@ Update `CHANGELOG.md` **before committing**. Use these categories:
 1. **Branch naming**: `feature/<description>` or `fix/<issue>`.
 2. **Commit messages**: [Conventional Commits](https://www.conventionalcommits.org/) — `feat: ...`, `fix: ...`, `chore: ...`, `docs: ...`.
 3. **Always merge feature branches into `main`** after completion.
-4. **Upstream sync**: Regularly fetch from `upstream` (`srbhptl39/MCP-SuperAssistant`) and merge into `main`.
+4. **Upstream sync**: Regularly fetch from `upstream` (`srbhptl39/Borg-Extension`) and merge into `main`.
 5. **Submodule hygiene**: If submodules are added, update and push them before the parent commit.
 6. **Conflict resolution**: When merging, preserve all features from both sides. Never silently drop functionality.
 7. **Push after each feature**: Commit, push, then continue to the next task.
