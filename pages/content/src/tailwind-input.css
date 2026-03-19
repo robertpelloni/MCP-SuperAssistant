@@ -1,5 +1,19 @@
+/*
+  We use a scoped approach for base styles to prevent preflight leaking
+  into the host page via the Shadow DOM, while still providing resets
+  within our extension container.
+*/
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Ensure base styles only apply within our host to prevent leakage */
+@layer base {
+  :host {
+    /* Basic resets that might be needed */
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+}
 
 /* Minimal styling only */ 

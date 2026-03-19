@@ -342,23 +342,23 @@ class McpClient {
   /**
    * Handle tool updates from background script
    */
-  private handleToolUpdate(tools: any[], resources: any[] = [], prompts: any[] = []): void {
+  private handleToolUpdate(tools: Record<string, unknown>[], resources: Record<string, unknown>[] = [], prompts: Record<string, unknown>[] = []): void {
     logMessage(
       `[McpClient] Processing updates: ${tools.length} tools, ${resources.length} resources, ${prompts.length} prompts`,
     );
 
     // Normalize tool data to ensure consistent schema
-    const normalizedTools = tools.map(tool => ({
-      name: tool.name,
-      description: tool.description || '',
-      input_schema: tool.input_schema || tool.schema || {},
+    const normalizedTools = tools.map((tool: any) => ({
+      name: String(tool.name || ''),
+      description: String(tool.description || ''),
+      input_schema: (tool.input_schema || tool.schema || {}) as Record<string, unknown>,
       // Legacy support
       schema: typeof tool.schema === 'string' ? tool.schema : JSON.stringify(tool.input_schema || {}),
     }));
 
     useToolStore.getState().setAvailableTools(normalizedTools);
-    useResourceStore.getState().setAvailableResources(resources);
-    usePromptStore.getState().setAvailablePrompts(prompts);
+    useResourceStore.getState().setAvailableResources(resources as any[]);
+    usePromptStore.getState().setAvailablePrompts(prompts as any[]);
 
     eventBus.emit('tool:list-updated', { tools: normalizedTools });
   }
@@ -553,7 +553,7 @@ class McpClient {
   /**
    * Retrieve the list of available tools with enhanced caching and validation
    */
-  async getAvailableTools(forceRefresh = false): Promise<any[]> {
+  async getAvailableTools(forceRefresh = false): Promise<Record<string, unknown>[]> {
     if (!this.isInitialized) {
       throw new Error('McpClient not initialized');
     }
@@ -570,10 +570,10 @@ class McpClient {
 
       // Validate and normalize tools
       const validatedTools = Array.isArray(tools) ? tools : [];
-      const normalizedTools = validatedTools.map(tool => ({
-        name: tool.name,
-        description: tool.description || '',
-        input_schema: tool.input_schema || tool.schema || {},
+      const normalizedTools = validatedTools.map((tool: any) => ({
+        name: String(tool.name || ''),
+        description: String(tool.description || ''),
+        input_schema: (tool.input_schema || tool.schema || {}) as Record<string, unknown>,
         // Legacy support
         schema: typeof tool.schema === 'string' ? tool.schema : JSON.stringify(tool.input_schema || {}),
       }));
