@@ -625,18 +625,69 @@ chrome.runtime.onInstalled.addListener(async details => {
 
 // Setup context menu
 chrome.runtime.onInstalled.addListener(() => {
+  // Parent menu
   chrome.contextMenus.create({
-    id: 'save-to-mcp-context',
-    title: 'Save to MCP Context',
+    id: 'mcp-superassistant',
+    title: 'MCP SuperAssistant',
+    contexts: ['selection'],
+  });
+
+  // Omni-Save action
+  chrome.contextMenus.create({
+    id: 'save-to-omni-memory',
+    parentId: 'mcp-superassistant',
+    title: 'Omni-Save to Memory',
+    contexts: ['selection'],
+  });
+
+  // Specific Saves
+  chrome.contextMenus.create({
+    id: 'save-to-local-context',
+    parentId: 'mcp-superassistant',
+    title: 'Save to Local Context',
+    contexts: ['selection'],
+  });
+
+  chrome.contextMenus.create({
+    id: 'save-to-vector-db',
+    parentId: 'mcp-superassistant',
+    title: 'Save to Vector DB',
+    contexts: ['selection'],
+  });
+
+  chrome.contextMenus.create({
+    id: 'send-to-anythingllm',
+    parentId: 'mcp-superassistant',
+    title: 'Send to AnythingLLM',
     contexts: ['selection'],
   });
 });
 
 chrome.contextMenus.onClicked.addListener((info, tab) => {
-  if (info.menuItemId === 'save-to-mcp-context' && tab?.id) {
+  if (tab?.id && info.selectionText) {
+    let actionType = '';
+
+    switch (info.menuItemId) {
+      case 'save-to-omni-memory':
+        actionType = 'omni';
+        break;
+      case 'save-to-local-context':
+        actionType = 'local';
+        break;
+      case 'save-to-vector-db':
+        actionType = 'vector';
+        break;
+      case 'send-to-anythingllm':
+        actionType = 'anything';
+        break;
+      default:
+        return;
+    }
+
     chrome.tabs.sendMessage(tab.id, {
-      type: 'mcp:save-context',
+      type: 'mcp:context-menu-action',
       payload: {
+        action: actionType,
         content: info.selectionText,
       },
     });

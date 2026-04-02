@@ -147,7 +147,11 @@ export const MemoryTab: React.FC = () => {
               onKeyDown={e => e.key === 'Enter' && searchMemory('omni', memoryQuery)}
               title="Searches across all selected Omni-Memory destinations"
             />
-            <Button size="icon" onClick={() => searchMemory('omni', memoryQuery)} disabled={isSearching} title="Omni Search">
+            <Button
+              size="icon"
+              onClick={() => searchMemory('omni', memoryQuery)}
+              disabled={isSearching}
+              title="Omni Search">
               <SearchIcon className={isSearching ? 'animate-spin h-4 w-4' : 'h-4 w-4'} />
             </Button>
           </div>

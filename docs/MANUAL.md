@@ -271,6 +271,7 @@ Connects to MCP Memory Servers (like OpenMemory, SuperMemory, Core).
 *   **Memory Server**: Configure any MCP tool for saving and searching memory (e.g., `save_memory`, `search_memory`).
 *   **Omni-Search**: Search your memory across *all* connected backends simultaneously directly from the Memory Tab.
 *   **Global Omni-Search**: Press `Cmd+K` to open the Command Palette, then type `?` to instantly search across all your saved memories from anywhere.
+*   **Omni-Actions (Right-Click)**: Highlight any text on a webpage, right-click, and choose "MCP SuperAssistant" to instantly save the selection to your chosen backend (Local Context, Vector DB, AnythingLLM, or all of them via "Omni-Save").
 *   **Save**: Send clipped content to your Vector DB with metadata.
 
 ### AnythingLLM Integration

@@ -101,32 +101,47 @@ export const useMemoryActions = () => {
     [getAdapter, capturedContent, toast],
   );
 
-  const searchMemory = useCallback(async (type: 'vector' | 'anything' | 'local' | 'omni', query: string) => {
+  const searchMemory = useCallback(
+    async (type: 'vector' | 'anything' | 'local' | 'omni', query: string) => {
       if (!query) return;
       setIsSearching(true);
       try {
-      if (type === 'omni') {
+        if (type === 'omni') {
           // Search across all enabled destinations
           const dests = useMemoryStore.getState().omniHarvestDestinations;
           const promises = [];
 
-          if (dests.local) promises.push(getAdapter('local').search(query).catch(() => []));
-          if (dests.vector) promises.push(getAdapter('vector').search(query).catch(() => []));
-          if (dests.anything) promises.push(getAdapter('anything').search(query).catch(() => []));
+          if (dests.local)
+            promises.push(
+              getAdapter('local')
+                .search(query)
+                .catch(() => []),
+            );
+          if (dests.vector)
+            promises.push(
+              getAdapter('vector')
+                .search(query)
+                .catch(() => []),
+            );
+          if (dests.anything)
+            promises.push(
+              getAdapter('anything')
+                .search(query)
+                .catch(() => []),
+            );
 
           const resultsArrays = await Promise.all(promises);
 
           // Flatten and deduplicate (basic deduplication by content)
           const allResults = resultsArrays.flat();
-          const uniqueResults = allResults.filter((v, i, a) => a.findIndex(t => (t.content === v.content)) === i);
+          const uniqueResults = allResults.filter((v, i, a) => a.findIndex(t => t.content === v.content) === i);
 
           setSearchResults(uniqueResults);
-
-      } else {
+        } else {
           const adapter = getAdapter(type);
           const results = await adapter.search(query);
           setSearchResults(results);
-      }
+        }
       } catch (error) {
         toast({ title: 'Search Failed', description: String(error), variant: 'destructive' });
       } finally {

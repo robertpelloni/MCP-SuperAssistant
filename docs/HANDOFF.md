@@ -19,10 +19,10 @@ Inspired by the requested `byterover-cipher` submodule, we built an engine that 
 -   **AnythingLLM Adapter**: Connects directly to an AnythingLLM instance for RAG (Upload + Chat).
 -   **UI Representation**: Users can check boxes for `[x] Local`, `[x] Vector`, `[x] AnythingLLM` and click "Push to All Selected".
 
-### 2. Global Omni-Search & Command Palette
+### 2. Global Omni-Search & Context Menu Omni-Actions
 -   **Omni-Search Engine**: Expanded `useMemoryActions` to support parallel `searchMemory('omni', query)`. This fires concurrent requests to all configured backends (`LocalContextAdapter`, `VectorAdapter`, `AnythingLLMAdapter`) and aggregates/deduplicates the results.
--   **`Cmd+K` Integration**: The Command Palette now features a "Memory Mode".
--   **Usage**: Typing `?` activates memory search, performing debounced Omni-Search queries against all your memory databases instantly from anywhere in the browser.
+-   **Command Palette (`Cmd+K`)**: Now features a "Memory Mode" activated by typing `?` to instantly search across all memory databases.
+-   **Right-Click Context Menu**: Rebuilt the Chrome context menu. Highlighting text and right-clicking now offers "Omni-Save to Memory", "Save to Vector DB", "Save to Local Context", and "Send to AnythingLLM". The background script routes these `mcp:context-menu-action` events to the Sidebar, which dynamically loads the correct memory adapter to save the snippet with metadata (Title, URL) silently in the background.
 
 ### 3. Stability & Technical Debt Resolution
 -   **ActivityLog Virtualization**: Implemented a custom `useVirtualList` hook. The log can now comfortably hold and render >1000 items without crashing the DOM.

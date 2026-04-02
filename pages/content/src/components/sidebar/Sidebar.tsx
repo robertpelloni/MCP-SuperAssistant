@@ -391,19 +391,101 @@ const Sidebar: React.FC<SidebarProps> = ({ initialPreferences }) => {
 
     // Listen for context menu save action
     const unsubscribeContextSave = eventBus.on('context:save', data => {
-      logMessage(`[Sidebar] Received context save request: ${data.content.substring(0, 20)}...`);
-      // We'll handle this by opening the Context Manager or just adding it
-      // For now, let's just add a toast and maybe open the manager
+      logMessage(`[Sidebar] Received legacy context save request: ${data.content.substring(0, 20)}...`);
       addToast({
         title: 'Text Selected',
         message: 'Text copied from context menu. Open Context Manager to save.',
         type: 'info',
         duration: 3000,
       });
-      // In a real implementation, we might want to auto-open the Context Manager
-      // or pass this data to the InputArea
     });
     unsubscribeCallbacks.push(unsubscribeContextSave);
+
+    // Listen for enhanced Omni-Actions from context menu
+    const unsubscribeContextMenuAction = eventBus.on('context-menu:action', async data => {
+      const { action, content } = data;
+      logMessage(`[Sidebar] Received context menu action: ${action}`);
+
+      // We need to dynamically import or use the store/actions here.
+      // Since we are in the Sidebar component, we can use the store directly.
+      const { useMemoryStore } = await import('@src/stores/memory.store');
+      const { VectorAdapter } = await import('@src/services/memory/adapters/VectorAdapter');
+      const { AnythingLLMAdapter } = await import('@src/services/memory/adapters/AnythingLLMAdapter');
+      const { LocalContextAdapter } = await import('@src/services/memory/adapters/LocalContextAdapter');
+
+      const store = useMemoryStore.getState();
+      const metadata = {
+        title: `Clipped from ${document.title || 'Web'}`,
+        url: window.location.href,
+        siteName: document.title,
+        timestamp: new Date().toISOString(),
+      };
+
+      try {
+        let success = false;
+        let adapterName = '';
+
+        if (action === 'local') {
+          const adapter = new LocalContextAdapter();
+          success = await adapter.save(content, metadata);
+          adapterName = adapter.name;
+        } else if (action === 'vector') {
+          const adapter = new VectorAdapter({
+            saveToolName: store.vectorSaveTool,
+            searchToolName: store.vectorSearchTool,
+          });
+          success = await adapter.save(content, metadata);
+          adapterName = adapter.name;
+        } else if (action === 'anything') {
+          const adapter = new AnythingLLMAdapter({
+            baseUrl: store.anythingLlmBaseUrl,
+            apiKey: store.anythingLlmApiKey,
+            workspaceSlug: 'default',
+          });
+          success = await adapter.save(content, metadata);
+          adapterName = adapter.name;
+        } else if (action === 'omni') {
+          // Handle omni manually since we don't have the hook here
+          const dests = store.omniHarvestDestinations;
+          const promises = [];
+          const names = [];
+          if (dests.local) {
+            promises.push(new LocalContextAdapter().save(content, metadata));
+            names.push('Local');
+          }
+          if (dests.vector) {
+            promises.push(
+              new VectorAdapter({ saveToolName: store.vectorSaveTool, searchToolName: store.vectorSearchTool })
+                .save(content, metadata)
+                .catch(() => false),
+            );
+            names.push('Vector');
+          }
+          if (dests.anything) {
+            promises.push(
+              new AnythingLLMAdapter({
+                baseUrl: store.anythingLlmBaseUrl,
+                apiKey: store.anythingLlmApiKey,
+                workspaceSlug: 'default',
+              })
+                .save(content, metadata)
+                .catch(() => false),
+            );
+            names.push('AnythingLLM');
+          }
+          await Promise.all(promises);
+          success = true;
+          adapterName = names.join(', ');
+        }
+
+        if (success) {
+          addToast({ title: 'Saved', message: `Content saved to ${adapterName}`, type: 'success', duration: 3000 });
+        }
+      } catch (error) {
+        addToast({ title: 'Save Failed', message: String(error), type: 'error', duration: 5000 });
+      }
+    });
+    unsubscribeCallbacks.push(unsubscribeContextMenuAction);
 
     // Cleanup all event listeners
     return () => {
