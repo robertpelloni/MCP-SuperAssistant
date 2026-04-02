@@ -1,10 +1,10 @@
 /**
  * Message type definitions for MCP communication
- * 
+ *
  * These types ensure consistency between the context bridge, MCP client, and background script
  */
 
-import type { ServerConfig, ConnectionStatus, Tool } from './stores';
+import type { ServerConfig, ConnectionStatus, Tool, Resource, Prompt } from './stores';
 
 // Base message structure for all communication
 export interface BaseMessage {
@@ -41,6 +41,26 @@ export interface CallToolResponse {
   result: any;
 }
 
+// Resource Reading
+export interface ReadResourceRequest {
+  uri: string;
+}
+
+export interface ReadResourceResponse {
+  contents: any[];
+}
+
+// Prompt Getting
+export interface GetPromptRequest {
+  name: string;
+  args?: Record<string, string>;
+}
+
+export interface GetPromptResponse {
+  description?: string;
+  messages: any[];
+}
+
 // Connection status
 export interface GetConnectionStatusRequest {}
 
@@ -57,6 +77,8 @@ export interface GetToolsRequest {
 
 export interface GetToolsResponse {
   tools: Tool[];
+  // Legacy support implies we might just return tools here,
+  // but future could return full primitives object
 }
 
 // Force reconnect
@@ -94,6 +116,17 @@ export interface HeartbeatResponse {
   receivedTimestamp: number;
 }
 
+// Sampling Response (Content -> Background)
+export interface SamplingResponseRequest {
+  requestId: string;
+  result?: any;
+  error?: any;
+}
+
+export interface SamplingResponseResponse {
+  success: boolean;
+}
+
 // Broadcast message types (one-way messages from background to content)
 
 export interface ConnectionStatusChangedBroadcast {
@@ -105,6 +138,8 @@ export interface ConnectionStatusChangedBroadcast {
 
 export interface ToolUpdateBroadcast {
   tools: Tool[];
+  resources?: Resource[];
+  prompts?: Prompt[];
 }
 
 export interface ServerConfigUpdatedBroadcast {
@@ -116,9 +151,16 @@ export interface HeartbeatResponseBroadcast {
   isConnected: boolean;
 }
 
+export interface SamplingRequestBroadcast {
+  requestId: string;
+  request: any;
+}
+
 // Message type union for better type safety
-export type McpMessageType = 
+export type McpMessageType =
   | 'mcp:call-tool'
+  | 'mcp:read-resource'
+  | 'mcp:get-prompt'
   | 'mcp:get-connection-status'
   | 'mcp:get-tools'
   | 'mcp:force-reconnect'
@@ -128,13 +170,23 @@ export type McpMessageType =
   | 'connection:status-changed'
   | 'mcp:tool-update'
   | 'mcp:server-config-updated'
-  | 'mcp:heartbeat-response';
+  | 'mcp:heartbeat-response'
+  | 'mcp:sampling-request'
+  | 'mcp:sampling-response';
 
 // Utility type for request/response mapping
 export interface McpMessageMap {
   'mcp:call-tool': {
     request: CallToolRequest;
     response: CallToolResponse;
+  };
+  'mcp:read-resource': {
+    request: ReadResourceRequest;
+    response: ReadResourceResponse;
+  };
+  'mcp:get-prompt': {
+    request: GetPromptRequest;
+    response: GetPromptResponse;
   };
   'mcp:get-connection-status': {
     request: GetConnectionStatusRequest;
@@ -160,6 +212,10 @@ export interface McpMessageMap {
     request: HeartbeatRequest;
     response: HeartbeatResponse;
   };
+  'mcp:sampling-response': {
+    request: SamplingResponseRequest;
+    response: SamplingResponseResponse;
+  };
 }
 
 // Error categories for better error handling
@@ -168,7 +224,7 @@ export enum ErrorCategory {
   TOOL_ERROR = 'tool_error',
   VALIDATION_ERROR = 'validation_error',
   TIMEOUT_ERROR = 'timeout_error',
-  UNKNOWN_ERROR = 'unknown_error'
+  UNKNOWN_ERROR = 'unknown_error',
 }
 
 // Enhanced error structure
@@ -184,6 +240,8 @@ export interface McpError {
 export function isValidMessageType(type: string): type is McpMessageType {
   const validTypes: McpMessageType[] = [
     'mcp:call-tool',
+    'mcp:read-resource',
+    'mcp:get-prompt',
     'mcp:get-connection-status',
     'mcp:get-tools',
     'mcp:force-reconnect',
@@ -193,16 +251,18 @@ export function isValidMessageType(type: string): type is McpMessageType {
     'connection:status-changed',
     'mcp:tool-update',
     'mcp:server-config-updated',
-    'mcp:heartbeat-response'
+    'mcp:heartbeat-response',
+    'mcp:sampling-request',
+    'mcp:sampling-response',
   ];
-  
+
   return validTypes.includes(type as McpMessageType);
 }
 
 export function createRequestMessage<T extends keyof McpMessageMap>(
   type: T,
   payload: McpMessageMap[T]['request'],
-  id?: string
+  id?: string,
 ): RequestMessage<McpMessageMap[T]['request']> {
   return {
     type,
@@ -210,7 +270,7 @@ export function createRequestMessage<T extends keyof McpMessageMap>(
     origin: 'content',
     timestamp: Date.now(),
     id: id || `msg_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`,
-    expectResponse: true
+    expectResponse: true,
   };
 }
 
@@ -219,7 +279,7 @@ export function createResponseMessage<T extends keyof McpMessageMap>(
   payload: McpMessageMap[T]['response'],
   originalMessage: RequestMessage,
   success: boolean = true,
-  processingTime?: number
+  processingTime?: number,
 ): ResponseMessage<McpMessageMap[T]['response']> {
   return {
     type,
@@ -228,14 +288,14 @@ export function createResponseMessage<T extends keyof McpMessageMap>(
     timestamp: Date.now(),
     id: originalMessage.id,
     success,
-    processingTime
+    processingTime,
   };
 }
 
 export function createErrorResponse(
   originalMessage: RequestMessage,
   error: string | McpError,
-  processingTime?: number
+  processingTime?: number,
 ): ResponseMessage {
   return {
     type: originalMessage.type,
@@ -244,18 +304,15 @@ export function createErrorResponse(
     id: originalMessage.id,
     error: typeof error === 'string' ? error : error.message,
     success: false,
-    processingTime
+    processingTime,
   };
 }
 
-export function createBroadcastMessage<T>(
-  type: McpMessageType,
-  payload: T
-): BaseMessage {
+export function createBroadcastMessage<T>(type: McpMessageType, payload: T): BaseMessage {
   return {
     type,
     payload,
     origin: 'background',
-    timestamp: Date.now()
+    timestamp: Date.now(),
   };
 }

@@ -1,16 +1,31 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useCurrentAdapter } from '@src/hooks/useAdapter';
 import { useTheme, useSidebarState, useUserPreferences, useConnectionStatus } from '@src/hooks';
+import { useKeyboardShortcuts } from '@src/hooks/useKeyboardShortcuts';
 import { useUIStore } from '@src/stores/ui.store';
 import ServerStatus from './ServerStatus/ServerStatus';
 import AvailableTools from './AvailableTools/AvailableTools';
+import ResourcesList from './Resources/ResourcesList';
+import PromptsList from './Prompts/PromptsList';
+import SamplingModal from './Sampling/SamplingModal';
 import InstructionManager from './Instructions/InstructionManager';
 import InputArea from './InputArea/InputArea';
 import Settings from './Settings/Settings';
+import Help from './Help/Help';
+import ActivityLog from './Activity/ActivityLog';
+import Dashboard from './Dashboard/Dashboard';
+import { MemoryTab } from './Memory/MemoryTab';
+import MacroList from './Macros/MacroList';
+import SystemInfo from './System/SystemInfo';
+import CommandPalette from './CommandPalette/CommandPalette';
+import Onboarding from './Onboarding/Onboarding';
 import { useMcpCommunication } from '@src/hooks/useMcpCommunication';
 import { logMessage } from '@src/utils/helpers';
 import { eventBus } from '@src/events/event-bus';
 import { Typography, Toggle, ToggleWithoutLabel, ResizeHandle, Icon, Button } from './ui';
+import { ToastContainer } from './ui/Toast';
+import { useToastStore } from '@src/stores/toast.store';
+import { useActivityStore } from '@src/stores/activity.store';
 import { cn } from '@src/lib/utils';
 import { Card, CardContent } from '@src/components/ui/card';
 import type { UserPreferences } from '@src/types/stores';
@@ -47,18 +62,21 @@ const Sidebar: React.FC<SidebarProps> = ({ initialPreferences }) => {
   const currentAdapter = useCurrentAdapter();
 
   // Create a compatibility adapter for legacy components
-  const adapter = useMemo(() => ({
-    // Legacy methods for backward compatibility
-    insertTextIntoInput: (text: string) => currentAdapter.insertText(text),
-    triggerSubmission: () => currentAdapter.submitForm(),
-    supportsFileUpload: () => currentAdapter.hasCapability('file-attachment'),
-    attachFile: (file: File) => currentAdapter.attachFile(file),
-    // Pass through other properties that might be needed
-    name: currentAdapter.activeAdapterName || 'Unknown',
-    isReady: currentAdapter.isReady,
-    status: currentAdapter.status,
-    capabilities: currentAdapter.capabilities
-  }), [currentAdapter]);
+  const adapter = useMemo(
+    () => ({
+      // Legacy methods for backward compatibility
+      insertTextIntoInput: (text: string) => currentAdapter.insertText(text),
+      triggerSubmission: () => currentAdapter.submitForm(),
+      supportsFileUpload: () => currentAdapter.hasCapability('file-attachment'),
+      attachFile: (file: File) => currentAdapter.attachFile(file),
+      // Pass through other properties that might be needed
+      name: currentAdapter.activeAdapterName || 'Unknown',
+      isReady: currentAdapter.isReady,
+      status: currentAdapter.status,
+      capabilities: currentAdapter.capabilities,
+    }),
+    [currentAdapter],
+  );
 
   // Use Zustand hooks for state management
   const { theme, setTheme } = useTheme();
@@ -69,16 +87,106 @@ const Sidebar: React.FC<SidebarProps> = ({ initialPreferences }) => {
     toggleSidebar,
     toggleMinimize,
     resizeSidebar,
-    setSidebarVisibility
+    setSidebarVisibility,
   } = useSidebarState();
   const { preferences, updatePreferences } = useUserPreferences();
   const { status: connectionStatus } = useConnectionStatus();
+
+  // Apply accent color
+  useEffect(() => {
+    const accentColor = preferences.accentColor || 'indigo';
+    const root = document.documentElement;
+    // Map of tailwind colors to hex values (simplified approximation for CSS vars)
+    const colorMap: Record<string, Record<number, string>> = {
+      indigo: {
+        50: '#eef2ff',
+        100: '#e0e7ff',
+        200: '#c7d2fe',
+        300: '#a5b4fc',
+        400: '#818cf8',
+        500: '#6366f1',
+        600: '#4f46e5',
+        700: '#4338ca',
+        800: '#3730a3',
+        900: '#312e81',
+      },
+      blue: {
+        50: '#eff6ff',
+        100: '#dbeafe',
+        200: '#bfdbfe',
+        300: '#93c5fd',
+        400: '#60a5fa',
+        500: '#3b82f6',
+        600: '#2563eb',
+        700: '#1d4ed8',
+        800: '#1e40af',
+        900: '#1e3a8a',
+      },
+      green: {
+        50: '#f0fdf4',
+        100: '#dcfce7',
+        200: '#bbf7d0',
+        300: '#86efac',
+        400: '#4ade80',
+        500: '#22c55e',
+        600: '#16a34a',
+        700: '#15803d',
+        800: '#166534',
+        900: '#14532d',
+      },
+      purple: {
+        50: '#faf5ff',
+        100: '#f3e8ff',
+        200: '#e9d5ff',
+        300: '#d8b4fe',
+        400: '#c084fc',
+        500: '#a855f7',
+        600: '#9333ea',
+        700: '#7e22ce',
+        800: '#6b21a8',
+        900: '#581c87',
+      },
+      red: {
+        50: '#fef2f2',
+        100: '#fee2e2',
+        200: '#fecaca',
+        300: '#fca5a5',
+        400: '#f87171',
+        500: '#ef4444',
+        600: '#dc2626',
+        700: '#b91c1c',
+        800: '#991b1b',
+        900: '#7f1d1d',
+      },
+      orange: {
+        50: '#fff7ed',
+        100: '#ffedd5',
+        200: '#fed7aa',
+        300: '#fdba74',
+        400: '#fb923c',
+        500: '#f97316',
+        600: '#ea580c',
+        700: '#c2410c',
+        800: '#9a3412',
+        900: '#7c2d12',
+      },
+    };
+
+    const colors = colorMap[accentColor] || colorMap['indigo'];
+    const rootEl = sidebarRef.current;
+
+    if (rootEl) {
+      Object.entries(colors).forEach(([shade, value]) => {
+        rootEl.style.setProperty(`--color-primary-${shade}`, value);
+      });
+      rootEl.setAttribute('data-accent', accentColor);
+    }
+  }, [preferences.accentColor]);
 
   // Error states that could block rendering
   const [initializationError, setInitializationError] = useState<string | null>(null);
   const [extensionContextInvalid, setExtensionContextInvalid] = useState<boolean>(false);
   const [isComponentMounted, setIsComponentMounted] = useState<boolean>(false);
-  const [renderKey, setRenderKey] = useState<number>(0); // Force re-render key
   const [isInitializing, setIsInitializing] = useState<boolean>(true); // Track initialization state
 
   // Get communication methods with guaranteed safe fallbacks and error boundaries
@@ -94,7 +202,7 @@ const Sidebar: React.FC<SidebarProps> = ({ initialPreferences }) => {
         setExtensionContextInvalid(true);
         setInitializationError('Extension was reloaded. Please refresh the page to restore functionality.');
       }, []);
-      
+
       // Provide fallback methods
       communicationMethods = {
         availableTools: [],
@@ -103,10 +211,12 @@ const Sidebar: React.FC<SidebarProps> = ({ initialPreferences }) => {
         forceReconnect: async () => false,
         serverStatus: 'disconnected' as const,
         updateServerConfig: async () => false,
-        getServerConfig: async () => ({ uri: '' })
+        getServerConfig: async () => ({ uri: '' }),
       };
     } else {
-      logMessage(`[Sidebar] Unexpected error in useMcpCommunication: ${error instanceof Error ? error.message : String(error)}`);
+      logMessage(
+        `[Sidebar] Unexpected error in useMcpCommunication: ${error instanceof Error ? error.message : String(error)}`,
+      );
       // Provide safe fallback methods for any other error
       communicationMethods = {
         availableTools: [],
@@ -115,7 +225,7 @@ const Sidebar: React.FC<SidebarProps> = ({ initialPreferences }) => {
         forceReconnect: async () => false,
         serverStatus: 'disconnected' as const,
         updateServerConfig: async () => false,
-        getServerConfig: async () => ({ uri: '' })
+        getServerConfig: async () => ({ uri: '' }),
       };
     }
   }
@@ -131,13 +241,13 @@ const Sidebar: React.FC<SidebarProps> = ({ initialPreferences }) => {
   useEffect(() => {
     setIsComponentMounted(true);
     logMessage(`[Sidebar] Component mounted (ID: ${componentId.current})`);
-    
+
     // Mark initialization as complete after a brief delay
     const initTimer = setTimeout(() => {
       setIsInitializing(false);
       logMessage(`[Sidebar] Component initialization completed (ID: ${componentId.current})`);
     }, 100);
-    
+
     return () => {
       clearTimeout(initTimer);
       setIsComponentMounted(false);
@@ -159,7 +269,7 @@ const Sidebar: React.FC<SidebarProps> = ({ initialPreferences }) => {
   useEffect(() => {
     // Initial check
     checkActiveSidebarManager();
-    
+
     // Periodic monitoring to detect if reference gets lost
     const monitorInterval = setInterval(() => {
       const available = checkActiveSidebarManager();
@@ -176,14 +286,26 @@ const Sidebar: React.FC<SidebarProps> = ({ initialPreferences }) => {
   // Enhanced event bus integration for real-time updates
   useEffect(() => {
     const unsubscribeCallbacks: (() => void)[] = [];
+    const { addToast } = useToastStore.getState();
+    const { addLog } = useActivityStore.getState();
 
     // Listen for connection status changes
-    const unsubscribeConnection = eventBus.on('connection:status-changed', (data) => {
+    const unsubscribeConnection = eventBus.on('connection:status-changed', data => {
       logMessage(`[Sidebar] Connection status event received: ${data.status}${data.error ? ` (${data.error})` : ''}`);
 
-      // The connection store will be updated by the MCP client,
-      // but we can add additional UI feedback here if needed
       if (data.status === 'connected') {
+        addToast({
+          title: 'Connected',
+          message: 'Successfully connected to MCP server',
+          type: 'success',
+          duration: 3000,
+        });
+        addLog({
+          type: 'connection',
+          title: 'Connected',
+          detail: 'Successfully connected to MCP server',
+          status: 'success',
+        });
         // Automatically refresh tools when connection is established
         logMessage('[Sidebar] Connection established, refreshing tools...');
         refreshTools(true).catch(error => {
@@ -194,28 +316,60 @@ const Sidebar: React.FC<SidebarProps> = ({ initialPreferences }) => {
     unsubscribeCallbacks.push(unsubscribeConnection);
 
     // Listen for tool updates
-    const unsubscribeTools = eventBus.on('tool:list-updated', (data) => {
+    const unsubscribeTools = eventBus.on('tool:list-updated', data => {
       logMessage(`[Sidebar] Tool list updated event received: ${data.tools.length} tools`);
-      // Tools are already updated in the store by the MCP client
-      // We can add UI feedback here if needed
+      if (data.tools.length > 0) {
+        addToast({
+          title: 'Tools Updated',
+          message: `Loaded ${data.tools.length} available tools`,
+          type: 'info',
+          duration: 2000,
+        });
+      }
     });
     unsubscribeCallbacks.push(unsubscribeTools);
 
     // Listen for tool execution events for better user feedback
-    const unsubscribeToolExecution = eventBus.on('tool:execution-completed', (data) => {
+    const unsubscribeToolExecution = eventBus.on('tool:execution-completed', data => {
       logMessage(`[Sidebar] Tool execution completed: ${data.execution.toolName} (ID: ${data.execution.id})`);
-      // Could show success notifications or update UI state
+      addToast({
+        title: 'Tool Executed',
+        message: `Successfully ran ${data.execution.toolName}`,
+        type: 'success',
+        duration: 3000,
+      });
+      addLog({
+        type: 'tool_execution',
+        title: `Executed: ${data.execution.toolName}`,
+        detail: 'Tool execution completed successfully',
+        status: 'success',
+        metadata: {
+          executionId: data.execution.id,
+          result: data.execution.result,
+        },
+      });
     });
     unsubscribeCallbacks.push(unsubscribeToolExecution);
 
-    const unsubscribeToolError = eventBus.on('tool:execution-failed', (data) => {
+    const unsubscribeToolError = eventBus.on('tool:execution-failed', data => {
       logMessage(`[Sidebar] Tool execution failed: ${data.toolName} - ${data.error}`);
-      // Could show error notifications
+      addToast({
+        title: 'Execution Failed',
+        message: `${data.toolName}: ${data.error}`,
+        type: 'error',
+        duration: 5000,
+      });
+      addLog({
+        type: 'error',
+        title: `Failed: ${data.toolName}`,
+        detail: data.error,
+        status: 'error',
+      });
     });
     unsubscribeCallbacks.push(unsubscribeToolError);
 
     // Listen for context bridge events to handle extension lifecycle
-    const unsubscribeBridgeInvalidated = eventBus.on('context:bridge-invalidated', (data) => {
+    const unsubscribeBridgeInvalidated = eventBus.on('context:bridge-invalidated', data => {
       logMessage(`[Sidebar] Context bridge invalidated: ${data.error}`);
       setExtensionContextInvalid(true);
       setInitializationError('Extension was reloaded. Please refresh the page to restore functionality.');
@@ -234,6 +388,22 @@ const Sidebar: React.FC<SidebarProps> = ({ initialPreferences }) => {
       });
     });
     unsubscribeCallbacks.push(unsubscribeBridgeRestored);
+
+    // Listen for context menu save action
+    const unsubscribeContextSave = eventBus.on('context:save', data => {
+      logMessage(`[Sidebar] Received context save request: ${data.content.substring(0, 20)}...`);
+      // We'll handle this by opening the Context Manager or just adding it
+      // For now, let's just add a toast and maybe open the manager
+      addToast({
+        title: 'Text Selected',
+        message: 'Text copied from context menu. Open Context Manager to save.',
+        type: 'info',
+        duration: 3000,
+      });
+      // In a real implementation, we might want to auto-open the Context Manager
+      // or pass this data to the InputArea
+    });
+    unsubscribeCallbacks.push(unsubscribeContextSave);
 
     // Cleanup all event listeners
     return () => {
@@ -260,18 +430,33 @@ const Sidebar: React.FC<SidebarProps> = ({ initialPreferences }) => {
   }, [serverStatus, availableTools.length]);
 
   // Use store values with fallbacks to initial preferences
-  const isMinimized = storeSidebarMinimized ?? (initialPreferences?.isMinimized ?? false);
+  const isMinimized = storeSidebarMinimized ?? initialPreferences?.isMinimized ?? false;
   const sidebarWidth = storeSidebarWidth || initialPreferences?.sidebarWidth || SIDEBAR_DEFAULT_WIDTH;
   const isPushMode = preferences.isPushMode ?? initialPreferences?.isPushMode ?? false;
   const autoSubmit = preferences.autoSubmit ?? initialPreferences?.autoSubmit ?? false;
 
   // Debug logging for state tracking
   useEffect(() => {
-    logMessage(`[Sidebar] State update - visible: ${sidebarVisible}, minimized: ${isMinimized}, pushMode: ${isPushMode}, width: ${sidebarWidth}`);
+    logMessage(
+      `[Sidebar] State update - visible: ${sidebarVisible}, minimized: ${isMinimized}, pushMode: ${isPushMode}, width: ${sidebarWidth}`,
+    );
   }, [sidebarVisible, isMinimized, isPushMode, sidebarWidth]);
 
   // Local UI state that doesn't need to be in the store
-  const [activeTab, setActiveTab] = useState<'availableTools' | 'instructions' | 'settings'>('availableTools');
+  const [activeTab, setActiveTab] = useState<
+    | 'availableTools'
+    | 'resources'
+    | 'prompts'
+    | 'instructions'
+    | 'activity'
+    | 'dashboard'
+    | 'macros'
+    | 'memory'
+    | 'settings'
+    | 'help'
+    | 'system'
+  >('availableTools');
+  const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [isInputMinimized, setIsInputMinimized] = useState(false);
@@ -282,6 +467,58 @@ const Sidebar: React.FC<SidebarProps> = ({ initialPreferences }) => {
   const previousWidthRef = useRef(SIDEBAR_DEFAULT_WIDTH);
   const transitionTimerRef = useRef<number | null>(null);
 
+  // Keyboard Shortcuts Integration
+  useKeyboardShortcuts({
+    toggleSidebar: () => {
+      toggleSidebar();
+      logMessage('[Sidebar] Toggled via shortcut');
+    },
+    closeSidebar: () => {
+      if (!isMinimized) toggleMinimize('shortcut');
+    },
+    toggleCommandPalette: () => {
+      setIsCommandPaletteOpen(prev => !prev);
+    },
+    focusSearch: () => {
+      // This requires passing a ref down to AvailableTools or managing focus globally
+      // For now, let's just switch to the tab
+      setActiveTab('availableTools');
+      // Ideally we would focus the input inside AvailableTools
+    },
+    switchTab: direction => {
+      const tabs: (
+        | 'availableTools'
+        | 'resources'
+        | 'prompts'
+        | 'instructions'
+        | 'activity'
+        | 'dashboard'
+        | 'macros'
+        | 'memory'
+        | 'settings'
+        | 'help'
+        | 'system'
+      )[] = [
+        'availableTools',
+        'resources',
+        'prompts',
+        'instructions',
+        'activity',
+        'dashboard',
+        'macros',
+        'memory',
+        'settings',
+        'help',
+        'system',
+      ];
+      const currentIndex = tabs.indexOf(activeTab);
+      let nextIndex = direction === 'next' ? currentIndex + 1 : currentIndex - 1;
+      if (nextIndex >= tabs.length) nextIndex = 0;
+      if (nextIndex < 0) nextIndex = tabs.length - 1;
+      setActiveTab(tabs[nextIndex]);
+    },
+  });
+
   // Helper function to wait for SidebarManager to become available with retry mechanism
   const waitForSidebarManager = useCallback(async (maxRetries = 10, baseDelay = 50): Promise<any> => {
     for (let attempt = 0; attempt < maxRetries; attempt++) {
@@ -290,42 +527,49 @@ const Sidebar: React.FC<SidebarProps> = ({ initialPreferences }) => {
         logMessage(`[Sidebar] activeSidebarManager found after ${attempt} attempts`);
         return sidebarManager;
       }
-      
+
       // Exponential backoff: 50ms, 100ms, 200ms, 400ms, etc.
       const delay = baseDelay * Math.pow(2, attempt);
-      logMessage(`[Sidebar] activeSidebarManager not available, retrying in ${delay}ms (attempt ${attempt + 1}/${maxRetries})`);
-      
+      logMessage(
+        `[Sidebar] activeSidebarManager not available, retrying in ${delay}ms (attempt ${attempt + 1}/${maxRetries})`,
+      );
+
       await new Promise(resolve => setTimeout(resolve, delay));
     }
-    
+
     logMessage(`[Sidebar] activeSidebarManager not available after ${maxRetries} attempts`);
     return null;
   }, []);
 
   // --- Theme Application Logic ---
-  const applyTheme = useCallback(async (selectedTheme: Theme) => {
-    try {
-      // Use retry mechanism to wait for SidebarManager
-      const sidebarManager = await waitForSidebarManager(5, 50); // Shorter retry for theme application
-      
-      if (!sidebarManager) {
-        logMessage('[Sidebar] Sidebar manager not available for theme application - will apply when ready.');
-        return;
-      }
-
-      // OPTIMIZATION: Theme application is now CSS-only and doesn't trigger re-renders
+  const applyTheme = useCallback(
+    async (selectedTheme: Theme) => {
       try {
-        const success = sidebarManager.applyThemeClass(selectedTheme);
-        if (!success) {
-          logMessage('[Sidebar] Theme application failed but continuing...');
+        // Use retry mechanism to wait for SidebarManager
+        const sidebarManager = await waitForSidebarManager(5, 50); // Shorter retry for theme application
+
+        if (!sidebarManager) {
+          logMessage('[Sidebar] Sidebar manager not available for theme application - will apply when ready.');
+          return;
+        }
+
+        // OPTIMIZATION: Theme application is now CSS-only and doesn't trigger re-renders
+        try {
+          const success = sidebarManager.applyThemeClass(selectedTheme);
+          if (!success) {
+            logMessage('[Sidebar] Theme application failed but continuing...');
+          }
+        } catch (error) {
+          logMessage(`[Sidebar] Theme application error: ${error instanceof Error ? error.message : String(error)}`);
         }
       } catch (error) {
-        logMessage(`[Sidebar] Theme application error: ${error instanceof Error ? error.message : String(error)}`);
+        logMessage(
+          `[Sidebar] Error waiting for SidebarManager during theme application: ${error instanceof Error ? error.message : String(error)}`,
+        );
       }
-    } catch (error) {
-      logMessage(`[Sidebar] Error waiting for SidebarManager during theme application: ${error instanceof Error ? error.message : String(error)}`);
-    }
-  }, [waitForSidebarManager]);
+    },
+    [waitForSidebarManager],
+  );
 
   // Effect to apply theme and listen for system changes
   // OPTIMIZATION: Throttle theme changes to avoid excessive calls
@@ -375,49 +619,26 @@ const Sidebar: React.FC<SidebarProps> = ({ initialPreferences }) => {
   }, [theme, applyTheme]);
   // --- End Theme Application Logic ---
 
-  // useEffect(() => {
-  //   // Function to update detected tools
-  //   const updateDetectedTools = () => {
-  //     try {
-  //       const toolDict = getMasterToolDict();
-  //       const mcpTools = Object.values(toolDict) as DetectedTool[];
-
-  //       // Update the detected tools state
-  //       setDetectedTools(mcpTools);
-
-  //       if (mcpTools.length > 0) {
-  //         // logMessage(`[Sidebar] Found ${mcpTools.length} MCP tools`);
-  //       }
-  //     } catch (error) {
-  //       // If getMasterToolDict fails, just log the error
-  //       logger.error("Error updating detected tools:", error);
-  //     }
-  //   };
-
-  //   // Set up interval to check for new tools
-  //   const updateInterval = setInterval(updateDetectedTools, 1000);
-
-  //   // Track URL changes to clear detected tools on navigation
-  //   let lastUrl = window.location.href;
-
   // Apply push mode when settings change - with robust retry mechanism
   useEffect(() => {
-    logMessage(`[Sidebar] Push mode effect triggered - visible: ${sidebarVisible}, pushMode: ${isPushMode}, minimized: ${isMinimized}, width: ${sidebarWidth}`);
-    
+    logMessage(
+      `[Sidebar] Push mode effect triggered - visible: ${sidebarVisible}, pushMode: ${isPushMode}, minimized: ${isMinimized}, width: ${sidebarWidth}`,
+    );
+
     // Use async function to handle the retry mechanism
     const applyPushModeSettings = async () => {
       try {
         // Wait for SidebarManager to become available with retry
         const sidebarManager = await waitForSidebarManager();
-        
+
         if (sidebarManager) {
           logMessage(`[Sidebar] activeSidebarManager available: true`);
-          
+
           try {
             // Apply push mode settings when visible
             if (sidebarVisible) {
               logMessage(
-                `[Sidebar] Applying push mode (${isPushMode}, minimized: ${isMinimized}) and width (${sidebarWidth})`
+                `[Sidebar] Applying push mode (${isPushMode}, minimized: ${isMinimized}) and width (${sidebarWidth})`,
               );
               sidebarManager.setPushContentMode(
                 isPushMode,
@@ -462,7 +683,9 @@ const Sidebar: React.FC<SidebarProps> = ({ initialPreferences }) => {
             logMessage('[Sidebar] Component unmounting - could not access SidebarManager for cleanup');
           }
         } catch (error) {
-          logMessage(`[Sidebar] Error during push mode cleanup: ${error instanceof Error ? error.message : String(error)}`);
+          logMessage(
+            `[Sidebar] Error during push mode cleanup: ${error instanceof Error ? error.message : String(error)}`,
+          );
         }
       };
 
@@ -578,12 +801,6 @@ const Sidebar: React.FC<SidebarProps> = ({ initialPreferences }) => {
     logMessage(`[Sidebar] Auto submit ${checked ? 'enabled' : 'disabled'}`);
   };
 
-  const handleClearTools = () => {
-    logMessage('[Sidebar] Clear tools requested - functionality deprecated');
-    // Note: Tool clearing is now handled by the store/MCP client
-    // This is kept for UI compatibility but doesn't clear anything
-  };
-
   const handleRefreshTools = async () => {
     logMessage('[Sidebar] Refreshing tools');
     setIsRefreshing(true);
@@ -645,13 +862,16 @@ const Sidebar: React.FC<SidebarProps> = ({ initialPreferences }) => {
         isTransitioning ? 'sidebar-transitioning' : '',
       )}
       style={{ width: isMinimized ? `${SIDEBAR_MINIMIZED_WIDTH}px` : `${sidebarWidth}px` }}>
+      {/* Sampling Modal Overlay */}
+      <SamplingModal />
+
       {/* Resize Handle - only visible when not minimized */}
       {!isMinimized && (
         <ResizeHandle
           onResize={handleResize}
           minWidth={SIDEBAR_DEFAULT_WIDTH}
           maxWidth={500}
-          className="absolute left-0 top-0 bottom-0 w-1 cursor-ew-resize hover:bg-indigo-400 dark:hover:bg-indigo-600 z-[60] transition-colors duration-300"
+          className="absolute left-0 top-0 bottom-0 w-1 cursor-ew-resize hover:bg-primary-400 dark:hover:bg-primary-600 z-[60] transition-colors duration-300"
         />
       )}
 
@@ -709,7 +929,7 @@ const Sidebar: React.FC<SidebarProps> = ({ initialPreferences }) => {
                 <Icon
                   name={getCurrentThemeIcon()}
                   size="sm"
-                  className="transition-all text-indigo-600 dark:text-indigo-400"
+                  className="transition-all text-primary-600 dark:text-primary-400"
                 />
                 <span className="sr-only">Toggle theme</span>
               </Button>
@@ -739,6 +959,17 @@ const Sidebar: React.FC<SidebarProps> = ({ initialPreferences }) => {
 
       {/* Main Content Area - Using sliding panel approach */}
       <div className="sidebar-inner-content flex-1 relative overflow-hidden bg-white dark:bg-slate-900">
+        <Onboarding />
+        <ToastContainer />
+        <CommandPalette
+          isOpen={isCommandPaletteOpen}
+          onClose={() => setIsCommandPaletteOpen(false)}
+          onNavigate={tab => {
+            setActiveTab(tab);
+            if (!sidebarVisible) toggleSidebar();
+          }}
+          togglePushMode={() => handlePushModeToggle(!isPushMode)}
+        />
         {/* Virtual slide - content always at full width */}
         <div
           ref={contentRef}
@@ -762,8 +993,7 @@ const Sidebar: React.FC<SidebarProps> = ({ initialPreferences }) => {
                       <Typography variant="caption" className="text-red-700 dark:text-red-300">
                         {extensionContextInvalid
                           ? 'The extension was reloaded. Please refresh this page to restore full functionality.'
-                          : `Some features may be limited: ${initializationError}`
-                        }
+                          : `Some features may be limited: ${initializationError}`}
                       </Typography>
                       {extensionContextInvalid && (
                         <div className="mt-2">
@@ -808,16 +1038,6 @@ const Sidebar: React.FC<SidebarProps> = ({ initialPreferences }) => {
                       onChange={handlePushModeToggle}
                     />
                   </div>
-                  {/* <div className="flex items-center justify-between">
-                    <Typography variant="subtitle" className="text-slate-700 dark:text-slate-300 font-medium">
-                      Auto Submit Tool Results
-                    </Typography>
-                    <ToggleWithoutLabel
-                      label="Auto Submit Tool Results"
-                      checked={autoSubmit}
-                      onChange={handleAutoSubmitToggle}
-                    />
-                  </div> */}
 
                   {/* DEBUG BUTTON - ONLY FOR DEVELOPMENT - REMOVE IN PRODUCTION */}
                   {process.env.NODE_ENV === 'development' && (
@@ -845,19 +1065,39 @@ const Sidebar: React.FC<SidebarProps> = ({ initialPreferences }) => {
                 <div className="flex">
                   <button
                     className={cn(
-                      'py-2 px-4 font-medium text-sm transition-all duration-200',
+                      'py-2 px-3 font-medium text-xs sm:text-sm transition-all duration-200',
                       activeTab === 'availableTools'
-                        ? 'border-b-2 border-indigo-600 text-indigo-600 dark:border-indigo-400 dark:text-indigo-400'
+                        ? 'border-b-2 border-primary-600 text-primary-600 dark:border-primary-400 dark:text-primary-400'
                         : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-t-lg',
                     )}
                     onClick={() => setActiveTab('availableTools')}>
-                    Available Tools
+                    Tools
                   </button>
                   <button
                     className={cn(
-                      'py-2 px-4 font-medium text-sm transition-all duration-200',
+                      'py-2 px-3 font-medium text-xs sm:text-sm transition-all duration-200',
+                      activeTab === 'resources'
+                        ? 'border-b-2 border-primary-600 text-primary-600 dark:border-primary-400 dark:text-primary-400'
+                        : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-t-lg',
+                    )}
+                    onClick={() => setActiveTab('resources')}>
+                    Resources
+                  </button>
+                  <button
+                    className={cn(
+                      'py-2 px-3 font-medium text-xs sm:text-sm transition-all duration-200',
+                      activeTab === 'prompts'
+                        ? 'border-b-2 border-primary-600 text-primary-600 dark:border-primary-400 dark:text-primary-400'
+                        : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-t-lg',
+                    )}
+                    onClick={() => setActiveTab('prompts')}>
+                    Prompts
+                  </button>
+                  <button
+                    className={cn(
+                      'py-2 px-3 font-medium text-xs sm:text-sm transition-all duration-200',
                       activeTab === 'instructions'
-                        ? 'border-b-2 border-indigo-600 text-indigo-600 dark:border-indigo-400 dark:text-indigo-400'
+                        ? 'border-b-2 border-primary-600 text-primary-600 dark:border-primary-400 dark:text-primary-400'
                         : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-t-lg',
                     )}
                     onClick={() => setActiveTab('instructions')}>
@@ -865,13 +1105,73 @@ const Sidebar: React.FC<SidebarProps> = ({ initialPreferences }) => {
                   </button>
                   <button
                     className={cn(
-                      'py-2 px-4 font-medium text-sm transition-all duration-200',
+                      'py-2 px-3 font-medium text-xs sm:text-sm transition-all duration-200',
+                      activeTab === 'activity'
+                        ? 'border-b-2 border-primary-600 text-primary-600 dark:border-primary-400 dark:text-primary-400'
+                        : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-t-lg',
+                    )}
+                    onClick={() => setActiveTab('activity')}>
+                    Activity
+                  </button>
+                  <button
+                    className={cn(
+                      'py-2 px-3 font-medium text-xs sm:text-sm transition-all duration-200',
+                      activeTab === 'dashboard'
+                        ? 'border-b-2 border-primary-600 text-primary-600 dark:border-primary-400 dark:text-primary-400'
+                        : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-t-lg',
+                    )}
+                    onClick={() => setActiveTab('dashboard')}>
+                    Dashboard
+                  </button>
+                  <button
+                    className={cn(
+                      'py-2 px-3 font-medium text-xs sm:text-sm transition-all duration-200',
+                      activeTab === 'macros'
+                        ? 'border-b-2 border-primary-600 text-primary-600 dark:border-primary-400 dark:text-primary-400'
+                        : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-t-lg',
+                    )}
+                    onClick={() => setActiveTab('macros')}>
+                    Macros
+                  </button>
+                  <button
+                    className={cn(
+                      'py-2 px-3 font-medium text-xs sm:text-sm transition-all duration-200',
+                      activeTab === 'memory'
+                        ? 'border-b-2 border-primary-600 text-primary-600 dark:border-primary-400 dark:text-primary-400'
+                        : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-t-lg',
+                    )}
+                    onClick={() => setActiveTab('memory')}>
+                    Memory
+                  </button>
+                  <button
+                    className={cn(
+                      'py-2 px-3 font-medium text-xs sm:text-sm transition-all duration-200',
                       activeTab === 'settings'
-                        ? 'border-b-2 border-indigo-600 text-indigo-600 dark:border-indigo-400 dark:text-indigo-400'
+                        ? 'border-b-2 border-primary-600 text-primary-600 dark:border-primary-400 dark:text-primary-400'
                         : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-t-lg',
                     )}
                     onClick={() => setActiveTab('settings')}>
                     Settings
+                  </button>
+                  <button
+                    className={cn(
+                      'py-2 px-3 font-medium text-xs sm:text-sm transition-all duration-200',
+                      activeTab === 'system'
+                        ? 'border-b-2 border-primary-600 text-primary-600 dark:border-primary-400 dark:text-primary-400'
+                        : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-t-lg',
+                    )}
+                    onClick={() => setActiveTab('system')}>
+                    System
+                  </button>
+                  <button
+                    className={cn(
+                      'py-2 px-3 font-medium text-xs sm:text-sm transition-all duration-200',
+                      activeTab === 'help'
+                        ? 'border-b-2 border-primary-600 text-primary-600 dark:border-primary-400 dark:text-primary-400'
+                        : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-t-lg',
+                    )}
+                    onClick={() => setActiveTab('help')}>
+                    Help
                   </button>
                 </div>
               </div>
@@ -897,6 +1197,24 @@ const Sidebar: React.FC<SidebarProps> = ({ initialPreferences }) => {
                 </Card>
               </div>
 
+              {/* Resources */}
+              <div
+                className={cn(
+                  'h-full overflow-y-auto scrollbar-thin scrollbar-thumb-slate-300 dark:scrollbar-thumb-slate-600 scrollbar-track-transparent',
+                  { hidden: activeTab !== 'resources' },
+                )}>
+                <ResourcesList />
+              </div>
+
+              {/* Prompts */}
+              <div
+                className={cn(
+                  'h-full overflow-y-auto scrollbar-thin scrollbar-thumb-slate-300 dark:scrollbar-thumb-slate-600 scrollbar-track-transparent',
+                  { hidden: activeTab !== 'prompts' },
+                )}>
+                <PromptsList />
+              </div>
+
               {/* Instructions */}
               <div
                 className={cn(
@@ -910,6 +1228,42 @@ const Sidebar: React.FC<SidebarProps> = ({ initialPreferences }) => {
                 </Card>
               </div>
 
+              {/* Activity Log */}
+              <div
+                className={cn(
+                  'h-full overflow-y-auto scrollbar-thin scrollbar-thumb-slate-300 dark:scrollbar-thumb-slate-600 scrollbar-track-transparent',
+                  { hidden: activeTab !== 'activity' },
+                )}>
+                <ActivityLog />
+              </div>
+
+              {/* Dashboard */}
+              <div
+                className={cn(
+                  'h-full overflow-y-auto scrollbar-thin scrollbar-thumb-slate-300 dark:scrollbar-thumb-slate-600 scrollbar-track-transparent',
+                  { hidden: activeTab !== 'dashboard' },
+                )}>
+                <Dashboard onExecute={sendMessage} />
+              </div>
+
+              {/* Macros */}
+              <div
+                className={cn(
+                  'h-full overflow-y-auto scrollbar-thin scrollbar-thumb-slate-300 dark:scrollbar-thumb-slate-600 scrollbar-track-transparent',
+                  { hidden: activeTab !== 'macros' },
+                )}>
+                <MacroList onExecute={sendMessage} />
+              </div>
+
+              {/* Memory */}
+              <div
+                className={cn(
+                  'h-full overflow-y-auto scrollbar-thin scrollbar-thumb-slate-300 dark:scrollbar-thumb-slate-600 scrollbar-track-transparent',
+                  { hidden: activeTab !== 'memory' },
+                )}>
+                <MemoryTab />
+              </div>
+
               {/* Settings */}
               <div
                 className={cn(
@@ -918,31 +1272,55 @@ const Sidebar: React.FC<SidebarProps> = ({ initialPreferences }) => {
                 )}>
                 <Settings />
               </div>
+
+              {/* System */}
+              <div
+                className={cn(
+                  'h-full overflow-y-auto scrollbar-thin scrollbar-thumb-slate-300 dark:scrollbar-thumb-slate-600 scrollbar-track-transparent',
+                  { hidden: activeTab !== 'system' },
+                )}>
+                <SystemInfo />
+              </div>
+
+              {/* Help */}
+              <div
+                className={cn(
+                  'h-full overflow-y-auto scrollbar-thin scrollbar-thumb-slate-300 dark:scrollbar-thumb-slate-600 scrollbar-track-transparent',
+                  { hidden: activeTab !== 'help' },
+                )}>
+                <Help />
+              </div>
             </div>
 
-            {/* Input Area (Always at the bottom) */}
-            {/* <div className="border-t border-slate-200 dark:border-slate-700 flex-shrink-0 bg-white dark:bg-slate-800 shadow-inner">
+            {/* Input Area (Smart Context) */}
+            <div className="border-t border-slate-200 dark:border-slate-700 flex-shrink-0 bg-white dark:bg-slate-800 shadow-inner z-10">
               {!isInputMinimized ? (
-                <div className="relative">
-                  <Button variant="ghost" size="sm" onClick={toggleInputMinimize} className="absolute top-2 right-2">
-                    <Icon name="chevron-down" size="sm" />
-                  </Button>
-                  <InputArea
-                    onSubmit={async text => {
+                <InputArea
+                  onSubmit={async text => {
+                    // In "Push Mode" or overlay, we usually want to insert into the AI's chat box
+                    // But if we have our own input area, we might want to send directly to the AI via adapter
+                    try {
                       await adapter.insertTextIntoInput(text);
-                      await new Promise(resolve => setTimeout(resolve, 300));
-                      await adapter.triggerSubmission();
-                    }}
-                    onToggleMinimize={toggleInputMinimize}
-                  />
-                </div>
+                      // Optional: trigger submission if configured
+                      if (autoSubmit) {
+                        await new Promise(resolve => setTimeout(resolve, 300));
+                        await adapter.triggerSubmission();
+                      }
+                    } catch (e) {
+                      logMessage(`[Sidebar] Error inserting text: ${e}`);
+                    }
+                  }}
+                  onToggleMinimize={toggleInputMinimize}
+                />
               ) : (
-                <Button variant="default" size="sm" onClick={toggleInputMinimize} className="w-full h-10">
-                  <Icon name="chevron-up" size="sm" className="mr-2" />
-                  Show Input
-                </Button>
+                <div className="p-2">
+                  <Button variant="outline" size="sm" onClick={toggleInputMinimize} className="w-full h-8 text-xs">
+                    <Icon name="chevron-up" size="xs" className="mr-2" />
+                    Show Input & Context
+                  </Button>
+                </div>
               )}
-            </div> */}
+            </div>
           </div>
         </div>
       </div>

@@ -1,6 +1,9 @@
 import { contextBridge } from './context-bridge';
 import { useConnectionStore } from '../stores/connection.store';
 import { useToolStore } from '../stores/tool.store';
+import { useResourceStore } from '../stores/resource.store';
+import { usePromptStore } from '../stores/prompt.store';
+import { useSamplingStore } from '../stores/sampling.store';
 import { eventBus } from '../events/event-bus';
 import type { ServerConfig, ConnectionStatus } from '../types/stores';
 import { logMessage } from '../utils/helpers';
@@ -9,7 +12,7 @@ import { pluginRegistry } from '../plugins';
 /**
  * McpClient – Enhanced wrapper around ContextBridge for communicating with the
  * background script and managing MCP (Model Context Protocol) connections.
- * 
+ *
  * This class provides:
  * - Type-safe communication with the background script
  * - Automatic state synchronization with Zustand stores
@@ -17,7 +20,7 @@ import { pluginRegistry } from '../plugins';
  * - Tool execution and management
  * - Server configuration handling
  * - Comprehensive error handling and recovery
- * 
+ *
  * The client follows a singleton pattern to ensure consistent state management
  * across the entire content script lifecycle.
  */
@@ -60,23 +63,25 @@ class McpClient {
 
       // Request initial connection status and server config (async, don't block initialization)
       this.requestInitialState().catch(error => {
-        logMessage(`[McpClient] Initial state request failed (non-blocking): ${error instanceof Error ? error.message : String(error)}`);
+        logMessage(
+          `[McpClient] Initial state request failed (non-blocking): ${error instanceof Error ? error.message : String(error)}`,
+        );
       });
 
       logMessage('[McpClient] Initialized successfully');
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error);
       logMessage(`[McpClient] Initialization failed: ${errorMessage}`);
-      
+
       // Reset initialization flag on failure
       this.isInitialized = false;
-      
+
       // Emit error event for other components to handle
-      eventBus.emit('error:unhandled', { 
+      eventBus.emit('error:unhandled', {
         error: error instanceof Error ? error : new Error(errorMessage),
-        context: 'mcp-client-initialization'
+        context: 'mcp-client-initialization',
       });
-      
+
       throw error;
     }
   }
@@ -87,39 +92,45 @@ class McpClient {
   private async requestInitialState(): Promise<void> {
     const maxRetries = 3;
     let retryCount = 0;
-    
+
     while (retryCount < maxRetries) {
       try {
         logMessage(`[McpClient] Requesting initial state from background (attempt ${retryCount + 1}/${maxRetries})...`);
-        
+
         // First, get current connection status with timeout
         try {
           const statusResponse = await this.getCurrentConnectionStatus();
           if (statusResponse) {
-            logMessage(`[McpClient] Initial connection status: ${statusResponse.status} (isConnected: ${statusResponse.isConnected})`);
+            logMessage(
+              `[McpClient] Initial connection status: ${statusResponse.status} (isConnected: ${statusResponse.isConnected})`,
+            );
             // Cast status to ConnectionStatus type since background returns a string
             const connectionStatus = statusResponse.status as ConnectionStatus;
             this.handleConnectionStatusChange(connectionStatus, undefined);
           }
         } catch (statusError) {
-          logMessage(`[McpClient] Failed to get initial connection status: ${statusError instanceof Error ? statusError.message : String(statusError)}`);
+          logMessage(
+            `[McpClient] Failed to get initial connection status: ${statusError instanceof Error ? statusError.message : String(statusError)}`,
+          );
           // Don't fail the entire initialization, continue with other operations
         }
-        
+
         // Get server config
         try {
           const config = await this.getServerConfig();
           useConnectionStore.getState().setServerConfig(config);
           logMessage(`[McpClient] Initial server config loaded: ${JSON.stringify(config)}`);
         } catch (configError) {
-          logMessage(`[McpClient] Failed to get server config: ${configError instanceof Error ? configError.message : String(configError)}`);
+          logMessage(
+            `[McpClient] Failed to get server config: ${configError instanceof Error ? configError.message : String(configError)}`,
+          );
           // Use default config if loading fails
           useConnectionStore.getState().setServerConfig({
             uri: 'http://localhost:3006/sse',
             connectionType: 'sse',
             timeout: 5000,
             retryAttempts: 3,
-            retryDelay: 2000
+            retryDelay: 2000,
           });
         }
 
@@ -128,30 +139,33 @@ class McpClient {
           const tools = await this.getAvailableTools(true);
           logMessage(`[McpClient] Initial tools loaded: ${tools.length} tools`);
         } catch (toolsError) {
-          logMessage(`[McpClient] Failed to get initial tools: ${toolsError instanceof Error ? toolsError.message : String(toolsError)}`);
+          logMessage(
+            `[McpClient] Failed to get initial tools: ${toolsError instanceof Error ? toolsError.message : String(toolsError)}`,
+          );
           // Continue without tools - they can be loaded later
         }
-        
+
         logMessage('[McpClient] Initial state request completed successfully');
         return; // Success, exit retry loop
-        
       } catch (error) {
         retryCount++;
         const errorMessage = error instanceof Error ? error.message : String(error);
         logMessage(`[McpClient] Initial state request attempt ${retryCount} failed: ${errorMessage}`);
-        
+
         if (retryCount >= maxRetries) {
-          logMessage(`[McpClient] All ${maxRetries} initial state request attempts failed. Continuing with degraded functionality.`);
-          
+          logMessage(
+            `[McpClient] All ${maxRetries} initial state request attempts failed. Continuing with degraded functionality.`,
+          );
+
           // Emit error event but don't throw - let the client continue to work
           eventBus.emit('error:unhandled', {
             error: error instanceof Error ? error : new Error(errorMessage),
-            context: 'mcp-client-initial-state'
+            context: 'mcp-client-initial-state',
           });
-          
+
           return;
         }
-        
+
         // Wait before retry with exponential backoff
         const delay = Math.min(1000 * Math.pow(2, retryCount - 1), 5000);
         logMessage(`[McpClient] Retrying in ${delay}ms...`);
@@ -169,30 +183,67 @@ class McpClient {
       try {
         // Extract status from the payload (should now be properly structured)
         const { status, error, isConnected } = message.payload ?? {};
-        
+
         // Log the raw message for debugging
         logMessage(`[McpClient] Received connection status message: ${JSON.stringify(message)}`);
-        
+
         // Ensure we handle the status properly
         if (status) {
           logMessage(`[McpClient] Processing status: ${status}, error: ${error}, isConnected: ${isConnected}`);
           this.handleConnectionStatusChange(status, error);
         } else {
-          logMessage(`[McpClient] Warning: No status in connection message payload. Received: ${JSON.stringify(message)}`);
+          logMessage(
+            `[McpClient] Warning: No status in connection message payload. Received: ${JSON.stringify(message)}`,
+          );
         }
       } catch (error) {
-        logMessage(`[McpClient] Error processing connection status message: ${error instanceof Error ? error.message : String(error)}`);
+        logMessage(
+          `[McpClient] Error processing connection status message: ${error instanceof Error ? error.message : String(error)}`,
+        );
       }
     });
 
     // Listen for tool-list updates (broadcast by background when primitives change)
     contextBridge.onMessage('mcp:tool-update', message => {
       try {
-        const tools = Array.isArray(message.payload) ? message.payload : [];
-        logMessage(`[McpClient] Received tool update: ${tools.length} tools`);
-        this.handleToolUpdate(tools);
+        const payload = message.payload || {};
+
+        // Handle backward compatibility where payload might be array of tools or object with primitives
+        let tools: any[] = [];
+        let resources: any[] = [];
+        let prompts: any[] = [];
+
+        if (Array.isArray(payload)) {
+          // Legacy format: payload IS the tools array (unlikely given new structure, but safe)
+          tools = payload;
+        } else {
+          // New format or tools array inside object
+          tools = Array.isArray(payload.tools) ? payload.tools : Array.isArray(payload) ? payload : [];
+          resources = Array.isArray(payload.resources) ? payload.resources : [];
+          prompts = Array.isArray(payload.prompts) ? payload.prompts : [];
+        }
+
+        logMessage(
+          `[McpClient] Received update: ${tools.length} tools, ${resources.length} resources, ${prompts.length} prompts`,
+        );
+        this.handleToolUpdate(tools, resources, prompts);
       } catch (error) {
-        logMessage(`[McpClient] Error processing tool update: ${error instanceof Error ? error.message : String(error)}`);
+        logMessage(
+          `[McpClient] Error processing tool update: ${error instanceof Error ? error.message : String(error)}`,
+        );
+      }
+    });
+
+    // Listen for sampling requests
+    contextBridge.onMessage('mcp:sampling-request', message => {
+      try {
+        const { requestId, request } = message.payload || {};
+        logMessage(`[McpClient] Received sampling request: ${requestId}`);
+        if (requestId && request) {
+          useSamplingStore.getState().handleRequest(requestId, request);
+        }
+      } catch (error) {
+        logMessage(`[McpClient] Error processing sampling request: ${error}`);
       }
     });
 
@@ -207,7 +258,9 @@ class McpClient {
           logMessage(`[McpClient] Warning: No config in server config update message`);
         }
       } catch (error) {
-        logMessage(`[McpClient] Error processing server config update: ${error instanceof Error ? error.message : String(error)}`);
+        logMessage(
+          `[McpClient] Error processing server config update: ${error instanceof Error ? error.message : String(error)}`,
+        );
       }
     });
 
@@ -220,9 +273,11 @@ class McpClient {
           if (typeof isConnected === 'boolean') {
             const currentStatus = useConnectionStore.getState().status;
             const expectedStatus = isConnected ? 'connected' : 'disconnected';
-            
+
             if (currentStatus !== expectedStatus) {
-              logMessage(`[McpClient] Heartbeat indicates status should be ${expectedStatus}, updating from ${currentStatus}`);
+              logMessage(
+                `[McpClient] Heartbeat indicates status should be ${expectedStatus}, updating from ${currentStatus}`,
+              );
               this.handleConnectionStatusChange(expectedStatus);
             }
           }
@@ -231,7 +286,9 @@ class McpClient {
           logMessage(`[McpClient] Warning: No timestamp in heartbeat response`);
         }
       } catch (error) {
-        logMessage(`[McpClient] Error processing heartbeat response: ${error instanceof Error ? error.message : String(error)}`);
+        logMessage(
+          `[McpClient] Error processing heartbeat response: ${error instanceof Error ? error.message : String(error)}`,
+        );
       }
     });
 
@@ -252,13 +309,17 @@ class McpClient {
         // Emit event for other components
         eventBus.emit('connection:status-changed', { status, error: undefined });
         logMessage(`[McpClient] Emitted connected status to event bus`);
-        
+
         // Automatically fetch tools when connected
-        this.getAvailableTools(true).then(tools => {
-          logMessage(`[McpClient] Auto-fetched ${tools.length} tools after connection`);
-        }).catch(error => {
-          logMessage(`[McpClient] Failed to auto-fetch tools after connection: ${error instanceof Error ? error.message : String(error)}`);
-        });
+        this.getAvailableTools(true)
+          .then(tools => {
+            logMessage(`[McpClient] Auto-fetched ${tools.length} tools after connection`);
+          })
+          .catch(error => {
+            logMessage(
+              `[McpClient] Failed to auto-fetch tools after connection: ${error instanceof Error ? error.message : String(error)}`,
+            );
+          });
         break;
       case 'reconnecting':
         store.startReconnecting();
@@ -281,19 +342,28 @@ class McpClient {
   /**
    * Handle tool updates from background script
    */
-  private handleToolUpdate(tools: any[]): void {
-    logMessage(`[McpClient] Received tool update with ${tools.length} tools`);
+  private handleToolUpdate(
+    tools: Record<string, unknown>[],
+    resources: Record<string, unknown>[] = [],
+    prompts: Record<string, unknown>[] = [],
+  ): void {
+    logMessage(
+      `[McpClient] Processing updates: ${tools.length} tools, ${resources.length} resources, ${prompts.length} prompts`,
+    );
 
     // Normalize tool data to ensure consistent schema
-    const normalizedTools = tools.map(tool => ({
-      name: tool.name,
-      description: tool.description || '',
-      input_schema: tool.input_schema || tool.schema || {},
+    const normalizedTools = tools.map((tool: any) => ({
+      name: String(tool.name || ''),
+      description: String(tool.description || ''),
+      input_schema: (tool.input_schema || tool.schema || {}) as Record<string, unknown>,
       // Legacy support
-      schema: typeof tool.schema === 'string' ? tool.schema : JSON.stringify(tool.input_schema || {})
+      schema: typeof tool.schema === 'string' ? tool.schema : JSON.stringify(tool.input_schema || {}),
     }));
 
     useToolStore.getState().setAvailableTools(normalizedTools);
+    useResourceStore.getState().setAvailableResources(resources as any[]);
+    usePromptStore.getState().setAvailablePrompts(prompts as any[]);
+
     eventBus.emit('tool:list-updated', { tools: normalizedTools });
   }
 
@@ -376,7 +446,9 @@ class McpClient {
     // Validate connection status before making the call
     const connectionStore = useConnectionStore.getState();
     if (connectionStore.status !== 'connected') {
-      throw new Error(`Not connected to MCP server. Current status: ${connectionStore.status}. Please check your connection.`);
+      throw new Error(
+        `Not connected to MCP server. Current status: ${connectionStore.status}. Please check your connection.`,
+      );
     }
 
     logMessage(`[McpClient] Calling tool: ${toolName} with args: ${JSON.stringify(args)}`);
@@ -393,7 +465,7 @@ class McpClient {
         'background',
         'mcp:call-tool',
         { toolName, args, adapterName }, // Pass adapter name to background
-        { timeout: 30_000 }
+        { timeout: 30_000 },
       );
 
       logMessage(`[McpClient] Tool call successful: ${toolName}`);
@@ -409,8 +481,8 @@ class McpClient {
           parameters: args,
           result,
           timestamp: Date.now(),
-          status: 'success' as const
-        }
+          status: 'success' as const,
+        },
       });
 
       return result;
@@ -425,7 +497,7 @@ class McpClient {
       eventBus.emit('tool:execution-failed', {
         toolName,
         error: errorMessage,
-        callId: executionId
+        callId: executionId,
       });
 
       // Check if this is a connection-related error
@@ -436,6 +508,29 @@ class McpClient {
 
       throw error;
     }
+  }
+
+  async readResource(uri: string): Promise<any> {
+    if (!this.isInitialized) throw new Error('McpClient not initialized');
+    logMessage(`[McpClient] Reading resource: ${uri}`);
+    return await contextBridge.sendMessage('background', 'mcp:read-resource', { uri });
+  }
+
+  async getPrompt(name: string, args?: Record<string, string>): Promise<any> {
+    if (!this.isInitialized) throw new Error('McpClient not initialized');
+    logMessage(`[McpClient] Getting prompt: ${name}`);
+    return await contextBridge.sendMessage('background', 'mcp:get-prompt', { name, args });
+  }
+
+  async sendSamplingResponse(requestId: string, result?: any, error?: any): Promise<void> {
+    if (!this.isInitialized) throw new Error('McpClient not initialized');
+    logMessage(`[McpClient] Sending sampling response: ${requestId}`);
+    await contextBridge.sendMessage(
+      'background',
+      'mcp:sampling-response',
+      { requestId, result, error },
+      { timeout: 10000 },
+    );
   }
 
   /**
@@ -453,7 +548,7 @@ class McpClient {
       /connection failed/i,
       /transport error/i,
       /fetch failed/i,
-      /chrome runtime error/i
+      /chrome runtime error/i,
     ];
 
     return connectionErrorPatterns.some(pattern => pattern.test(errorMessage));
@@ -462,7 +557,7 @@ class McpClient {
   /**
    * Retrieve the list of available tools with enhanced caching and validation
    */
-  async getAvailableTools(forceRefresh = false): Promise<any[]> {
+  async getAvailableTools(forceRefresh = false): Promise<Record<string, unknown>[]> {
     if (!this.isInitialized) {
       throw new Error('McpClient not initialized');
     }
@@ -474,17 +569,17 @@ class McpClient {
         'background',
         'mcp:get-tools',
         { forceRefresh },
-        { timeout: 10_000 }
+        { timeout: 10_000 },
       );
 
       // Validate and normalize tools
       const validatedTools = Array.isArray(tools) ? tools : [];
-      const normalizedTools = validatedTools.map(tool => ({
-        name: tool.name,
-        description: tool.description || '',
-        input_schema: tool.input_schema || tool.schema || {},
+      const normalizedTools = validatedTools.map((tool: any) => ({
+        name: String(tool.name || ''),
+        description: String(tool.description || ''),
+        input_schema: (tool.input_schema || tool.schema || {}) as Record<string, unknown>,
         // Legacy support
-        schema: typeof tool.schema === 'string' ? tool.schema : JSON.stringify(tool.input_schema || {})
+        schema: typeof tool.schema === 'string' ? tool.schema : JSON.stringify(tool.input_schema || {}),
       }));
 
       // Update store for consumers
@@ -522,7 +617,7 @@ class McpClient {
         'background',
         'mcp:force-reconnect',
         {},
-        { timeout: 25_000 } // Increased timeout for reconnection
+        { timeout: 25_000 }, // Increased timeout for reconnection
       );
 
       const isConnected = response?.isConnected ?? false;
@@ -539,7 +634,9 @@ class McpClient {
           await this.getAvailableTools(true);
           logMessage('[McpClient] Tools refreshed after successful reconnection');
         } catch (toolError) {
-          logMessage(`[McpClient] Failed to refresh tools after reconnect: ${toolError instanceof Error ? toolError.message : String(toolError)}`);
+          logMessage(
+            `[McpClient] Failed to refresh tools after reconnect: ${toolError instanceof Error ? toolError.message : String(toolError)}`,
+          );
           // Don't fail the reconnection just because tool refresh failed
         }
       } else {
@@ -577,7 +674,9 @@ class McpClient {
     try {
       const statusResponse = await this.getCurrentConnectionStatus();
       if (statusResponse) {
-        logMessage(`[McpClient] Immediate connection status: ${statusResponse.status} (isConnected: ${statusResponse.isConnected})`);
+        logMessage(
+          `[McpClient] Immediate connection status: ${statusResponse.status} (isConnected: ${statusResponse.isConnected})`,
+        );
         const connectionStatus = statusResponse.status as ConnectionStatus;
         this.handleConnectionStatusChange(connectionStatus, undefined);
       }
@@ -599,12 +698,7 @@ class McpClient {
     logMessage('[McpClient] Getting server config');
 
     try {
-      const config = await contextBridge.sendMessage(
-        'background',
-        'mcp:get-server-config',
-        {},
-        { timeout: 5_000 }
-      );
+      const config = await contextBridge.sendMessage('background', 'mcp:get-server-config', {}, { timeout: 5_000 });
 
       logMessage('[McpClient] Server config retrieved successfully');
       return config;
@@ -630,7 +724,7 @@ class McpClient {
         'background',
         'mcp:get-connection-status',
         {},
-        { timeout: 5_000 }
+        { timeout: 5_000 },
       );
 
       logMessage(`[McpClient] Current connection status retrieved: ${statusResponse.status}`);
@@ -657,7 +751,7 @@ class McpClient {
         'background',
         'mcp:update-server-config',
         { config },
-        { timeout: 15_000 } // Increased timeout for reconnection process
+        { timeout: 15_000 }, // Increased timeout for reconnection process
       );
 
       const success = !!response?.success;

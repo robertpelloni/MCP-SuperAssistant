@@ -6,7 +6,6 @@ import { WebSocketPlugin } from '../plugins/websocket/WebSocketPlugin.js';
 import { StreamableHttpPlugin } from '../plugins/streamable-http/StreamableHttpPlugin.js';
 import { createLogger } from '@extension/shared/lib/logger';
 
-
 const logger = createLogger('PluginRegistry');
 
 export class PluginRegistry extends EventEmitter<RegistryEvents> {
@@ -26,8 +25,7 @@ export class PluginRegistry extends EventEmitter<RegistryEvents> {
     }
 
     this.plugins.set(transportType, plugin);
-    logger.debug(`Registered plugin: ${plugin.metadata.name} v${plugin.metadata.version} (${transportType})`,
-    );
+    logger.debug(`Registered plugin: ${plugin.metadata.name} v${plugin.metadata.version} (${transportType})`);
 
     this.emit('registry:plugin-registered', { plugin });
   }

@@ -139,8 +139,8 @@ const parameterContentCache = new Map<string, Map<string, string>>(); // blockId
  */
 const cacheParameterContent = (blockId: string, content: string): void => {
   // Detect format
-  const isJSON = content.includes('"type"') &&
-                 (content.includes('function_call_start') || content.includes('parameter'));
+  const isJSON =
+    content.includes('"type"') && (content.includes('function_call_start') || content.includes('parameter'));
 
   let params;
   if (isJSON) {
@@ -171,7 +171,10 @@ const cacheParameterContent = (blockId: string, content: string): void => {
     parameterContentCache.set(blockId, blockCache);
 
     if (CONFIG.debug) {
-      logger.debug(`Cached ${isJSON ? 'JSON' : 'XML'} parameter content for ${blockId}:`, Array.from(blockCache.entries()));
+      logger.debug(
+        `Cached ${isJSON ? 'JSON' : 'XML'} parameter content for ${blockId}:`,
+        Array.from(blockCache.entries()),
+      );
     }
   }
 };
@@ -236,9 +239,11 @@ const detectFunctionChunk = (
   }
 
   // Check if it's any significant content (XML or JSON)
-  if (CHUNK_PATTERNS.significantChunk.test(newContent) ||
-      CHUNK_PATTERNS.jsonSignificant.test(newContent) ||
-      newContent.length > 20) {
+  if (
+    CHUNK_PATTERNS.significantChunk.test(newContent) ||
+    CHUNK_PATTERNS.jsonSignificant.test(newContent) ||
+    newContent.length > 20
+  ) {
     return { hasNewChunk: true, chunkType: 'content', isSignificant: newContent.length > 20 };
   }
 
@@ -435,7 +440,9 @@ export const monitorNode = (node: HTMLElement, blockId: string): void => {
   const isJSON = content.includes('"type"');
 
   if (CONFIG.debug) {
-    logger.debug(`Setting up monitoring for block: ${blockId}, element: ${node.tagName}, format: ${isJSON ? 'JSON' : 'XML'}`);
+    logger.debug(
+      `Setting up monitoring for block: ${blockId}, element: ${node.tagName}, format: ${isJSON ? 'JSON' : 'XML'}`,
+    );
     logger.debug(`Content preview:`, content);
   }
 
@@ -470,8 +477,9 @@ export const monitorNode = (node: HTMLElement, blockId: string): void => {
 
     // Check for incomplete JSON
     const hasJSONStart = currentContent.includes('"type"') && currentContent.includes('function_call_start');
-    const hasJSONEnd = currentContent.includes('"type"') &&
-                       (currentContent.includes('"function_call_end"') || currentContent.includes('"type": "function_call_end"'));
+    const hasJSONEnd =
+      currentContent.includes('"type"') &&
+      (currentContent.includes('"function_call_end"') || currentContent.includes('"type": "function_call_end"'));
     const hasIncompleteJSON = hasJSONStart && !hasJSONEnd;
 
     // Detect incomplete tags (XML or JSON)
@@ -544,8 +552,9 @@ export const monitorNode = (node: HTMLElement, blockId: string): void => {
         if (!functionCallPattern) {
           PATTERN_CACHE.allFunctionPatterns.lastIndex = 0;
           const hasXMLPattern = PATTERN_CACHE.allFunctionPatterns.test(textContent);
-          const hasJSONPattern = textContent.includes('"type"') &&
-                                (textContent.includes('function_call') || textContent.includes('parameter'));
+          const hasJSONPattern =
+            textContent.includes('"type"') &&
+            (textContent.includes('function_call') || textContent.includes('parameter'));
           functionCallPattern = hasXMLPattern || hasJSONPattern;
         }
 

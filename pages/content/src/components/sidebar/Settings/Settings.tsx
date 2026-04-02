@@ -1,39 +1,49 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useUserPreferences } from '@src/hooks';
-import { Card, CardContent } from '@src/components/ui/card';
-import { Typography } from '../ui';
+import { useProfileStore } from '@src/stores/profile.store';
+import { useActivityStore } from '@src/stores/activity.store';
+import { useToastStore } from '@src/stores/toast.store';
+import { Card, CardContent, CardHeader, CardTitle } from '@src/components/ui/card';
+import { Typography, Icon, Button, ToggleWithoutLabel } from '../ui';
+import { ThemeSelector } from './ThemeSelector';
+import ServerProfiles from './ServerProfiles';
 import { AutomationService } from '@src/services/automation.service';
+import { useSyncStore } from '@src/stores/sync.store';
+import { SyncService } from '@src/services/sync.service';
 import { cn } from '@src/lib/utils';
 import { createLogger } from '@extension/shared/lib/logger';
-
-// Default delay values in seconds
 
 const logger = createLogger('Settings');
 
 const DEFAULT_DELAYS = {
   autoInsertDelay: 2,
   autoSubmitDelay: 2,
-  autoExecuteDelay: 2
+  autoExecuteDelay: 2,
 } as const;
 
 const Settings: React.FC = () => {
   const { preferences, updatePreferences } = useUserPreferences();
+  // Sync local state with preferences for smoother UI if needed
+  const [trustedToolsInput, setTrustedToolsInput] = useState('');
 
   // Handle delay input changes
   const handleDelayChange = (type: 'autoInsert' | 'autoSubmit' | 'autoExecute', value: string) => {
     const delay = Math.max(0, parseInt(value) || 0); // Ensure non-negative integer
     logger.debug(`${type} delay changed to: ${delay}`);
-    
+
     // Update user preferences store with the new delay
     updatePreferences({ [`${type}Delay`]: delay });
 
     // Store in localStorage
     try {
       const storedDelays = JSON.parse(localStorage.getItem('mcpDelaySettings') || '{}');
-      localStorage.setItem('mcpDelaySettings', JSON.stringify({
-        ...storedDelays,
-        [`${type}Delay`]: delay
-      }));
+      localStorage.setItem(
+        'mcpDelaySettings',
+        JSON.stringify({
+          ...storedDelays,
+          [`${type}Delay`]: delay,
+        }),
+      );
     } catch (error) {
       logger.error('[Settings] Error storing delay settings:', error);
     }
@@ -62,98 +72,461 @@ const Settings: React.FC = () => {
     }
   }, [updatePreferences]);
 
+  const handleResetDefaults = () => {
+    updatePreferences(DEFAULT_DELAYS);
+    localStorage.setItem('mcpDelaySettings', JSON.stringify(DEFAULT_DELAYS));
+    logger.debug('[Settings] Reset to defaults');
+  };
+
+  const handleExportData = () => {
+    const data = {
+      preferences: preferences,
+      profiles: useProfileStore.getState().profiles,
+      activeProfileId: useProfileStore.getState().activeProfileId,
+      logs: useActivityStore.getState().logs,
+      favorites: JSON.parse(localStorage.getItem('mcpFavorites') || '[]'),
+      version: '0.6.1',
+      timestamp: new Date().toISOString(),
+    };
+
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `mcp-superassistant-backup-${new Date().toISOString().slice(0, 10)}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+
+    useToastStore.getState().addToast({
+      title: 'Export Successful',
+      message: 'Data exported to JSON file',
+      type: 'success',
+    });
+  };
+
+  const handleImportData = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = e => {
+      try {
+        const data = JSON.parse(e.target?.result as string);
+
+        if (data.preferences) updatePreferences(data.preferences);
+        if (data.profiles) useProfileStore.setState({ profiles: data.profiles, activeProfileId: data.activeProfileId });
+        if (data.logs) useActivityStore.setState({ logs: data.logs });
+        if (data.favorites) localStorage.setItem('mcpFavorites', JSON.stringify(data.favorites));
+
+        useToastStore.getState().addToast({
+          title: 'Import Successful',
+          message: 'Settings and data restored',
+          type: 'success',
+        });
+
+        // Refresh page to ensure all stores rehydrate correctly if needed
+        setTimeout(() => window.location.reload(), 1500);
+      } catch (error) {
+        logger.error('Import failed', error);
+        useToastStore.getState().addToast({
+          title: 'Import Failed',
+          message: 'Invalid backup file',
+          type: 'error',
+        });
+      }
+    };
+    reader.readAsText(file);
+    // Reset input
+    event.target.value = '';
+  };
+
   return (
-    <div className="p-4 space-y-4">
-      <Card className="border-slate-200 dark:border-slate-700 dark:bg-slate-800">
-        <CardContent className="p-4">
-          <Typography variant="h4" className="mb-4 text-slate-700 dark:text-slate-300">
-            Automation Delay Settings
-          </Typography>
-          
-          <div className="space-y-4">
-            {/* Auto Insert Delay */}
-            <div>
-              <label
-                htmlFor="auto-insert-delay"
-                className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1"
-              >
-                Auto Insert Delay (seconds)
-              </label>
-              <input
-                id="auto-insert-delay"
-                type="number"
-                min="0"
-                value={preferences.autoInsertDelay || 0}
-                onChange={(e) => handleDelayChange('autoInsert', e.target.value)}
-                disabled={false}
-                className={cn(
-                  "w-full p-2 text-sm border rounded-md",
-                  "bg-white dark:bg-slate-900",
-                  "border-slate-300 dark:border-slate-600",
-                  "text-slate-900 dark:text-slate-100"
-                )}
+    <div className="p-4 space-y-6">
+      <div className="flex flex-col space-y-2">
+        <Typography variant="h4" className="font-semibold text-slate-800 dark:text-slate-100">
+          Settings
+        </Typography>
+        <Typography variant="caption" className="text-slate-500 dark:text-slate-400">
+          Configure automation behaviors and extension preferences.
+        </Typography>
+      </div>
+
+      <div className="space-y-4">
+        {/* Server Profiles */}
+        <ServerProfiles />
+
+        {/* Cloud Sync */}
+        <Card className="border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm overflow-hidden">
+          <CardHeader className="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-800 p-4">
+            <div className="flex items-center gap-2">
+              <div className="p-1.5 bg-sky-100 dark:bg-sky-900/30 rounded text-sky-600 dark:text-sky-400">
+                <Icon name="cloud" size="sm" />
+              </div>
+              <CardTitle className="text-base font-medium">Cloud Sync (Beta)</CardTitle>
+            </div>
+          </CardHeader>
+          <CardContent className="p-5">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <Typography variant="subtitle" className="text-slate-900 dark:text-slate-100">
+                  Sync Data
+                </Typography>
+                <Typography variant="caption" className="text-slate-500 dark:text-slate-400">
+                  Sync macros and contexts across devices via Chrome.
+                </Typography>
+              </div>
+              <ToggleWithoutLabel
+                label="Enable Sync"
+                checked={useSyncStore(s => s.isEnabled)}
+                onChange={checked => useSyncStore.getState().setSyncEnabled(checked)}
               />
-              <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                Delay before auto-inserting content
+            </div>
+            <div className="flex flex-col gap-2">
+              <Button
+                size="sm"
+                variant="outline"
+                disabled={!useSyncStore(s => s.isEnabled)}
+                className="w-full flex justify-between px-4"
+                onClick={() => SyncService.getInstance().sync()}>
+                <span>Push Local Data to Cloud</span>
+                <Icon name="upload-cloud" size="xs" />
+              </Button>
+              <div className="flex gap-2 w-full">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="flex-1 text-xs"
+                  disabled={!useSyncStore(s => s.isEnabled)}
+                  onClick={() => SyncService.getInstance().pull('merge')}
+                  title="Merge remote data with local data (keeps newest)">
+                  <Icon name="git-merge" size="xs" className="mr-1" /> Smart Merge
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="flex-1 text-xs text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
+                  disabled={!useSyncStore(s => s.isEnabled)}
+                  onClick={() => {
+                    if (
+                      confirm(
+                        'This will completely overwrite your local macros and contexts with the cloud version. Proceed?',
+                      )
+                    ) {
+                      SyncService.getInstance().pull('overwrite');
+                    }
+                  }}
+                  title="Overwrite local data with cloud data">
+                  <Icon name="download-cloud" size="xs" className="mr-1" /> Force Pull
+                </Button>
+              </div>
+            </div>
+            {useSyncStore(s => s.lastSyncedAt) && (
+              <Typography variant="caption" className="text-slate-400 mt-2 block">
+                Last synced: {new Date(useSyncStore.getState().lastSyncedAt!).toLocaleString()}
+              </Typography>
+            )}
+            {useSyncStore(s => s.error) && (
+              <Typography variant="caption" className="text-red-500 mt-2 block">
+                Error: {useSyncStore.getState().error}
+              </Typography>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Appearance Settings */}
+        <Card className="border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm overflow-hidden">
+          <CardHeader className="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-800 p-4">
+            <div className="flex items-center gap-2">
+              <div className="p-1.5 bg-fuchsia-100 dark:bg-fuchsia-900/30 rounded text-fuchsia-600 dark:text-fuchsia-400">
+                <Icon name="sun" size="sm" />
+              </div>
+              <CardTitle className="text-base font-medium">Appearance</CardTitle>
+            </div>
+          </CardHeader>
+          <CardContent className="p-5 space-y-4">
+            <ThemeSelector />
+            <div className="flex items-center justify-between border-t border-slate-100 dark:border-slate-800 pt-4">
+              <div>
+                <Typography variant="subtitle" className="text-slate-900 dark:text-slate-100">
+                  Push Content Mode
+                </Typography>
+                <Typography variant="caption" className="text-slate-500 dark:text-slate-400">
+                  Shift page content instead of overlaying.
+                </Typography>
+              </div>
+              <ToggleWithoutLabel
+                label="Push Content Mode"
+                checked={preferences.isPushMode}
+                onChange={checked => updatePreferences({ isPushMode: checked })}
+              />
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Automation Settings */}
+        <Card className="border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm overflow-hidden">
+          <CardHeader className="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-800 p-4">
+            <div className="flex items-center gap-2">
+              <div className="p-1.5 bg-blue-100 dark:bg-blue-900/30 rounded text-blue-600 dark:text-blue-400">
+                <Icon name="lightning" size="sm" />
+              </div>
+              <CardTitle className="text-base font-medium">Automation Controls</CardTitle>
+            </div>
+          </CardHeader>
+          <CardContent className="p-5 space-y-6">
+            {/* Auto Insert Delay */}
+            <div className="group">
+              <div className="flex items-center justify-between mb-2">
+                <label
+                  htmlFor="auto-insert-delay"
+                  className="block text-sm font-medium text-slate-700 dark:text-slate-300">
+                  Auto Insert Delay
+                </label>
+                <div className="text-xs text-slate-400 dark:text-slate-500 font-mono bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded">
+                  {preferences.autoInsertDelay}s
+                </div>
+              </div>
+              <div className="flex items-center gap-3">
+                <input
+                  id="auto-insert-delay"
+                  type="range"
+                  min="0"
+                  max="30"
+                  value={preferences.autoInsertDelay || 0}
+                  onChange={e => handleDelayChange('autoInsert', e.target.value)}
+                  className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer dark:bg-slate-700 accent-blue-600"
+                />
+                <input
+                  type="number"
+                  min="0"
+                  max="60"
+                  value={preferences.autoInsertDelay || 0}
+                  onChange={e => handleDelayChange('autoInsert', e.target.value)}
+                  className="w-16 p-1 text-sm text-center border rounded-md bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-600 text-slate-900 dark:text-slate-100"
+                />
+              </div>
+              <p className="mt-2 text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                Automatically inserts the tool result into the chat input box after execution.
+                <br />
+                <span className="text-slate-400 dark:text-slate-500 italic">
+                  Wait time allows you to review the result before insertion. 0 = Instant.
+                </span>
               </p>
             </div>
+
+            <div className="border-t border-slate-100 dark:border-slate-800"></div>
 
             {/* Auto Submit Delay */}
-            <div>
-              <label
-                htmlFor="auto-submit-delay"
-                className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1"
-              >
-                Auto Submit Delay (seconds)
-              </label>
-              <input
-                id="auto-submit-delay"
-                type="number"
-                min="0"
-                value={preferences.autoSubmitDelay || 0}
-                onChange={(e) => handleDelayChange('autoSubmit', e.target.value)}
-                disabled={false}
-                className={cn(
-                  "w-full p-2 text-sm border rounded-md",
-                  "bg-white dark:bg-slate-900",
-                  "border-slate-300 dark:border-slate-600",
-                  "text-slate-900 dark:text-slate-100"
-                )}
-              />
-              <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                Delay before auto-submitting form
+            <div className="group">
+              <div className="flex items-center justify-between mb-2">
+                <label
+                  htmlFor="auto-submit-delay"
+                  className="block text-sm font-medium text-slate-700 dark:text-slate-300">
+                  Auto Submit Delay
+                </label>
+                <div className="text-xs text-slate-400 dark:text-slate-500 font-mono bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded">
+                  {preferences.autoSubmitDelay}s
+                </div>
+              </div>
+              <div className="flex items-center gap-3">
+                <input
+                  id="auto-submit-delay"
+                  type="range"
+                  min="0"
+                  max="30"
+                  value={preferences.autoSubmitDelay || 0}
+                  onChange={e => handleDelayChange('autoSubmit', e.target.value)}
+                  className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer dark:bg-slate-700 accent-green-600"
+                />
+                <input
+                  type="number"
+                  min="0"
+                  max="60"
+                  value={preferences.autoSubmitDelay || 0}
+                  onChange={e => handleDelayChange('autoSubmit', e.target.value)}
+                  className="w-16 p-1 text-sm text-center border rounded-md bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-600 text-slate-900 dark:text-slate-100"
+                />
+              </div>
+              <p className="mt-2 text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                Automatically submits the chat message after result insertion.
+                <br />
+                <span className="text-slate-400 dark:text-slate-500 italic">
+                  Requires 'Auto Insert'. Wait time allows you to cancel submission.
+                </span>
               </p>
             </div>
 
+            <div className="border-t border-slate-100 dark:border-slate-800"></div>
+
             {/* Auto Execute Delay */}
-            <div>
-              <label
-                htmlFor="auto-execute-delay"
-                className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1"
-              >
-                Auto Execute Delay (seconds)
-              </label>
-              <input
-                id="auto-execute-delay"
-                type="number"
-                min="0"
-                value={preferences.autoExecuteDelay || 0}
-                onChange={(e) => handleDelayChange('autoExecute', e.target.value)}
-                disabled={false}
-                className={cn(
-                  "w-full p-2 text-sm border rounded-md",
-                  "bg-white dark:bg-slate-900",
-                  "border-slate-300 dark:border-slate-600",
-                  "text-slate-900 dark:text-slate-100"
-                )}
-              />
-              <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                Delay before auto-executing functions
+            <div className="group">
+              <div className="flex items-center justify-between mb-2">
+                <label
+                  htmlFor="auto-execute-delay"
+                  className="block text-sm font-medium text-slate-700 dark:text-slate-300 flex items-center gap-2">
+                  Auto Execute Delay
+                  <span className="px-1.5 py-0.5 text-[10px] font-bold bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300 rounded uppercase">
+                    Advanced
+                  </span>
+                </label>
+                <div className="text-xs text-slate-400 dark:text-slate-500 font-mono bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded">
+                  {preferences.autoExecuteDelay}s
+                </div>
+              </div>
+              <div className="flex items-center gap-3">
+                <input
+                  id="auto-execute-delay"
+                  type="range"
+                  min="0"
+                  max="30"
+                  value={preferences.autoExecuteDelay || 0}
+                  onChange={e => handleDelayChange('autoExecute', e.target.value)}
+                  className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer dark:bg-slate-700 accent-amber-500"
+                />
+                <input
+                  type="number"
+                  min="0"
+                  max="60"
+                  value={preferences.autoExecuteDelay || 0}
+                  onChange={e => handleDelayChange('autoExecute', e.target.value)}
+                  className="w-16 p-1 text-sm text-center border rounded-md bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-600 text-slate-900 dark:text-slate-100"
+                />
+              </div>
+              <p className="mt-2 text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                Automatically runs tools when detected, skipping the "Run" click.
+                <br />
+                <span className="text-slate-400 dark:text-slate-500 italic">
+                  Use with caution. Wait time allows you to cancel execution.
+                </span>
               </p>
             </div>
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+
+        {/* Safety Settings (Trusted Tools) */}
+        <Card className="border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm overflow-hidden">
+          <CardHeader className="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-800 p-4">
+            <div className="flex items-center gap-2">
+              <div className="p-1.5 bg-green-100 dark:bg-green-900/30 rounded text-green-600 dark:text-green-400">
+                <Icon name="check" size="sm" />
+              </div>
+              <CardTitle className="text-base font-medium">Safety & Whitelist</CardTitle>
+            </div>
+          </CardHeader>
+          <CardContent className="p-5">
+            <div className="text-sm text-slate-600 dark:text-slate-400 mb-3">
+              Tools listed here will auto-execute without confirmation (if enabled above).
+            </div>
+            <div className="flex gap-2 mb-3">
+              <input
+                type="text"
+                placeholder="Enter tool name (e.g., filesystem.read_file)"
+                className="flex-1 px-3 py-2 text-sm border rounded-md bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-600 text-slate-900 dark:text-slate-100"
+                value={trustedToolsInput}
+                onChange={e => setTrustedToolsInput(e.target.value)}
+                onKeyDown={e => {
+                  if (e.key === 'Enter') {
+                    const val = trustedToolsInput.trim();
+                    if (val && !(preferences.autoExecuteWhitelist || []).includes(val)) {
+                      const newTools = [...(preferences.autoExecuteWhitelist || []), val];
+                      updatePreferences({ autoExecuteWhitelist: newTools });
+                      setTrustedToolsInput('');
+                    }
+                  }
+                }}
+              />
+              <Button
+                size="sm"
+                variant="outline"
+                className="border-slate-300 dark:border-slate-600"
+                onClick={() => {
+                  const val = trustedToolsInput.trim();
+                  if (val && !(preferences.autoExecuteWhitelist || []).includes(val)) {
+                    const newTools = [...(preferences.autoExecuteWhitelist || []), val];
+                    updatePreferences({ autoExecuteWhitelist: newTools });
+                    setTrustedToolsInput('');
+                  }
+                }}>
+                Add
+              </Button>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {(preferences.autoExecuteWhitelist || []).map(tool => (
+                <div
+                  key={tool}
+                  className="flex items-center gap-1 px-2 py-1 bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300 text-xs rounded border border-green-100 dark:border-green-800">
+                  <span>{tool}</span>
+                  <button
+                    onClick={() => {
+                      const newTools = (preferences.autoExecuteWhitelist || []).filter(t => t !== tool);
+                      updatePreferences({ autoExecuteWhitelist: newTools });
+                    }}
+                    className="hover:text-green-900 dark:hover:text-green-100">
+                    <Icon name="x" size="xs" />
+                  </button>
+                </div>
+              ))}
+              {(!preferences.autoExecuteWhitelist || preferences.autoExecuteWhitelist.length === 0) && (
+                <span className="text-xs text-slate-400 italic">No trusted tools configured.</span>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Data Management */}
+        <Card className="border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm overflow-hidden">
+          <CardHeader className="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-800 p-4">
+            <div className="flex items-center gap-2">
+              <div className="p-1.5 bg-purple-100 dark:bg-purple-900/30 rounded text-purple-600 dark:text-purple-400">
+                <Icon name="box" size="sm" />
+              </div>
+              <CardTitle className="text-base font-medium">Data Management</CardTitle>
+            </div>
+          </CardHeader>
+          <CardContent className="p-5">
+            <div className="flex gap-3">
+              <Button
+                variant="outline"
+                className="flex-1 border-slate-300 dark:border-slate-600"
+                onClick={handleExportData}>
+                <Icon name="arrow-up-right" size="sm" className="mr-2 rotate-45" />
+                Export Data
+              </Button>
+              <div className="relative flex-1">
+                <input
+                  type="file"
+                  accept=".json"
+                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                  onChange={handleImportData}
+                />
+                <Button variant="outline" className="w-full border-slate-300 dark:border-slate-600">
+                  <Icon name="arrow-up-right" size="sm" className="mr-2 rotate-[-135deg]" />
+                  Import Data
+                </Button>
+              </div>
+            </div>
+            <Typography variant="caption" className="text-slate-500 dark:text-slate-400 mt-2 block text-center">
+              Backup your settings, profiles, logs, and favorites.
+            </Typography>
+          </CardContent>
+        </Card>
+
+        {/* Info / Reset */}
+        <div className="flex items-center justify-between pt-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleResetDefaults}
+            className="text-xs text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200">
+            <Icon name="refresh" size="xs" className="mr-1.5" />
+            Reset to Defaults
+          </Button>
+
+          <div className="text-xs text-slate-400 dark:text-slate-500 italic">Changes are saved automatically</div>
+        </div>
+      </div>
     </div>
   );
 };
